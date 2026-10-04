@@ -6,6 +6,7 @@ import type { AppState, Reward, Schedule, Source, SourceCategory } from '../engi
 import { describeSchedule, fmtInt, fmtSingles, pendingLabel } from './format';
 import { Icon } from './Icon';
 import { NumberField } from './NumberField';
+import { PLAIN_TEXT_INPUT } from './inputs';
 
 interface Props {
   state: AppState;
@@ -193,7 +194,7 @@ function SourceEditor({ source, today, onUpdate, onDelete }: EditorProps) {
         <div className="grid-2">
           <label className="field">
             <span className="field-label">Nombre</span>
-            <input type="text" value={source.name} onChange={(e) => onUpdate({ name: e.target.value })} />
+            <input type="text" {...PLAIN_TEXT_INPUT} value={source.name} onChange={(e) => onUpdate({ name: e.target.value })} />
           </label>
           <label className="field">
             <span className="field-label">Frecuencia</span>

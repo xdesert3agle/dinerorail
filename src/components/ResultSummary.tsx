@@ -82,7 +82,6 @@ export function Breakdown({ result }: { result: Result }) {
     <section className="card">
       <header className="card-header">
         <h2>Desglose por fuente</h2>
-        <span className="muted">en singles</span>
       </header>
       <div className="table-wrap">
         <table className="breakdown">

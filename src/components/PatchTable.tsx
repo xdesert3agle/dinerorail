@@ -5,6 +5,7 @@ import { nextVersion } from '../engine/sources';
 import type { AppState, Patch, PatchEvent } from '../engine/types';
 import { fmtSingles } from './format';
 import { NumberField } from './NumberField';
+import { PLAIN_TEXT_INPUT } from './inputs';
 
 interface Props {
   state: AppState;
@@ -50,9 +51,6 @@ export function PatchTable({ state, today, onChange }: Props) {
           + Actualización
         </button>
       </header>
-      <p className="muted small">
-        Cada evento se cuenta el día de su fecha. Los eventos con fecha de hoy o anterior no se suman.
-      </p>
 
       {patches.map((p) => (
         <div key={p.id} className="patch-block">
@@ -61,6 +59,7 @@ export function PatchTable({ state, today, onChange }: Props) {
               <span className="field-label">Versión</span>
               <input
                 type="text"
+                {...PLAIN_TEXT_INPUT}
                 className="input-version"
                 value={p.version}
                 onChange={(e) => updatePatch(p.id, (x) => ({ ...x, version: e.target.value }))}
@@ -111,6 +110,7 @@ export function PatchTable({ state, today, onChange }: Props) {
                 <div key={ev.id} className={`event-row ${status ? 'is-ignored' : ''}`} title={status}>
                   <input
                     type="text"
+                    {...PLAIN_TEXT_INPUT}
                     value={ev.name}
                     title={ev.name}
                     placeholder="Nombre del evento"

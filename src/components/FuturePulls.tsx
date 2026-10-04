@@ -34,6 +34,7 @@ import type { AppState, PlannedPull, PullKind } from '../engine/types';
 import { fmtInt } from './format';
 import { Icon } from './Icon';
 import { Toggle } from './Toggle';
+import { PLAIN_TEXT_INPUT } from './inputs';
 
 interface Props {
   state: AppState;
@@ -105,11 +106,24 @@ export function FuturePulls({ state, result, onChange }: Props) {
       <header className="card-header">
         <h2>Planificación de tiradas</h2>
         <div className="header-actions">
-          <button type="button" className="btn" onClick={() => add('character')}>
-            + Personaje
+          {/* "+" y el icono del tipo; el nombre va en el tooltip y para lectores de pantalla. */}
+          <button
+            type="button"
+            className="btn btn-add-pull"
+            title="Añadir personaje"
+            aria-label="Añadir personaje"
+            onClick={() => add('character')}
+          >
+            +<span className="glyph glyph-character" aria-hidden="true" />
           </button>
-          <button type="button" className="btn" onClick={() => add('lightCone')}>
-            + Cono de luz
+          <button
+            type="button"
+            className="btn btn-add-pull"
+            title="Añadir cono de luz"
+            aria-label="Añadir cono de luz"
+            onClick={() => add('lightCone')}
+          >
+            +<span className="glyph glyph-light-cone" aria-hidden="true" />
           </button>
         </div>
       </header>
@@ -227,6 +241,7 @@ function SortablePullRow({ pull, row, countStarlight, onUpdate, onRemove }: RowP
 
       <input
         type="text"
+        {...PLAIN_TEXT_INPUT}
         className="pull-name"
         value={pull.name}
         placeholder={pull.kind === 'character' ? 'Nombre del personaje' : 'Nombre del cono de luz'}

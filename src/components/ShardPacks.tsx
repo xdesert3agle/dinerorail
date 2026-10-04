@@ -37,12 +37,13 @@ export function ShardPacks({ state, onChange }: Props) {
 
       <div className="pack-list">
         <div className="pack-row pack-header" aria-hidden="true">
+          {/* Cada título al inicio de su columna (sobre el icono o el borde del campo), como en los eventos. */}
           <span>Pack</span>
-          <span className="num">Precio</span>
-          <span className="num">Cristales</span>
-          <span className="num pack-qty-header">Cantidad</span>
+          <span>Precio</span>
+          <span>Cristales</span>
+          <span>Cantidad</span>
           <span />
-          <span className="num">Total</span>
+          <span>Total</span>
         </div>
         {SHARD_PACKS.map((pack) => {
           const purchase = state.shardPacks[pack.id] ?? emptyPurchase();
@@ -79,7 +80,11 @@ export function ShardPacks({ state, onChange }: Props) {
                 />
                 x2
               </label>
-              <strong className="num pack-total">{shards > 0 ? fmtInt(shards) : '—'}</strong>
+              {/* Como en Cristales: icono a la izquierda y cifra a la derecha. */}
+              <strong className="num pack-total">
+                <Icon kind="shard" size={18} decorative />
+                <span className="pack-total-value">{shards > 0 ? fmtInt(shards) : '—'}</span>
+              </strong>
             </div>
           );
         })}

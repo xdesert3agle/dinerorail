@@ -70,9 +70,21 @@ export function Odds({ state, result }: Props) {
       <div className="odds-list">
         {plan.map((p, i) => (
           <div key={p.id} className="odds-row" title="Probabilidad de tenerlo, junto con todos los anteriores">
+            {/* El tipo va como icono (con su nombre en el tooltip y para lectores de pantalla). */}
             <span className="odds-name">
-              {p.name || KIND_LABEL[p.kind]}
-              {p.name && <span className="muted small"> · {KIND_LABEL[p.kind]}</span>}
+              <span
+                className={`glyph ${p.kind === 'character' ? 'glyph-character' : 'glyph-light-cone'}`}
+                title={KIND_LABEL[p.kind]}
+                aria-hidden="true"
+              />
+              {p.name ? (
+                <>
+                  <span className="sr-only">{KIND_LABEL[p.kind]}: </span>
+                  {p.name}
+                </>
+              ) : (
+                KIND_LABEL[p.kind]
+              )}
             </span>
             <span className="odds-bar" aria-hidden="true">
               <span style={{ width: `${odds.chances[i] * 100}%` }} />

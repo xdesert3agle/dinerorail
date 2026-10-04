@@ -90,6 +90,9 @@
  * Mismo reparto que Kafka: el rojo solo en lo interactivo, los datos y la decoración.
  */
 :root[data-skin='aha'] {
+  /* Figtree: mayúsculas ya centradas, así que los campos no necesitan el ajuste de 1px. Cifras de ancho fijo, como Segoe. */
+  font-family: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --input-nudge: 0px;
   --page: #f0eae9;
   --surface: #ffffff;
   --surface-2: #f6e8e5;
@@ -763,6 +766,12 @@ p {
   gap: 6px;
 }
 
+/* Aha: la tarjeta Resumen deja ver un poco los naipes del fondo (solo el fondo de la tarjeta es translúcido). */
+:root[data-skin='aha'] .hero {
+  background:
+    radial-gradient(420px 220px at 100% 0%, var(--glow), transparent 70%),
+    color-mix(in srgb, var(--surface) 50%, transparent);
+}
 /* Aha: títulos de tarjeta con letra de naipe. Sin negrita: la fuente solo tiene un peso y se vería falseada. */
 :root[data-skin='aha'] .card-header h2 {
   /* En claro, rojo de naipe; en oscuro, el color del texto. */
@@ -783,6 +792,12 @@ p {
 }
 /* Cifras de Jades, Pases y Esquirlas del resumen, también con letra de naipe. */
 :root[data-skin='aha'] .hero-stats dd {
+  font-family: 'Card Characters', system-ui, sans-serif;
+  font-weight: 400;
+}
+/* Coste de cada tirada y balance de la planificación, también en letra de naipe (juntos para que los tickets
+ * sigan en la misma columna). */
+:root[data-skin='aha'] .pull-cost strong {
   font-family: 'Card Characters', system-ui, sans-serif;
   font-weight: 400;
 }
@@ -838,6 +853,8 @@ p {
   width: 14px;
   height: 14px;
   margin-left: 5px;
+  /* Puede asomar hasta 5px en el hueco entre columnas: así el (i) de "Cosmiluz Inextinguible" no baja solo a otra línea. */
+  margin-right: -5px;
   border: 1px solid currentColor;
   border-radius: 50%;
   font-size: 0.625rem;
@@ -873,6 +890,12 @@ select {
   padding: calc(8px - var(--input-nudge)) 10px calc(8px + var(--input-nudge));
   width: 100%;
   min-width: 0;
+}
+/* Chrome da padding vertical a la parte editable y al icono del calendario: sin esto la fecha sale 2px más alta que el resto. */
+input[type='date']::-webkit-datetime-edit,
+input[type='date']::-webkit-datetime-edit-fields-wrapper,
+input[type='date']::-webkit-calendar-picker-indicator {
+  padding-block: 0;
 }
 /*
  * Chevron propio: el nativo de Chrome ignora el padding y queda pegado al borde.
@@ -962,6 +985,37 @@ select:focus {
   border-radius: 999px;
   padding: 6px 12px;
 }
+/*
+ * Iconos de interfaz monocromos (personaje, cono de luz): el PNG blanco se usa como máscara sobre el color
+ * del texto, así siguen al tema y al modo claro u oscuro.
+ */
+/*
+ * Todos los iconos ocupan la misma caja (así los botones miden lo mismo); el margen negativo evita que el
+ * botón crezca de alto. El dibujo de cada uno se ajusta dentro con el tamaño de la máscara.
+ */
+.glyph {
+  display: inline-block;
+  flex: none;
+  width: 1.5em;
+  height: 1.5em;
+  margin-block: -0.125em;
+  background-color: currentColor;
+}
+/* El personaje es una silueta rellena: se dibuja algo más pequeño (1,25em) para no pesar más que el cono. */
+.glyph-character {
+  -webkit-mask: url('./assets/icons/character.png') center / 83.333% no-repeat;
+  mask: url('./assets/icons/character.png') center / 83.333% no-repeat;
+}
+/* El cono es de trazo fino: ocupa toda la caja. */
+.glyph-light-cone {
+  -webkit-mask: url('./assets/icons/light-cone.png') center / contain no-repeat;
+  mask: url('./assets/icons/light-cone.png') center / contain no-repeat;
+}
+.btn-add-pull {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
 .btn-ghost {
   background: transparent;
   border-color: transparent;
@@ -977,6 +1031,20 @@ select:focus {
 /* Sources */
 .source-group {
   display: grid;
+}
+/* Arriba ya separa el gap de la tarjeta (12px); entre grupos, 8px más, como .group-gap. */
+.source-group h3 {
+  margin-top: 0;
+}
+.source-group + .source-group {
+  margin-top: 8px;
+}
+/* Sin aire bajo la última fuente de cada grupo: el siguiente grupo y el borde de la tarjeta ya separan. */
+.source:last-child > .source-row:last-child {
+  padding-bottom: 0;
+}
+.source:last-child > .source-edit:last-child {
+  margin-bottom: 0;
 }
 .source {
   border-top: 1px solid var(--grid);
@@ -1140,6 +1208,11 @@ tfoot td {
   padding: 8px 0;
   border-top: 1px solid var(--grid);
 }
+/* La primera fila no lleva línea ni aire propio: bajo la cabecera ya separa el gap de la tarjeta. */
+.pull-row:first-child {
+  padding-top: 0;
+  border-top: none;
+}
 .pull-row input[type='text'],
 .pull-row select {
   padding: calc(6px - var(--input-nudge)) 8px calc(6px + var(--input-nudge));
@@ -1264,6 +1337,11 @@ tfoot td {
   display: grid;
   gap: 8px;
 }
+/* La línea solo separa una actualización de otra; bajo la cabecera ya separa el gap de la tarjeta. */
+.card-header + .patch-block {
+  border-top: none;
+  padding-top: 0;
+}
 .patch-head {
   display: flex;
   flex-wrap: wrap;
@@ -1331,7 +1409,7 @@ tfoot td {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(60px, 40%) 3.5em;
   column-gap: 12px;
-  row-gap: 10px;
+  row-gap: 14px;
   align-items: center;
 }
 .odds-row {
@@ -1339,6 +1417,11 @@ tfoot td {
   display: grid;
   grid-template-columns: subgrid;
   align-items: center;
+}
+/* Icono del tipo delante del nombre; el nombre sigue cortándose con puntos suspensivos si no cabe. */
+.odds-name .glyph {
+  margin-right: 4px;
+  vertical-align: middle;
 }
 .odds-name {
   overflow: hidden;
@@ -1413,14 +1496,10 @@ tfoot td {
   grid-template-columns: subgrid;
   align-items: center;
 }
-/* Cabecera: texto a la izquierda y cifras a la derecha, cada título encima del final de su cifra. */
+/* Cabecera: cada título al inicio de su columna (sobre el icono o el borde del campo). */
 .pack-header {
   font-size: 0.75rem;
   color: var(--text-muted);
-}
-.pack-qty-header {
-  /* El número del campo termina antes del borde: su padding derecho más el borde. */
-  padding-right: 9px;
 }
 .pack-shards {
   display: flex;
@@ -1440,12 +1519,21 @@ tfoot td {
 .pack-price {
   font-variant-numeric: tabular-nums;
 }
-/* Hueco fijo para 6 cifras con punto de miles (999.999): la columna no cambia de ancho. */
 .pack-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
   font-size: 1.0625rem;
   font-variant-numeric: tabular-nums;
+}
+/*
+ * Hueco fijo para 6 cifras con punto de miles (999.999): la columna no cambia de ancho.
+ * Medido en negrita: 68,7px en Figtree y 71,4px en Courier Prime (Sparxie), así que 72px.
+ */
+.pack-total-value {
   /* En rem y no en ch: las filas vacías no van en negrita y su "ch" es más estrecho. */
-  min-width: 4.25rem;
+  min-width: 4.5rem;
 }
 .pack-price {
   color: var(--text-secondary);
@@ -1462,20 +1550,27 @@ tfoot td {
   .pack-row input[type='number'] {
     padding: calc(6px - var(--input-nudge)) 6px calc(6px + var(--input-nudge));
   }
-  .pack-qty-header {
-    padding-right: 7px;
-  }
   .pack-shards {
     gap: 4px;
   }
+  /* Gap de 2px: compensa el hueco de la cifra para que el nombre del pack no pase de dos líneas. La cifra
+     va alineada a la derecha dentro de su hueco, así que solo se acerca al icono con 6 cifras. */
   .pack-total {
+    gap: 2px;
     font-size: 0.9375rem;
-    min-width: 3.75rem;
+  }
+  /* A 15px: 60,6px en Figtree; Sparxie aprieta sus cifras en móvil y se queda en 56,7px. */
+  .pack-total-value {
+    min-width: 3.875rem;
   }
 }
 .pack-row.is-empty .pack-total {
   color: var(--text-muted);
   font-weight: 400;
+}
+/* Sin compra, el icono se apaga como el guion. */
+.pack-row.is-empty .pack-total .icon {
+  opacity: 0.4;
 }
 .event-row.is-ignored > :not(.event-status):not(.btn) {
   opacity: 0.5;
