@@ -68,10 +68,16 @@ Everything is computed in Jades (1 single = 160 Jades, `JADES_PER_PULL`). Specia
 ### UI conventions
 
 - **Tabs:** chosen by URL hash. No hash is "Calculadora"; `#configuracion` is "Configuración", and the legacy `#fuentes` also maps to it.
-- **Themes ("skins"):** `kafka` and `aha`, set as `data-skin` on `<html>`. All colors are CSS custom properties in `src/styles.css`, with light and dark variants per skin. Use the tokens; never hard-code colors.
+- **Themes ("skins"):** `kafka`, `aha`, `grafito` and `sparxie`, set as `data-skin` on `<html>`. Only `aha` (the default) and `sparxie` appear in the selector. `kafka` and `grafito` keep their code but are listed in `HIDDEN_SKINS` (`store.ts`), and `normalizeState` moves them to the default. To bring one back, remove it from that list. All colors are CSS custom properties in `src/styles.css`, with light and dark variants per skin. Use the tokens; never hard-code colors.
+  - `grafito` comes from `designs/resent.DESIGN.md` (flavors.design "Soupabase"), and `sparxie` (called `retro` before; `normalizeState` migrates it) from `designs/droolsuite.DESING.md` (flavors.design "Droolsuite"). Both designs are dark-only or light-only; the missing variant was made up following the same rules.
+  - Their fonts load from Google Fonts (linked in `index.html`). Their component rules sit under `:where(:root[data-skin='…'])` so they keep base specificity.
+  - The hero decoration per skin is the `DECORATION` map in `ResultSummary.tsx` (`sparxie` has none).
+  - In `aha`, card titles use Card Characters, a playing-card index font that only has capitals. It ships with the project in `src/assets/fonts/` and loads through `@font-face`, so it does not depend on the system.
+- **Light/dark mode:** `settings.theme` is `system | light | dark` and is independent of the skin. `App.tsx` sets it as `data-theme` on `<html>`, or removes the attribute for `system` so the CSS follows `prefers-color-scheme`. The selector has only sun and moon buttons. `system` is the starting value with no button; while it is active, the button for the current OS mode is shown pressed. Every skin needs its dark tokens in both the media query and `[data-theme='dark']`.
+  - In `sparxie`, Pixelify Sans is only for short labels without digits: its 5 looks like an S. Numbers stay in Courier Prime.
 - **Layout stability is a recurring user concern.** Numbers in headers and rows must not shift the layout as their digit count changes:
   - Use fixed `rem` column widths.
   - Reserve space with `visibility: hidden` instead of unmounting.
-- **Input padding:** inputs have 1px less top padding than bottom, to vertically center Segoe UI text. Keep it when adding inputs.
+- **Input padding:** inputs have 1px less top padding than bottom, to vertically center Segoe UI text. It is the `--input-nudge` variable (`calc(8px - var(--input-nudge))` on top, `+` at the bottom); `grafito` sets it to 0 because Inter is already centered, and `sparxie` to -1px because Courier Prime sits 1px high. Use it when adding inputs.
 - **Shared controls:** `NumberField` keeps an empty input while the user types, and has `info` tooltips and an `icon`. `Toggle` renders switch-style checkboxes; use it instead of a plain checkbox.
 - **Icons:** game item icons are PNGs in `src/assets/icons/`, used through `Icon.tsx`.

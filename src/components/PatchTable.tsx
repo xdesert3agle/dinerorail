@@ -47,12 +47,11 @@ export function PatchTable({ state, today, onChange }: Props) {
       <header className="card-header">
         <h2>Actualizaciones y eventos</h2>
         <button type="button" className="btn" onClick={addPatch}>
-          + Parche
+          + Actualización
         </button>
       </header>
       <p className="muted small">
-        Cada evento se cuenta el día de su fecha. Apunta solo lo que te queda por cobrar: los eventos con fecha de hoy o
-        anterior no se suman.
+        Cada evento se cuenta el día de su fecha. Los eventos con fecha de hoy o anterior no se suman.
       </p>
 
       {patches.map((p) => (

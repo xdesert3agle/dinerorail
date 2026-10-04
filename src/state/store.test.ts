@@ -62,6 +62,35 @@ describe('normalizeState', () => {
     expect(p48.events).toEqual([]);
   });
 
+  it('el modo claro/oscuro sigue al sistema en datos antiguos o inválidos y conserva uno válido', () => {
+    const old = JSON.parse(JSON.stringify(defaultState())) as Record<string, any>;
+    delete old.settings.theme;
+    expect(normalizeState(old).settings.theme).toBe('system');
+
+    old.settings.theme = 'sepia';
+    expect(normalizeState(old).settings.theme).toBe('system');
+
+    old.settings.theme = 'dark';
+    expect(normalizeState(old).settings.theme).toBe('dark');
+  });
+
+  it('migra el tema "retro" a su nombre actual, "sparxie"', () => {
+    const old = JSON.parse(JSON.stringify(defaultState())) as Record<string, any>;
+    old.settings.skin = 'retro';
+    expect(normalizeState(old).settings.skin).toBe('sparxie');
+
+    old.settings.skin = 'desconocido';
+    expect(normalizeState(old).settings.skin).toBe('aha');
+  });
+
+  it('pasa al tema por defecto a quien tenga guardado un tema oculto', () => {
+    const old = JSON.parse(JSON.stringify(defaultState())) as Record<string, any>;
+    for (const hidden of ['kafka', 'grafito']) {
+      old.settings.skin = hidden;
+      expect(normalizeState(old).settings.skin).toBe('aha');
+    }
+  });
+
   it('rechaza archivos que no son copias de seguridad', () => {
     expect(() => normalizeState({ foo: 1 })).toThrow();
   });

@@ -151,6 +151,8 @@ export function FuturePulls({ state, result, onChange }: Props) {
               checked={countStarlight}
               onChange={(countStarlight) => onChange((s) => ({ ...s, settings: { ...s.settings, countStarlight } }))}
               title={[
+                'Cosmiluz que devuelven las tiradas del plan (la de Recursos actuales ya está sumada)',
+                '',
                 `4★ = ${STARLIGHT_PER_4_STAR.character} Cosmiluz`,
                 `5★ = ${STARLIGHT_PER_5_STAR} Cosmiluz`,
                 `5★ E6 = ${STARLIGHT_PER_5_STAR_E6} Cosmiluz`,
@@ -164,7 +166,7 @@ export function FuturePulls({ state, result, onChange }: Props) {
               ].join('\n')}
             >
               <Icon kind="starlight" size={20} decorative />
-              Contar Cosmiluz Inextinguible
+              Contar Cosmiluz de las tiradas
             </Toggle>
             <div
               className={`pull-cost ${left >= 0 ? 'status-ok' : 'status-short'}`}

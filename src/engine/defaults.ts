@@ -43,7 +43,7 @@ export function defaultSources(today = todayISO()): Source[] {
     },
     {
       id: 'weekly',
-      name: 'Recompensa semanal (Universo Simulado)',
+      name: 'Recompensa semanal',
       description: 'Se puede hacer cualquier día; se considera cobrada el lunes.',
       category: 'semanal',
       enabled: true,
@@ -53,7 +53,7 @@ export function defaultSources(today = todayISO()): Source[] {
     },
     {
       id: 'memory-of-chaos',
-      name: 'Salón Olvidado (Memoria del Caos)',
+      name: 'Salón Olvidado',
       description: '800 + 100 del modo Starward. Ciclos de 6 semanas.',
       category: 'endgame',
       enabled: true,
@@ -83,7 +83,7 @@ export function defaultSources(today = todayISO()): Source[] {
     },
     {
       id: 'maintenance',
-      name: 'Compensación por mantenimiento',
+      name: 'Compensación mantenimiento',
       category: 'parche',
       enabled: true,
       schedule: { type: 'perPatch', offsetDays: 0 },
@@ -122,7 +122,7 @@ export function defaultSources(today = todayISO()): Source[] {
     },
     {
       id: 'nameless-glory',
-      name: 'Honor Anónimo (Gloria Anónima)',
+      name: 'Honor Anónimo',
       description: 'Pase de batalla de pago: 680 Jades + 4 Pases Especiales por parche.',
       category: 'parche',
       enabled: false,
@@ -205,7 +205,8 @@ export function defaultState(today = todayISO()): AppState {
       },
     ],
     settings: {
-      skin: 'kafka',
+      skin: 'aha',
+      theme: 'system',
       includeShards: true,
       countStarlight: true,
       packsInYen: false,

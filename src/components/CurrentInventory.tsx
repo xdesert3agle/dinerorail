@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { addDays, isValidISO } from '../engine/dates';
 import { JADES_PER_PULL } from '../engine/defaults';
 import { clampPity, STARLIGHT_PER_PASS } from '../engine/pulls';
@@ -14,8 +15,8 @@ interface Props {
 }
 
 const PITY_FIELDS: { kind: PullKind; label: string; guaranteedLabel: string }[] = [
-  { kind: 'character', label: 'Pity de personaje', guaranteedLabel: 'Personaje garantizado' },
-  { kind: 'lightCone', label: 'Pity de cono de luz', guaranteedLabel: 'Cono de Luz garantizado' },
+  { kind: 'character', label: 'Pity de personaje', guaranteedLabel: 'Siguiente personaje garantizado' },
+  { kind: 'lightCone', label: 'Pity de cono de luz', guaranteedLabel: 'Siguiente cono de luz garantizado' },
 ];
 
 const QUICK_TARGETS = [
@@ -26,6 +27,7 @@ const QUICK_TARGETS = [
 ];
 
 export function CurrentInventory({ state, today, onChange }: Props) {
+  const targetDateId = useId();
   const inv = state.inventory;
   const { hardPity } = state.settings;
   const setInv = (patch: Partial<Inventory>) => onChange((s) => ({ ...s, inventory: { ...s.inventory, ...patch } }));
@@ -83,7 +85,6 @@ export function CurrentInventory({ state, today, onChange }: Props) {
           <div key={kind} className="pity-field">
             <NumberField
               label={label}
-              hint={`Tiradas desde el último 5★ (máx. ${hardPity[kind] - 1})`}
               value={state.pity[kind]}
               min={0}
               max={hardPity[kind] - 1}
@@ -102,10 +103,14 @@ export function CurrentInventory({ state, today, onChange }: Props) {
         ))}
       </div>
 
-      <div className="target-row group-gap">
-        <label className="field">
-          <span className="field-label">Fecha objetivo</span>
+      {/* La fecha y los atajos van en la misma fila flexible para que los atajos queden centrados con la casilla. */}
+      <div className="field group-gap">
+        <label className="field-label" htmlFor={targetDateId}>
+          Fecha objetivo
+        </label>
+        <div className="target-row">
           <input
+            id={targetDateId}
             type="date"
             value={state.targetDate}
             min={today}
@@ -114,18 +119,18 @@ export function CurrentInventory({ state, today, onChange }: Props) {
               if (isValidISO(v)) onChange((s) => ({ ...s, targetDate: v }));
             }}
           />
-        </label>
-        <div className="chips">
-          {QUICK_TARGETS.map((q) => (
-            <button
-              key={q.days}
-              type="button"
-              className="chip"
-              onClick={() => onChange((s) => ({ ...s, targetDate: addDays(today, q.days) }))}
-            >
-              {q.label}
-            </button>
-          ))}
+          <div className="chips">
+            {QUICK_TARGETS.map((q) => (
+              <button
+                key={q.days}
+                type="button"
+                className="chip"
+                onClick={() => onChange((s) => ({ ...s, targetDate: addDays(today, q.days) }))}
+              >
+                {q.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </section>

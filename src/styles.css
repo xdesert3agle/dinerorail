@@ -28,6 +28,7 @@
   --warning-bg: #fff4dc;
   --warning-text: #7a5200;
   --radius: 12px;
+  --input-nudge: 1px;
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
   line-height: 1.45;
 }
@@ -89,8 +90,8 @@
  * Mismo reparto que Kafka: el rojo solo en lo interactivo, los datos y la decoración.
  */
 :root[data-skin='aha'] {
-  --page: #faf4f3;
-  --surface: #fffbfa;
+  --page: #f0eae9;
+  --surface: #ffffff;
   --surface-2: #f6e8e5;
   --text: #1e0c0d;
   --text-secondary: #5f4442;
@@ -106,21 +107,20 @@
   --deco-opacity: 0.3;
   --deco-ink: #7a1418;
   --deco-ink-opacity: 0.6;
-  --aha-gold: #b07a72;
-  --bevel-border: rgba(176, 122, 114, 0.55);
-  --bevel-hi: rgba(255, 255, 255, 0.9);
   --bevel-lo: rgba(120, 40, 40, 0.12);
   --glow: rgba(208, 51, 58, 0.1);
+  --page-pattern-opacity: 0.17;
+  --card-title: #c8102e;
 }
 
 @media (prefers-color-scheme: dark) {
   :root[data-skin='aha']:not([data-theme='light']) {
     --page: #0f0708;
-    --surface: #1a0c0e;
-    --surface-2: #261316;
-    --text: #fff5f3;
+    --surface: #29151a;
+    --surface-2: #311b1e;
+    --text: #ffffff;
     --text-secondary: #d2b9b6;
-    --text-muted: #8f7774;
+    --text-muted: #957d7a;
     --grid: #2f1a1c;
     --axis: #4a2a2d;
     --border: rgba(255, 200, 190, 0.09);
@@ -132,21 +132,20 @@
     --deco-opacity: 0.45;
     --deco-ink: #fbeee9;
     --deco-ink-opacity: 0.85;
-    --aha-gold: #d9aea6;
-    --bevel-border: rgba(217, 174, 166, 0.45);
-    --bevel-hi: rgba(255, 255, 255, 0.07);
     --bevel-lo: rgba(0, 0, 0, 0.45);
     --glow: rgba(226, 59, 63, 0.15);
+    --page-pattern-opacity: 0.21;
+    --card-title: var(--text);
   }
 }
 
 :root[data-skin='aha'][data-theme='dark'] {
   --page: #0f0708;
-  --surface: #1a0c0e;
-  --surface-2: #261316;
-  --text: #fff5f3;
+  --surface: #29151a;
+  --surface-2: #311b1e;
+  --text: #ffffff;
   --text-secondary: #d2b9b6;
-  --text-muted: #8f7774;
+  --text-muted: #957d7a;
   --grid: #2f1a1c;
   --axis: #4a2a2d;
   --border: rgba(255, 200, 190, 0.09);
@@ -158,11 +157,209 @@
   --deco-opacity: 0.45;
   --deco-ink: #fbeee9;
   --deco-ink-opacity: 0.85;
-  --aha-gold: #d9aea6;
-  --bevel-border: rgba(217, 174, 166, 0.45);
-  --bevel-hi: rgba(255, 255, 255, 0.07);
   --bevel-lo: rgba(0, 0, 0, 0.45);
   --glow: rgba(226, 59, 63, 0.15);
+  --page-pattern-opacity: 0.21;
+  --card-title: var(--text);
+}
+
+/*
+ * Tema Grafito (de flavors.design/f/soupabase): grafito con un punto verde, nunca negro puro, y un único
+ * verde esmeralda que se reserva para lo interactivo y los datos. Todo se separa con líneas finas de 1px.
+ * El diseño original solo es oscuro; la variante clara sigue las mismas reglas sobre blanco.
+ */
+:root[data-skin='grafito'] {
+  --page: #f6f7f6;
+  --surface: #ffffff;
+  --surface-2: #f0f2f1;
+  --text: #161817;
+  --text-secondary: #5c605e;
+  --text-muted: #767a78;
+  --grid: #e7eae8;
+  --axis: #c9cecb;
+  --border: color-mix(in srgb, var(--text) 9%, transparent);
+  --border-strong: color-mix(in srgb, var(--text) 16%, transparent);
+  --control: color-mix(in srgb, var(--text) 3%, transparent);
+  --series-1: #1a9a5f;
+  --accent: #1a9a5f;
+  --accent-text: #0d7346;
+  --accent-soft: #d3f3e3;
+  --deco: #b4bab7;
+  --deco-opacity: 1;
+  --glow: rgba(26, 154, 95, 0.06);
+  --danger: #d03b3b;
+  --success-text: #0d7346;
+  --warning-bg: #fbf0e2;
+  --warning-text: #8a4b0c;
+  --shadow-lg: 0 10px 15px -3px rgba(22, 24, 23, 0.08), 0 4px 6px -4px rgba(22, 24, 23, 0.08);
+  --radius: 16px;
+  --input-nudge: 0px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --font-display: 'Manrope', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'Source Code Pro', Menlo, Consolas, monospace;
+  font-family: var(--font-body);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-skin='grafito']:not([data-theme='light']) {
+    --page: #131413;
+    --surface: #181a19;
+    --surface-2: #1f2120;
+    --text: #edefee;
+    --text-secondary: #989a99;
+    --text-muted: #7c7f7d;
+    --grid: #262827;
+    --axis: #3a3c3b;
+    --border: color-mix(in srgb, var(--text) 7.5%, transparent);
+    --border-strong: color-mix(in srgb, var(--text) 13.5%, transparent);
+    --control: color-mix(in srgb, var(--text) 5%, transparent);
+    --series-1: #3ecf8e;
+    --accent: #3ecf8e;
+    --accent-text: #3ecf8e;
+    --accent-soft: #173a2a;
+    --deco: #5d5f5e;
+    --glow: rgba(62, 207, 142, 0.06);
+    --danger: #f0605a;
+    --success-text: #3ecf8e;
+    --warning-bg: #2e2416;
+    --warning-text: #f0a25e;
+    --shadow-lg: 0 10px 15px -3px rgba(11, 14, 13, 0.4), 0 4px 6px -4px rgba(11, 14, 13, 0.4);
+  }
+}
+
+:root[data-skin='grafito'][data-theme='dark'] {
+  --page: #131413;
+  --surface: #181a19;
+  --surface-2: #1f2120;
+  --text: #edefee;
+  --text-secondary: #989a99;
+  --text-muted: #7c7f7d;
+  --grid: #262827;
+  --axis: #3a3c3b;
+  --border: color-mix(in srgb, var(--text) 7.5%, transparent);
+  --border-strong: color-mix(in srgb, var(--text) 13.5%, transparent);
+  --control: color-mix(in srgb, var(--text) 5%, transparent);
+  --series-1: #3ecf8e;
+  --accent: #3ecf8e;
+  --accent-text: #3ecf8e;
+  --accent-soft: #173a2a;
+  --deco: #5d5f5e;
+  --glow: rgba(62, 207, 142, 0.06);
+  --danger: #f0605a;
+  --success-text: #3ecf8e;
+  --warning-bg: #2e2416;
+  --warning-text: #f0a25e;
+  --shadow-lg: 0 10px 15px -3px rgba(11, 14, 13, 0.4), 0 4px 6px -4px rgba(11, 14, 13, 0.4);
+}
+
+/*
+ * Tema Sparxie (de flavors.design/f/droolsuite): un escritorio de 1987. Ventanas con marco de tinta de 1px
+ * sobre un rosa tramado, botones biselados y tres voces: serif para títulos y cifras, máquina de escribir
+ * para campos y botones, y letra de píxeles para el resto. El turquesa es el único acento.
+ * El diseño solo trae el esquema claro; el oscuro ("Night Swim") es una piscina de noche con las mismas reglas.
+ */
+:root[data-skin='sparxie'] {
+  --page: #f6d5d5;
+  --surface: #ffffff;
+  --surface-2: #f9f0e9;
+  --text: #000000;
+  --text-secondary: #5f5550;
+  --text-muted: #766b66;
+  --grid: color-mix(in srgb, var(--text) 18%, transparent);
+  --axis: #9b9b9b;
+  --border: #000000;
+  --series-1: #afe5dd;
+  --accent: #afe5dd;
+  --accent-text: #24675f;
+  --accent-soft: #afe5dd;
+  --deco: #000000;
+  --deco-opacity: 0;
+  --glow: transparent;
+  --danger: #c42020;
+  --success-text: #3f7d4e;
+  --warning-bg: #faf5c6;
+  --warning-text: #6b4e00;
+  --tertiary: #faf5c6;
+  --button: #f6d6d5;
+  --button-shadow: #7b6b6b;
+  --bevel-hi: #ffffff;
+  --bevel-dark: #9b9b9b;
+  --chip: #e3dcd6;
+  --knob: #ffffff;
+  --ink: #000000;
+  --dither: 3%;
+  --shadow-win: 0 50px 80px -50px rgba(0, 0, 0, 0.34);
+  --radius: 6px;
+  --input-nudge: -1px;
+  --font-display: 'Instrument Serif', Georgia, serif;
+  --font-body: 'Pixelify Sans', system-ui, sans-serif;
+  --font-type: 'Courier Prime', 'Courier New', monospace;
+  --font-mono: 'VT323', ui-monospace, monospace;
+  font-family: var(--font-type);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-skin='sparxie']:not([data-theme='light']) {
+    --page: #1c2742;
+    --surface: #211d28;
+    --surface-2: #2e2a36;
+    --text: #f9f0e9;
+    --text-secondary: #cbbfb7;
+    --text-muted: #9e928c;
+    --grid: color-mix(in srgb, var(--text) 16%, transparent);
+    --axis: #6d6478;
+    --border: #5a5266;
+    --accent-text: #afe5dd;
+    --accent-soft: #2f4a47;
+    --danger: #ff7a72;
+    --success-text: #8fd6a2;
+    --warning-bg: #36321a;
+    --warning-text: #f3d77a;
+    --tertiary: #36321f;
+    --button: #4d3640;
+    --button-shadow: #24171c;
+    --bevel-hi: #4a4552;
+    --bevel-dark: #0d0b10;
+    --chip: #3a3540;
+    --knob: #f9f0e9;
+    --dither: 5%;
+    --shadow-win: 0 50px 80px -50px rgba(0, 0, 0, 0.6);
+  }
+}
+
+:root[data-skin='sparxie'][data-theme='dark'] {
+  --page: #1c2742;
+  --surface: #211d28;
+  --surface-2: #2e2a36;
+  --text: #f9f0e9;
+  --text-secondary: #cbbfb7;
+  --text-muted: #9e928c;
+  --grid: color-mix(in srgb, var(--text) 16%, transparent);
+  --axis: #6d6478;
+  --border: #5a5266;
+  --accent-text: #afe5dd;
+  --accent-soft: #2f4a47;
+  --danger: #ff7a72;
+  --success-text: #8fd6a2;
+  --warning-bg: #36321a;
+  --warning-text: #f3d77a;
+  --tertiary: #36321f;
+  --button: #4d3640;
+  --button-shadow: #24171c;
+  --bevel-hi: #4a4552;
+  --bevel-dark: #0d0b10;
+  --chip: #3a3540;
+  --knob: #f9f0e9;
+  --dither: 5%;
+  --shadow-win: 0 50px 80px -50px rgba(0, 0, 0, 0.6);
+}
+
+/* Fuente de índice de naipe para los títulos de tarjeta de Aha (va con el proyecto, no depende del sistema). */
+@font-face {
+  font-family: 'Card Characters';
+  src: url('./assets/fonts/card-characters.ttf') format('truetype');
+  font-display: swap;
 }
 
 *,
@@ -177,6 +374,24 @@ body {
   /* Un resplandor vino muy tenue arriba a la derecha, como luz de escenario. */
   background: radial-gradient(1200px 600px at 85% -10%, var(--glow), transparent 70%) no-repeat, var(--page);
   color: var(--text);
+}
+/*
+ * Aha: motivo de naipes detrás de toda la página. Reinas y ases de corazones inclinados, y entre ellos
+ * corazones coronados y de contorno, en diagonal. Mismo trazo pálido que tenía el enrejado de rombos: es una
+ * máscara (rellenos suaves y contorno de 1px) sobre el color de --deco, así sigue los tokens del tema.
+ */
+:root[data-skin='aha'] body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--deco);
+  opacity: var(--page-pattern-opacity);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='144' height='144' viewBox='0 0 144 144'%3E%3Cg stroke='%23000'%3E%3Cg transform='translate(36 38) rotate(-12)'%3E%3Cpath d='M-12-21H12A3 3 0 0 1 15-18V18A3 3 0 0 1 12 21H-12A3 3 0 0 1-15 18V-18A3 3 0 0 1-12-21Z' fill='%23000' fill-opacity='.18'/%3E%3Cpath d='M0 9C-4.5 6 -7 3.5 -7 1C-7 -1.5 -5 -3 -3.25 -3C-1.75 -3 -0.5 -2 0 -0.75C0.5 -2 1.75 -3 3.25 -3C5 -3 7 -1.5 7 1C7 3.5 4.5 6 0 9ZM-3.5 -4.5L-4 -8.5L-1.75 -6.5L0 -9.5L1.75 -6.5L4 -8.5L3.5 -4.5Z' fill='%23000' fill-opacity='.45'/%3E%3Cpath d='M-9 -17A2.3 3 0 1 0 -9 -11A2.3 3 0 1 0 -9 -17ZM-8.2 -12.4L-6.2 -10' fill='none' stroke-width='.9'/%3E%3C/g%3E%3Cpath d='M108 50C99 44 94 39 94 34C94 29 98 26 101.5 26C104.5 26 107 28 108 30.5C109 28 111.5 26 114.5 26C118 26 122 29 122 34C122 39 117 44 108 50Z' fill='none'/%3E%3Cpath d='M36 122C27 116 22 111 22 106C22 101 26 98 29.5 98C32.5 98 35 100 36 102.5C37 100 39.5 98 42.5 98C46 98 50 101 50 106C50 111 45 116 36 122ZM29 95L28 87L32.5 91L36 85L39.5 91L44 87L43 95Z' fill='%23000' fill-opacity='.3'/%3E%3Cg transform='translate(108 106) rotate(10)'%3E%3Cpath d='M-12-21H12A3 3 0 0 1 15-18V18A3 3 0 0 1 12 21H-12A3 3 0 0 1-15 18V-18A3 3 0 0 1-12-21Z' fill='%23000' fill-opacity='.18'/%3E%3Cpath d='M0 8.5C-5.85 4.6 -9.1 1.35 -9.1 -1.9C-9.1 -5.15 -6.5 -7.1 -4.23 -7.1C-2.27 -7.1 -0.65 -5.8 0 -4.17C0.65 -5.8 2.28 -7.1 4.23 -7.1C6.5 -7.1 9.1 -5.15 9.1 -1.9C9.1 1.35 5.85 4.6 0 8.5Z' fill='%23000' fill-opacity='.45'/%3E%3Cpath d='M-9.5 -11.8C-11.48 -13.12 -12.58 -14.22 -12.58 -15.32C-12.58 -16.42 -11.7 -17.08 -10.93 -17.08C-10.27 -17.08 -9.72 -16.64 -9.5 -16.09C-9.28 -16.64 -8.73 -17.08 -8.07 -17.08C-7.3 -17.08 -6.42 -16.42 -6.42 -15.32C-6.42 -14.22 -7.52 -13.12 -9.5 -11.8Z' fill='%23000'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")
+    0 0 / 144px 144px repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='144' height='144' viewBox='0 0 144 144'%3E%3Cg stroke='%23000'%3E%3Cg transform='translate(36 38) rotate(-12)'%3E%3Cpath d='M-12-21H12A3 3 0 0 1 15-18V18A3 3 0 0 1 12 21H-12A3 3 0 0 1-15 18V-18A3 3 0 0 1-12-21Z' fill='%23000' fill-opacity='.18'/%3E%3Cpath d='M0 9C-4.5 6 -7 3.5 -7 1C-7 -1.5 -5 -3 -3.25 -3C-1.75 -3 -0.5 -2 0 -0.75C0.5 -2 1.75 -3 3.25 -3C5 -3 7 -1.5 7 1C7 3.5 4.5 6 0 9ZM-3.5 -4.5L-4 -8.5L-1.75 -6.5L0 -9.5L1.75 -6.5L4 -8.5L3.5 -4.5Z' fill='%23000' fill-opacity='.45'/%3E%3Cpath d='M-9 -17A2.3 3 0 1 0 -9 -11A2.3 3 0 1 0 -9 -17ZM-8.2 -12.4L-6.2 -10' fill='none' stroke-width='.9'/%3E%3C/g%3E%3Cpath d='M108 50C99 44 94 39 94 34C94 29 98 26 101.5 26C104.5 26 107 28 108 30.5C109 28 111.5 26 114.5 26C118 26 122 29 122 34C122 39 117 44 108 50Z' fill='none'/%3E%3Cpath d='M36 122C27 116 22 111 22 106C22 101 26 98 29.5 98C32.5 98 35 100 36 102.5C37 100 39.5 98 42.5 98C46 98 50 101 50 106C50 111 45 116 36 122ZM29 95L28 87L32.5 91L36 85L39.5 91L44 87L43 95Z' fill='%23000' fill-opacity='.3'/%3E%3Cg transform='translate(108 106) rotate(10)'%3E%3Cpath d='M-12-21H12A3 3 0 0 1 15-18V18A3 3 0 0 1 12 21H-12A3 3 0 0 1-15 18V-18A3 3 0 0 1-12-21Z' fill='%23000' fill-opacity='.18'/%3E%3Cpath d='M0 8.5C-5.85 4.6 -9.1 1.35 -9.1 -1.9C-9.1 -5.15 -6.5 -7.1 -4.23 -7.1C-2.27 -7.1 -0.65 -5.8 0 -4.17C0.65 -5.8 2.28 -7.1 4.23 -7.1C6.5 -7.1 9.1 -5.15 9.1 -1.9C9.1 1.35 5.85 4.6 0 8.5Z' fill='%23000' fill-opacity='.45'/%3E%3Cpath d='M-9.5 -11.8C-11.48 -13.12 -12.58 -14.22 -12.58 -15.32C-12.58 -16.42 -11.7 -17.08 -10.93 -17.08C-10.27 -17.08 -9.72 -16.64 -9.5 -16.09C-9.28 -16.64 -8.73 -17.08 -8.07 -17.08C-7.3 -17.08 -6.42 -16.42 -6.42 -15.32C-6.42 -14.22 -7.52 -13.12 -9.5 -11.8Z' fill='%23000'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")
+    0 0 / 144px 144px repeat;
 }
 ::selection {
   background: var(--accent-soft);
@@ -333,12 +548,29 @@ p {
   height: 10px;
   border-radius: 50%;
 }
+/* Claro/oscuro: solo icono, pero con una línea de texto invisible para medir lo mismo que el selector de tema. */
+.theme-option {
+  gap: 0;
+}
+.theme-option::after {
+  content: '\200b';
+}
+.theme-option svg {
+  display: block;
+}
 /* Colores fijos: cada muestra enseña el tema al que lleva, no el actual. */
 .swatch-kafka {
   background: #e5539b;
 }
 .swatch-aha {
   background: #e23b3f;
+}
+.swatch-grafito {
+  background: #3ecf8e;
+}
+.swatch-sparxie {
+  background: #f6d5d5;
+  box-shadow: inset 0 0 0 1px #000;
 }
 /* Pestañas bajo la cabecera: la seleccionada se subraya con el acento del tema. */
 .tabs {
@@ -433,7 +665,11 @@ p {
   border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
   background: radial-gradient(420px 220px at 100% 0%, var(--glow), transparent 70%), var(--surface);
 }
-/* Decoración de fondo de la tarjeta principal (telaraña de Kafka, máscaras de Aha…). */
+/* La tarjeta va más apretada que las demás (gap de 4px): el título se separa un poco más de la cifra. */
+.hero .card-header {
+  margin-bottom: 6px;
+}
+/* Decoración de fondo de la tarjeta principal (telaraña de Kafka, foco de Aha…). */
 .hero-deco {
   position: absolute;
   top: 0;
@@ -463,9 +699,6 @@ p {
 }
 .spider-fill {
   fill: var(--deco);
-}
-.masks .lattice {
-  opacity: var(--deco-opacity);
 }
 /* Foco de teatro detrás del personaje. */
 .spotlight-core {
@@ -497,12 +730,6 @@ p {
   -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, 0.35), #000 45%);
   mask-image: linear-gradient(to right, rgba(0, 0, 0, 0.35), #000 45%);
 }
-.hero-sub strong {
-  color: var(--accent-text);
-}
-.hero-label {
-  color: var(--text-secondary);
-}
 .hero-value {
   display: flex;
   align-items: center;
@@ -511,18 +738,6 @@ p {
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.02em;
-}
-.hero-unit {
-  font-size: 1.25rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  margin-left: 2px;
-  align-self: flex-end;
-  padding-bottom: 0.5em;
-  letter-spacing: 0;
-}
-.hero-sub {
-  color: var(--text-secondary);
 }
 .hero-stats {
   display: grid;
@@ -548,42 +763,36 @@ p {
   gap: 6px;
 }
 
-/* Aha: recuadros biselados con filigrana dorada en la esquina, y cifra con un leve resplandor. */
+/* Aha: títulos de tarjeta con letra de naipe. Sin negrita: la fuente solo tiene un peso y se vería falseada. */
+:root[data-skin='aha'] .card-header h2 {
+  /* En claro, rojo de naipe; en oscuro, el color del texto. */
+  color: var(--card-title);
+  font-family: 'Card Characters', system-ui, sans-serif;
+  font-weight: 400;
+  font-size: 1.125rem;
+  letter-spacing: 0.02em;
+}
+/* Aha: recuadros de color plano con el mismo borde que la tarjeta, y cifra con un leve resplandor. */
 :root[data-skin='aha'] .hero-stats div {
-  position: relative;
-  overflow: hidden;
   border-radius: 10px;
   padding: 10px 12px;
-  background: linear-gradient(180deg, var(--bevel-hi), transparent 45%),
-    color-mix(in srgb, var(--surface-2) 88%, transparent);
-  border: 1px solid var(--bevel-border);
-  box-shadow:
-    inset 0 1px 0 var(--bevel-hi),
-    inset 0 -3px 6px var(--bevel-lo),
-    inset 0 0 0 3px color-mix(in srgb, var(--surface) 55%, transparent),
-    inset 0 0 0 4px color-mix(in srgb, var(--bevel-border) 45%, transparent),
-    0 3px 10px var(--bevel-lo);
+  /* Transparencia muy ligera: se intuye lo de detrás sin restar legibilidad. */
+  background: color-mix(in srgb, var(--surface-2) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
+  box-shadow: 0 3px 10px var(--bevel-lo);
 }
-:root[data-skin='aha'] .hero-stats div::after {
-  content: '';
-  position: absolute;
-  right: 5px;
-  bottom: 4px;
-  width: 58px;
-  height: 36px;
-  pointer-events: none;
-  background: var(--aha-gold);
-  opacity: 0.75;
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 40' fill='none' stroke='black' stroke-width='1.1' stroke-linecap='round'%3E%3Cpath d='M62 38C48 38 40 33 37 26C35 20 39 16 43 18C46 20 45 24 42 24'/%3E%3Cpath d='M62 30C56 30 52 27 53 23C54 21 57 21 57 24'/%3E%3Cpath d='M37 26C30 29 23 26 18 30C23 33 30 33 37 26'/%3E%3Cpath d='M62 38L62 20'/%3E%3Cpath d='M26 38L50 38'/%3E%3Ccircle cx='12' cy='34' r='1.3'/%3E%3Ccircle cx='59' cy='15' r='1.1'/%3E%3C/svg%3E")
-    no-repeat right bottom / contain;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 40' fill='none' stroke='black' stroke-width='1.1' stroke-linecap='round'%3E%3Cpath d='M62 38C48 38 40 33 37 26C35 20 39 16 43 18C46 20 45 24 42 24'/%3E%3Cpath d='M62 30C56 30 52 27 53 23C54 21 57 21 57 24'/%3E%3Cpath d='M37 26C30 29 23 26 18 30C23 33 30 33 37 26'/%3E%3Cpath d='M62 38L62 20'/%3E%3Cpath d='M26 38L50 38'/%3E%3Ccircle cx='12' cy='34' r='1.3'/%3E%3Ccircle cx='59' cy='15' r='1.1'/%3E%3C/svg%3E")
-    no-repeat right bottom / contain;
+/* Cifras de Jades, Pases y Esquirlas del resumen, también con letra de naipe. */
+:root[data-skin='aha'] .hero-stats dd {
+  font-family: 'Card Characters', system-ui, sans-serif;
+  font-weight: 400;
 }
 :root[data-skin='aha'] .hero-value {
-  text-shadow: 0 0 24px color-mix(in srgb, var(--deco) 25%, transparent);
-}
-:root[data-skin='aha'] .hero-unit {
+  font-family: 'Card Characters', system-ui, sans-serif;
+  /* 56px fijos (no crece ni encoge con la ventana como en los otros temas). */
+  font-size: 3.5rem;
   font-weight: 400;
+  letter-spacing: 0;
+  text-shadow: 0 0 24px color-mix(in srgb, var(--deco) 25%, transparent);
 }
 
 /* Forms */
@@ -657,10 +866,11 @@ select {
   border: 1px solid var(--border);
   border-radius: 8px;
   /*
-   * 1px menos arriba que abajo en todos los campos: Segoe UI reserva más espacio sobre las letras
-   * que bajo ellas y, con el mismo padding, el texto se ve 1px más bajo de lo que toca.
+   * --input-nudge: 1px menos arriba que abajo en todos los campos. Segoe UI reserva más espacio sobre
+   * las letras que bajo ellas y, con el mismo padding, el texto se ve 1px más bajo de lo que toca.
+   * Inter (tema Grafito) ya queda centrada, así que ese tema lo pone a 0.
    */
-  padding: 7px 10px 9px;
+  padding: calc(8px - var(--input-nudge)) 10px calc(8px + var(--input-nudge));
   width: 100%;
   min-width: 0;
 }
@@ -681,10 +891,10 @@ select {
   background-repeat: no-repeat;
 }
 .field-compact input {
-  padding: 5px 8px 7px;
+  padding: calc(6px - var(--input-nudge)) 8px calc(6px + var(--input-nudge));
 }
 .field-compact select {
-  padding: 5px 28px 7px 8px;
+  padding: calc(6px - var(--input-nudge)) 28px calc(6px + var(--input-nudge)) 8px;
 }
 input:focus-visible,
 select:focus-visible,
@@ -709,13 +919,14 @@ button:focus-visible {
 .group-gap {
   margin-top: 8px;
 }
+/* Casilla de fecha y atajos: centrados entre sí; si no caben, los atajos bajan a otra línea. */
 .target-row {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  align-items: flex-end;
+  align-items: center;
 }
-.target-row .field {
+.target-row input {
   flex: 0 1 200px;
 }
 .chips {
@@ -896,6 +1107,10 @@ td {
   border-bottom: 1px solid var(--grid);
   vertical-align: middle;
 }
+/* Desglose por fuente: filas a 16px (las cabeceras de columna mantienen su tamaño). */
+.breakdown {
+  font-size: 1rem;
+}
 .num {
   text-align: right;
   font-variant-numeric: tabular-nums;
@@ -927,7 +1142,7 @@ tfoot td {
 }
 .pull-row input[type='text'],
 .pull-row select {
-  padding: 5px 8px 7px;
+  padding: calc(6px - var(--input-nudge)) 8px calc(6px + var(--input-nudge));
 }
 .pull-row select {
   width: auto;
@@ -1025,10 +1240,10 @@ tfoot td {
     --pull-gap: 5px;
   }
   .pull-row input[type='text'] {
-    padding: 5px 5px 7px;
+    padding: calc(6px - var(--input-nudge)) 5px calc(6px + var(--input-nudge));
   }
   .pull-row select {
-    padding: 5px 26px 7px 5px;
+    padding: calc(6px - var(--input-nudge)) 26px calc(6px + var(--input-nudge)) 5px;
     background-position:
       right 13px center,
       right 8px center;
@@ -1083,7 +1298,7 @@ tfoot td {
 .event-row input[type='text'],
 .event-row input[type='date'],
 .event-row input[type='number'] {
-  padding: 5px 8px 7px;
+  padding: calc(6px - var(--input-nudge)) 8px calc(6px + var(--input-nudge));
 }
 .event-row input[type='number'] {
   text-align: right;
@@ -1216,7 +1431,7 @@ tfoot td {
 }
 /* Flechas separadas de la cifra. */
 .pack-row input[type='number'] {
-  padding: 5px 8px 7px;
+  padding: calc(6px - var(--input-nudge)) 8px calc(6px + var(--input-nudge));
   text-align: right;
 }
 .pack-row input[type='number']::-webkit-inner-spin-button {
@@ -1245,7 +1460,7 @@ tfoot td {
     font-size: 0.875rem;
   }
   .pack-row input[type='number'] {
-    padding: 5px 6px 7px;
+    padding: calc(6px - var(--input-nudge)) 6px calc(6px + var(--input-nudge));
   }
   .pack-qty-header {
     padding-right: 7px;
@@ -1334,4 +1549,469 @@ tfoot td {
   border-radius: 8px;
   padding: 8px 12px;
   font-size: 0.875rem;
+}
+
+/*
+ * Tema Grafito: componentes. Todo va bajo :where() para que estas reglas pesen lo mismo que las de base
+ * y ganen solo por ir después; así las reglas más concretas (fila sin presupuesto, botones de las filas…)
+ * siguen mandando igual que en los otros temas.
+ * Reglas del diseño: tarjetas planas con borde fino y sin sombra, verde solo en dosis pequeñas, títulos
+ * a peso 500 como máximo, monoespaciada para los títulos de tarjeta y las cifras grandes.
+ */
+:where(:root[data-skin='grafito']) h1 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+:where(:root[data-skin='grafito']) .card-header h2 {
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+:where(:root[data-skin='grafito']) h3 {
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
+/* La línea bajo la cabecera es una línea fina más, de lado a lado. */
+:where(:root[data-skin='grafito']) .app-header::after {
+  background: var(--border-strong);
+}
+
+/* Selector de tema y pestañas: píldoras con borde fino; la activa, con el borde del color del texto. */
+:where(:root[data-skin='grafito']) .skin-option[aria-pressed='true'] {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 55%, transparent);
+}
+:where(:root[data-skin='grafito']) .tabs {
+  gap: 8px;
+}
+:where(:root[data-skin='grafito']) .tab {
+  font-size: 0.875rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 6px 18px;
+}
+:where(:root[data-skin='grafito']) .tab[aria-selected='true'] {
+  border-color: var(--text);
+}
+
+/* Tarjetas: sin sombra; al pasar el ratón solo se aviva el borde. */
+:where(:root[data-skin='grafito']) .card:not(.hero):hover {
+  border-color: var(--border-strong);
+}
+/* La principal es la destacada: borde más claro y la única con sombra. */
+:where(:root[data-skin='grafito']) .hero {
+  border-color: color-mix(in srgb, var(--text) 22%, transparent);
+  box-shadow: var(--shadow-lg);
+}
+:where(:root[data-skin='grafito']) .hero-deco {
+  filter: none;
+}
+.wireframe .grid {
+  opacity: 0.5;
+}
+.wireframe .globe {
+  opacity: 0.6;
+}
+.wireframe .route {
+  color: var(--accent);
+}
+.wireframe .route-halo {
+  opacity: 0.22;
+}
+:where(:root[data-skin='grafito']) .hero-value {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+/* Recuadros opacos: el globo del fondo no se ve a través de las cifras. */
+:where(:root[data-skin='grafito']) :is(.hero-stats, .odds-stats) div {
+  background: color-mix(in srgb, var(--text) 3%, var(--surface));
+  border: 1px solid var(--border);
+}
+:where(:root[data-skin='grafito']) :is(.hero-stats, .odds-stats) dd {
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
+:where(:root[data-skin='grafito']) .odds-stats dd .muted {
+  font-family: var(--font-mono);
+}
+
+/* Campos: relleno translúcido y borde fino, esquinas de 6px. */
+:where(:root[data-skin='grafito']) :is(input[type='number'], input[type='text'], input[type='date'], select) {
+  background-color: var(--control);
+  border-color: var(--border-strong);
+  border-radius: 6px;
+}
+:where(:root[data-skin='grafito']) :is(input, select):focus {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+/* Botones: rectángulos de 6px (las píldoras se quedan para los atajos y las pestañas). */
+:where(:root[data-skin='grafito']) :is(.btn, .chip) {
+  font-weight: 500;
+  background: var(--control);
+  border-color: var(--border-strong);
+}
+:where(:root[data-skin='grafito']) .btn {
+  border-radius: 6px;
+}
+:where(:root[data-skin='grafito']) .btn:hover {
+  background: color-mix(in srgb, var(--text) 9%, transparent);
+  border-color: var(--border-strong);
+}
+:where(:root[data-skin='grafito']) .chip:hover {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+:where(:root[data-skin='grafito']) .btn-ghost {
+  background: transparent;
+  border-color: transparent;
+}
+:where(:root[data-skin='grafito']) .btn-ghost:hover {
+  background: var(--control);
+  border-color: transparent;
+}
+
+/* Movimiento: 200ms con frenada suave; los botones se hunden un poco al pulsarlos. */
+:where(:root[data-skin='grafito']) :is(.btn, .chip, .tab, .skin-option, .card) {
+  transition:
+    background-color 200ms var(--ease),
+    border-color 200ms var(--ease),
+    color 200ms var(--ease),
+    scale 200ms var(--ease);
+}
+@media (prefers-reduced-motion: no-preference) {
+  :where(:root[data-skin='grafito']) :is(.btn, .chip):active:not(:disabled) {
+    scale: 0.97;
+  }
+}
+
+/*
+ * Tema Sparxie: componentes. Igual que en Grafito, todo va bajo :where() para pesar lo mismo que la base.
+ * Cada tarjeta es una ventana: barra de título crema con la caja de cierre a la izquierda y el título a la
+ * derecha, y el contenido en blanco. Marcos de 1px, sin pastillas redondeadas y sin brillos de color.
+ */
+:where(:root[data-skin='sparxie']) body {
+  /* Trama de 2px sobre el rosa del escritorio. */
+  background:
+    repeating-conic-gradient(color-mix(in srgb, var(--text) var(--dither), transparent) 0 25%, transparent 0 50%) 0 0 / 2px 2px,
+    var(--page);
+  -webkit-font-smoothing: none;
+}
+@media (max-width: 560px) {
+  /* En móvil la columna del nombre es estrecha: así no pasa de dos líneas, como en el resto de temas. */
+  :where(:root[data-skin='sparxie']) .pack-name {
+    font-size: 0.8125rem;
+  }
+  /* Las cifras en Courier son anchas: se aprietan un poco para dejarle sitio al nombre. */
+  :where(:root[data-skin='sparxie']) :is(.pack-price, .pack-shards, .pack-total) {
+    letter-spacing: -0.06em;
+  }
+}
+:where(:root[data-skin='sparxie']) h1 {
+  font-family: var(--font-display);
+  font-size: 2.25rem;
+  font-weight: 400;
+  line-height: 0.9;
+  letter-spacing: -1px;
+}
+:where(:root[data-skin='sparxie']) h3 {
+  font-family: var(--font-mono);
+  font-size: 1.0625rem;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+}
+:where(:root[data-skin='sparxie']) .app-header::after {
+  display: none;
+}
+/*
+ * La letra de píxeles solo en etiquetas cortas (su papel en el diseño: texto de interfaz). En cifras no:
+ * su 5 se confunde con una S. Todo lo demás va en máquina de escribir. Los nombres de paquete también van en
+ * píxeles: en Courier, que es más ancha, ocupaban dos líneas.
+ */
+:where(:root[data-skin='sparxie']) :is(.field-label, .check, dt, .event-header, .pack-header, .pack-name) {
+  font-family: var(--font-body);
+}
+/* "50/50" es una cifra aunque vaya en una casilla. */
+:where(:root[data-skin='sparxie']) .pull-win {
+  font-family: var(--font-type);
+}
+
+/* Selector de tema: una tira de celdas como la barra superior del escritorio; la activa, en negativo. */
+:where(:root[data-skin='sparxie']) .skin-switch {
+  padding: 0;
+  gap: 0;
+  background: var(--surface-2);
+  border-color: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+:where(:root[data-skin='sparxie']) .skin-option {
+  padding: 5px 8px 3px;
+  border-radius: 0;
+  border-left: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 1.0625rem;
+  line-height: 1;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text);
+  text-shadow: 0 1px 0 var(--bevel-hi);
+}
+:where(:root[data-skin='sparxie']) .skin-option:first-child {
+  border-left: 0;
+}
+:where(:root[data-skin='sparxie']) .skin-option:hover {
+  background: color-mix(in srgb, var(--surface-2) 88%, var(--text));
+}
+:where(:root[data-skin='sparxie']) .skin-option[aria-pressed='true'] {
+  color: var(--surface-2);
+  background: var(--text);
+  box-shadow: none;
+  text-shadow: none;
+}
+
+/* Pestañas: fichas grises; la seleccionada, negra. Todas en negrita para que no cambie el ancho. */
+:where(:root[data-skin='sparxie']) .tabs {
+  gap: 8px;
+  margin-top: -4px;
+}
+:where(:root[data-skin='sparxie']) .tab {
+  font-family: var(--font-type);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text);
+  background: var(--chip);
+  border: 0;
+  border-radius: 2px;
+  padding: 4px 10px;
+}
+:where(:root[data-skin='sparxie']) .tab[aria-selected='true'] {
+  color: var(--surface-2);
+  background: var(--text);
+}
+
+/* Ventanas */
+:where(:root[data-skin='sparxie']) .card {
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: var(--shadow-win);
+  padding: 0 14px 14px;
+}
+:where(:root[data-skin='sparxie']) .card-header {
+  margin: 0 -14px;
+  min-height: 30px;
+  padding: 3px 8px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  border-radius: calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0 0;
+}
+/* Caja de cierre de píxeles: decorativa, siempre la primera de la barra. */
+:where(:root[data-skin='sparxie']) .card-header::before {
+  content: '';
+  order: -1;
+  flex: none;
+  width: 9px;
+  height: 9px;
+  background: var(--text);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 9'%3E%3Cpath d='M0 0h1v1h1v1h1v1h1v1h1V3h1V2h1V1h1V0h1v1H8v1H7v1H6v1H5v1h1v1h1v1h1v1h1v1H8V8H7V7H6V6H5V5H4v1H3v1H2v1H1v1H0V8h1V7h1V6h1V5h1V4H3V3H2V2H1V1H0z'/%3E%3C/svg%3E")
+    0 0 / 100% 100%;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 9'%3E%3Cpath d='M0 0h1v1h1v1h1v1h1v1h1V3h1V2h1V1h1V0h1v1H8v1H7v1H6v1H5v1h1v1h1v1h1v1h1v1H8V8H7V7H6V6H5V5H4v1H3v1H2v1H1v1H0V8h1V7h1V6h1V5h1V4H3V3H2V2H1V1H0z'/%3E%3C/svg%3E")
+    0 0 / 100% 100%;
+}
+/* Título a la derecha, en serif estrechada (así imita la Garamond condensada del original). */
+:where(:root[data-skin='sparxie']) .card-header h2 {
+  order: 2;
+  margin-left: auto;
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.6px;
+  transform: scaleX(0.86);
+  transform-origin: right center;
+  -webkit-text-stroke: 0.5px var(--text);
+}
+:where(:root[data-skin='sparxie']) .card-header .btn {
+  padding: 3px 10px 2px;
+  font-size: 0.8125rem;
+}
+
+/* La principal es la ventana amarilla de bienvenida, con la cifra en serif grande. */
+:where(:root[data-skin='sparxie']) .hero {
+  background: var(--tertiary);
+}
+:where(:root[data-skin='sparxie']) .hero-value {
+  font-family: var(--font-display);
+  font-size: clamp(3.5rem, 9vw, 5rem);
+  font-weight: 400;
+  line-height: 0.9;
+  letter-spacing: -2px;
+}
+/* Recuadros de cifras: paneles con marco y un labio de 1px debajo. */
+:where(:root[data-skin='sparxie']) :is(.hero-stats, .odds-stats) div {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  box-shadow:
+    0 1px 0 var(--border),
+    inset 0 1px 0 var(--bevel-hi);
+}
+:where(:root[data-skin='sparxie']) .hero-stats div {
+  background: var(--surface);
+}
+:where(:root[data-skin='sparxie']) .odds-stats div {
+  background: var(--surface-2);
+}
+:where(:root[data-skin='sparxie']) :is(.hero-stats, .odds-stats) dd {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.5px;
+}
+:where(:root[data-skin='sparxie']) .odds-stats dd .muted {
+  font-family: var(--font-type);
+  letter-spacing: 0;
+}
+
+/* Campos: barras blancas con marco de tinta y letra de máquina de escribir. */
+:where(:root[data-skin='sparxie']) :is(input[type='number'], input[type='text'], input[type='date'], select) {
+  font-family: var(--font-type);
+  background-color: var(--surface);
+  border-color: var(--border);
+  border-radius: 3px;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text) 10%, transparent);
+}
+:where(:root[data-skin='sparxie']) :is(input, select):focus {
+  border-color: var(--border);
+}
+/* Foco punteado, como en los sistemas de la época: el turquesa apenas se ve sobre blanco. */
+:where(:root[data-skin='sparxie']) :is(input, select, button):focus-visible {
+  outline: 2px dotted var(--text);
+  outline-offset: 2px;
+}
+:where(:root[data-skin='sparxie']) input[type='checkbox'] {
+  accent-color: var(--text);
+}
+
+/* Botones biselados: luz arriba a la izquierda y sombra abajo a la derecha; al pulsar se invierten. */
+:where(:root[data-skin='sparxie']) :is(.btn, .chip) {
+  font-family: var(--font-type);
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  color: var(--text);
+  border-color: var(--border);
+  border-radius: 3px;
+}
+:where(:root[data-skin='sparxie']) .btn {
+  background: var(--surface-2);
+  box-shadow:
+    inset -1px -1px 0 var(--bevel-dark),
+    inset 1px 1px 0 var(--bevel-hi);
+}
+:where(:root[data-skin='sparxie']) .btn:hover {
+  background: color-mix(in srgb, var(--surface-2) 88%, var(--text));
+  border-color: var(--border);
+}
+:where(:root[data-skin='sparxie']) .btn:active:not(:disabled) {
+  box-shadow:
+    inset 1px 1px 0 var(--bevel-dark),
+    inset -1px -1px 0 var(--bevel-hi);
+}
+/* Los atajos de fecha son los botones rosas del diseño. */
+:where(:root[data-skin='sparxie']) .chip {
+  background: var(--button);
+  box-shadow:
+    inset -1px -1px 0 var(--button-shadow),
+    inset 1px 1px 0 var(--bevel-hi);
+}
+:where(:root[data-skin='sparxie']) .chip:hover {
+  color: var(--text);
+  border-color: var(--border);
+  background: color-mix(in srgb, var(--button) 86%, var(--button-shadow));
+}
+:where(:root[data-skin='sparxie']) .chip:active {
+  box-shadow:
+    inset 1px 1px 0 var(--button-shadow),
+    inset -1px -1px 0 var(--bevel-hi);
+}
+:where(:root[data-skin='sparxie']) .btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+:where(:root[data-skin='sparxie']) .btn-ghost:hover {
+  background: var(--chip);
+  border-color: transparent;
+}
+:where(:root[data-skin='sparxie']) .btn-ghost:active:not(:disabled) {
+  box-shadow: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* Solo se anima el tinte al pasar el ratón; el bisel cambia de golpe, como en un sistema de 1 bit. */
+  :where(:root[data-skin='sparxie']) :is(.btn, .chip, .tab, .skin-option) {
+    transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/* Interruptor: pista cuadrada con marco y un botón cuadrado, también pintado como degradado. */
+:where(:root[data-skin='sparxie']) .switch span {
+  border-radius: 3px;
+  background-color: var(--chip);
+  background-image: linear-gradient(var(--knob), var(--knob)), linear-gradient(var(--ink), var(--ink));
+  background-size:
+    12px 12px,
+    14px 14px;
+  background-position:
+    4px 50%,
+    3px 50%;
+  box-shadow: 0 0 0 1px var(--border);
+}
+:where(:root[data-skin='sparxie']) .switch input:checked + span {
+  background-color: var(--accent);
+  background-position:
+    right 4px center,
+    right 3px center;
+}
+
+/* Barras de datos: turquesa con marco de tinta, sin esquinas redondas. */
+:where(:root[data-skin='sparxie']) .odds-bar {
+  height: 10px;
+  border-radius: 2px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+:where(:root[data-skin='sparxie']) .odds-bar > span {
+  border-radius: 0;
+  box-shadow: 1px 0 0 var(--border);
+}
+:where(:root[data-skin='sparxie']) .bar {
+  height: 10px;
+  border-radius: 0;
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+/* Tablas: cabeceras en letra de terminal y separadores punteados. */
+:where(:root[data-skin='sparxie']) th {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  border-bottom-color: var(--border);
+}
+:where(:root[data-skin='sparxie']) td {
+  border-bottom-style: dotted;
+  border-bottom-color: color-mix(in srgb, var(--text) 35%, transparent);
+}
+:where(:root[data-skin='sparxie']) .tag {
+  border-radius: 2px;
+  background: var(--chip);
+  color: var(--text);
+}
+:where(:root[data-skin='sparxie']) :is(.notice, .warning) {
+  border: 1px solid var(--border);
+  border-radius: 4px;
 }

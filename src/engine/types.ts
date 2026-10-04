@@ -60,10 +60,14 @@ export interface Inventory {
 }
 
 /** Tema visual de la app. */
-export type Skin = 'kafka' | 'aha';
+export type Skin = 'kafka' | 'aha' | 'grafito' | 'sparxie';
+
+/** Modo claro u oscuro: "system" sigue al del sistema. */
+export type ThemeMode = 'system' | 'light' | 'dark';
 
 export interface Settings {
   skin: Skin;
+  theme: ThemeMode;
   includeShards: boolean;
   /** Descontar de las tiradas futuras la Cosmiluz Inextinguible que se recupera. */
   countStarlight: boolean;

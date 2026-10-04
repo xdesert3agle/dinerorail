@@ -15,6 +15,7 @@ import type {
   Skin,
   Source,
   SourceCategory,
+  ThemeMode,
 } from '../engine/types';
 
 const STORAGE_KEY = 'hsr-jades:v1';
@@ -26,7 +27,18 @@ const str = (v: unknown, fallback = '') => (typeof v === 'string' ? v : fallback
 const date = (v: unknown, fallback: string) => (isValidISO(v) ? v : fallback);
 
 const CATEGORIES: SourceCategory[] = ['diario', 'semanal', 'endgame', 'parche', 'mensual', 'otro'];
-const SKINS: Skin[] = ['kafka', 'aha'];
+const SKINS: Skin[] = ['kafka', 'aha', 'grafito', 'sparxie'];
+/** Temas que siguen en el código pero no salen en el selector: quien los tenga guardados pasa al de por defecto. */
+export const HIDDEN_SKINS: Skin[] = ['kafka', 'grafito'];
+/** Temas que han cambiado de nombre: el antiguo apunta al actual. */
+const RENAMED_SKINS: Record<string, Skin> = { retro: 'sparxie' };
+const THEMES: ThemeMode[] = ['system', 'light', 'dark'];
+
+function normalizeSkin(v: unknown, fallback: Skin): Skin {
+  if (typeof v !== 'string') return fallback;
+  const skin = RENAMED_SKINS[v] ?? v;
+  return SKINS.includes(skin as Skin) && !HIDDEN_SKINS.includes(skin as Skin) ? (skin as Skin) : fallback;
+}
 
 /** Solo se guardan los paquetes conocidos, con cantidades enteras no negativas. */
 function normalizeShardPacks(v: unknown): Record<string, ShardPackPurchase> {
@@ -194,7 +206,8 @@ export function normalizeState(raw: unknown): AppState {
       : d.patches,
     shardPacks: normalizeShardPacks(raw.shardPacks),
     settings: {
-      skin: SKINS.includes(settings.skin as Skin) ? (settings.skin as Skin) : d.settings.skin,
+      skin: normalizeSkin(settings.skin, d.settings.skin),
+      theme: THEMES.includes(settings.theme as ThemeMode) ? (settings.theme as ThemeMode) : d.settings.theme,
       includeShards: typeof settings.includeShards === 'boolean' ? settings.includeShards : d.settings.includeShards,
       countStarlight:
         typeof settings.countStarlight === 'boolean' ? settings.countStarlight : d.settings.countStarlight,

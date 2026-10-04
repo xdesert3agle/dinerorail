@@ -1,3 +1,4 @@
+import type { ComponentType } from 'react';
 import type { Result } from '../engine/calculate';
 import { formatDate } from '../engine/dates';
 import { fmtInt, fmtSingles } from './format';
@@ -5,35 +6,45 @@ import type { Skin } from '../engine/types';
 import { Icon } from './Icon';
 import { Masks } from './Masks';
 import { Threads } from './Threads';
+import { Wireframe } from './Wireframe';
+
+/** Decoración de fondo de la tarjeta principal en cada tema (Sparxie no lleva: su estilo ya es el marco). */
+const DECORATION: Record<Skin, ComponentType | null> = {
+  kafka: Threads,
+  aha: Masks,
+  grafito: Wireframe,
+  sparxie: null,
+};
 
 export function ResultSummary({ result, skin }: { result: Result; skin: Skin }) {
   if (!result.valid) {
     return (
       <section className="card hero">
+        <header className="card-header">
+          <h2>Resumen</h2>
+        </header>
         <p className="warning">La fecha objetivo tiene que ser hoy o posterior.</p>
       </section>
     );
   }
 
   const { final } = result;
+  const Decoration = DECORATION[skin];
   return (
     <section className="card hero" aria-live="polite">
-      {skin === 'aha' ? <Masks /> : <Threads />}
-      <div className="hero-label">
-        El {formatDate(result.targetDate)} ({fmtInt(result.days)} días) tendrás
-      </div>
-      <div className="hero-value">
+      <header className="card-header">
+        <h2>Resumen</h2>
+      </header>
+      {Decoration && <Decoration />}
+      {/* Solo la cifra; la fecha, los Jades sueltos y lo ganado en el periodo quedan en el tooltip. */}
+      <div
+        className="hero-value"
+        title={`El ${formatDate(result.targetDate)} (${fmtInt(result.days)} días) · ${fmtInt(result.leftoverJades)} Jades sueltos · +${fmtSingles(result.incomeSingles, 1)} singles ganadas en el periodo`}
+      >
         <Icon kind="pass" size={64} decorative />
         {fmtInt(result.wholeSingles)}
-        <span className="hero-unit">singles</span>
-      </div>
-      <div className="hero-sub">
-        {result.leftoverJades > 0 && (
-          <>
-            <span className="with-icon"><Icon kind="jade" size={18} decorative />{fmtInt(result.leftoverJades)} Jades</span> ·{' '}
-          </>
-        )}
-        <strong>+{fmtSingles(result.incomeSingles, 1)}</strong> singles ganadas en el periodo
+        {/* El icono del Pase ya dice la unidad; la palabra queda solo para lectores de pantalla. */}
+        <span className="sr-only">singles</span>
       </div>
 
       <dl className="hero-stats">
