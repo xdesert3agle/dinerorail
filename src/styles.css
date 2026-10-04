@@ -1,0 +1,1337 @@
+/*
+ * Paleta inspirada en Kafka: neutros con un punto de vino/ciruela y el magenta de sus hilos como acento.
+ * El rosa se reserva para lo interactivo y lo importante (interruptores, foco, gráfica, hilos decorativos);
+ * el resto se queda en neutros cálidos para que no sature.
+ */
+:root {
+  color-scheme: light;
+  --page: #f8f3f5;
+  --surface: #fffbfc;
+  --surface-2: #f4e9ee;
+  --text: #1f0f18;
+  --text-secondary: #5e4654;
+  --text-muted: #8f7a86;
+  --grid: #ecdde4;
+  --axis: #d3bfc9;
+  --border: rgba(60, 10, 35, 0.1);
+  --series-1: #c2346f;
+  --accent: #c2346f;
+  --accent-text: #a3275c;
+  --accent-soft: #f8d7e6;
+  --deco: #d6407f;
+  --deco-opacity: 0.35;
+  --deco-ink: #8e2453;
+  --deco-ink-opacity: 0.6;
+  --glow: rgba(214, 64, 127, 0.1);
+  --danger: #d03b3b;
+  --success-text: #006300;
+  --warning-bg: #fff4dc;
+  --warning-text: #7a5200;
+  --radius: 12px;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  line-height: 1.45;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --page: #110a0f;
+    --surface: #1c1219;
+    --surface-2: #281a23;
+    --text: #fbf2f6;
+    --text-secondary: #cbb5c1;
+    --text-muted: #8d7884;
+    --grid: #2f2029;
+    --axis: #463240;
+    --border: rgba(255, 190, 225, 0.09);
+    --series-1: #e5539b;
+    --accent: #e5539b;
+    --accent-text: #f283b9;
+    --accent-soft: #4a1a33;
+    --deco: #ec5fa3;
+    --deco-opacity: 0.55;
+    --deco-ink: #f7d9e8;
+    --deco-ink-opacity: 0.85;
+    --glow: rgba(229, 83, 155, 0.13);
+    --success-text: #0ca30c;
+    --warning-bg: #3a2c0b;
+    --warning-text: #fab219;
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --page: #110a0f;
+  --surface: #1c1219;
+  --surface-2: #281a23;
+  --text: #fbf2f6;
+  --text-secondary: #cbb5c1;
+  --text-muted: #8d7884;
+  --grid: #2f2029;
+  --axis: #463240;
+  --border: rgba(255, 190, 225, 0.09);
+  --series-1: #e5539b;
+  --accent: #e5539b;
+  --accent-text: #f283b9;
+  --accent-soft: #4a1a33;
+  --deco: #ec5fa3;
+  --deco-opacity: 0.55;
+  --deco-ink: #f7d9e8;
+  --deco-ink-opacity: 0.85;
+  --glow: rgba(229, 83, 155, 0.13);
+  --success-text: #0ca30c;
+  --warning-bg: #3a2c0b;
+  --warning-text: #fab219;
+}
+
+/*
+ * Tema Aha (Exultación): negro rojizo de teatro, rojo carmesí como acento y blanco hueso para las máscaras.
+ * Mismo reparto que Kafka: el rojo solo en lo interactivo, los datos y la decoración.
+ */
+:root[data-skin='aha'] {
+  --page: #faf4f3;
+  --surface: #fffbfa;
+  --surface-2: #f6e8e5;
+  --text: #1e0c0d;
+  --text-secondary: #5f4442;
+  --text-muted: #927a77;
+  --grid: #eedcd8;
+  --axis: #d9c0bb;
+  --border: rgba(70, 10, 10, 0.1);
+  --series-1: #c4262d;
+  --accent: #c4262d;
+  --accent-text: #a51d24;
+  --accent-soft: #fbd9d6;
+  --deco: #d0333a;
+  --deco-opacity: 0.3;
+  --deco-ink: #7a1418;
+  --deco-ink-opacity: 0.6;
+  --aha-gold: #b07a72;
+  --bevel-border: rgba(176, 122, 114, 0.55);
+  --bevel-hi: rgba(255, 255, 255, 0.9);
+  --bevel-lo: rgba(120, 40, 40, 0.12);
+  --glow: rgba(208, 51, 58, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-skin='aha']:not([data-theme='light']) {
+    --page: #0f0708;
+    --surface: #1a0c0e;
+    --surface-2: #261316;
+    --text: #fff5f3;
+    --text-secondary: #d2b9b6;
+    --text-muted: #8f7774;
+    --grid: #2f1a1c;
+    --axis: #4a2a2d;
+    --border: rgba(255, 200, 190, 0.09);
+    --series-1: #e23b3f;
+    --accent: #e23b3f;
+    --accent-text: #ff7a72;
+    --accent-soft: #4d1416;
+    --deco: #e5393f;
+    --deco-opacity: 0.45;
+    --deco-ink: #fbeee9;
+    --deco-ink-opacity: 0.85;
+    --aha-gold: #d9aea6;
+    --bevel-border: rgba(217, 174, 166, 0.45);
+    --bevel-hi: rgba(255, 255, 255, 0.07);
+    --bevel-lo: rgba(0, 0, 0, 0.45);
+    --glow: rgba(226, 59, 63, 0.15);
+  }
+}
+
+:root[data-skin='aha'][data-theme='dark'] {
+  --page: #0f0708;
+  --surface: #1a0c0e;
+  --surface-2: #261316;
+  --text: #fff5f3;
+  --text-secondary: #d2b9b6;
+  --text-muted: #8f7774;
+  --grid: #2f1a1c;
+  --axis: #4a2a2d;
+  --border: rgba(255, 200, 190, 0.09);
+  --series-1: #e23b3f;
+  --accent: #e23b3f;
+  --accent-text: #ff7a72;
+  --accent-soft: #4d1416;
+  --deco: #e5393f;
+  --deco-opacity: 0.45;
+  --deco-ink: #fbeee9;
+  --deco-ink-opacity: 0.85;
+  --aha-gold: #d9aea6;
+  --bevel-border: rgba(217, 174, 166, 0.45);
+  --bevel-hi: rgba(255, 255, 255, 0.07);
+  --bevel-lo: rgba(0, 0, 0, 0.45);
+  --glow: rgba(226, 59, 63, 0.15);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  /* Un resplandor vino muy tenue arriba a la derecha, como luz de escenario. */
+  background: radial-gradient(1200px 600px at 85% -10%, var(--glow), transparent 70%) no-repeat, var(--page);
+  color: var(--text);
+}
+::selection {
+  background: var(--accent-soft);
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  line-height: 1.2;
+}
+h1 {
+  font-size: 1.5rem;
+}
+h2 {
+  font-size: 1.05rem;
+}
+h3 {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin: 16px 0 6px;
+}
+p {
+  margin: 0;
+}
+
+.muted {
+  color: var(--text-secondary);
+}
+.small {
+  font-size: 0.8125rem;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Icons */
+.icon {
+  display: inline-block;
+  flex: none;
+  object-fit: contain;
+  vertical-align: middle;
+  user-select: none;
+}
+.with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.reward {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  vertical-align: middle;
+}
+.input-wrap {
+  position: relative;
+  display: block;
+}
+.input-wrap.has-icon .icon {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.input-wrap.has-icon input {
+  padding-left: 40px;
+}
+.field-compact .input-wrap.has-icon .icon {
+  left: 6px;
+}
+.field-compact .input-wrap.has-icon input {
+  padding-left: 32px;
+}
+.title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Layout */
+.app {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+.app-header {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+}
+/* Un hilo fino bajo la cabecera que se desvanece hacia la derecha. */
+.app-header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, var(--deco), transparent 75%);
+  opacity: var(--deco-opacity);
+}
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+/* Selector de tema */
+.skin-switch {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+.skin-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+.skin-option:hover {
+  color: var(--text);
+}
+.skin-option[aria-pressed='true'] {
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+/* Colores fijos: cada muestra enseña el tema al que lleva, no el actual. */
+.swatch-kafka {
+  background: #e5539b;
+}
+.swatch-aha {
+  background: #e23b3f;
+}
+/* Pestañas bajo la cabecera: la seleccionada se subraya con el acento del tema. */
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin: -10px 0 16px;
+  overflow-x: auto;
+}
+.tab {
+  font: inherit;
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 8px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tab:hover {
+  color: var(--text);
+}
+/* Sin negrita al seleccionar: cambiaría el ancho y movería la pestaña de al lado. */
+.tab[aria-selected='true'] {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+/* Vista de una sola columna (pestaña de fuentes). */
+.layout-single {
+  max-width: 820px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+.col-inputs,
+.col-results {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-content: start;
+  min-width: 0;
+}
+/* En móvil, el resultado va primero. */
+.col-results {
+  order: -1;
+}
+@media (min-width: 1040px) {
+  .layout {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    align-items: start;
+  }
+  .col-results {
+    order: 0;
+  }
+}
+
+/* Cards */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  min-width: 0;
+}
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+/* Títulos de las tarjetas en mayúsculas, con algo de espaciado para que no queden apretados. */
+.card-header h2 {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Hero: la única tarjeta con hilos de fondo y borde teñido de rosa. */
+.hero {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  gap: 4px;
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+  background: radial-gradient(420px 220px at 100% 0%, var(--glow), transparent 70%), var(--surface);
+}
+/* Decoración de fondo de la tarjeta principal (telaraña de Kafka, máscaras de Aha…). */
+.hero-deco {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+  color: var(--deco);
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--deco) 60%, transparent));
+  /* Cubre toda la tarjeta y solo se suaviza hacia el borde izquierdo. */
+  -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, 0.35), #000 45%);
+  mask-image: linear-gradient(to right, rgba(0, 0, 0, 0.35), #000 45%);
+}
+.threads .web {
+  opacity: var(--deco-opacity);
+}
+.threads .spider {
+  opacity: var(--deco-ink-opacity);
+}
+.spider-ring {
+  stroke: var(--deco);
+  opacity: 0.6;
+}
+.spider-ink {
+  stroke: var(--deco-ink);
+}
+.spider-fill {
+  fill: var(--deco);
+}
+.masks .lattice {
+  opacity: var(--deco-opacity);
+}
+/* Foco de teatro detrás del personaje. */
+.spotlight-core {
+  stop-opacity: 0.35;
+}
+:root[data-skin='aha'] .spotlight-core {
+  stop-opacity: 0.12;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-skin='aha']:not([data-theme='light']) .spotlight-core {
+    stop-opacity: 0.35;
+  }
+}
+:root[data-skin='aha'][data-theme='dark'] .spotlight-core {
+  stop-opacity: 0.35;
+}
+/* Ilustración del personaje (fondo transparente), anclada a la derecha y más alta que la tarjeta. */
+.hero-art {
+  position: absolute;
+  top: 2px;
+  right: -6px;
+  height: 118%;
+  width: auto;
+  max-width: none;
+  z-index: -1;
+  pointer-events: none;
+  user-select: none;
+  /* Las llaves de la izquierda se atenúan para no competir con el texto. */
+  -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, 0.35), #000 45%);
+  mask-image: linear-gradient(to right, rgba(0, 0, 0, 0.35), #000 45%);
+}
+.hero-sub strong {
+  color: var(--accent-text);
+}
+.hero-label {
+  color: var(--text-secondary);
+}
+.hero-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: clamp(3rem, 8vw, 4.5rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.hero-unit {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-left: 2px;
+  align-self: flex-end;
+  padding-bottom: 0.5em;
+  letter-spacing: 0;
+}
+.hero-sub {
+  color: var(--text-secondary);
+}
+.hero-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 12px 0 0;
+}
+.hero-stats div {
+  background: var(--surface-2);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.hero-stats dt {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+.hero-stats dd {
+  margin: 2px 0 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Aha: recuadros biselados con filigrana dorada en la esquina, y cifra con un leve resplandor. */
+:root[data-skin='aha'] .hero-stats div {
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: linear-gradient(180deg, var(--bevel-hi), transparent 45%),
+    color-mix(in srgb, var(--surface-2) 88%, transparent);
+  border: 1px solid var(--bevel-border);
+  box-shadow:
+    inset 0 1px 0 var(--bevel-hi),
+    inset 0 -3px 6px var(--bevel-lo),
+    inset 0 0 0 3px color-mix(in srgb, var(--surface) 55%, transparent),
+    inset 0 0 0 4px color-mix(in srgb, var(--bevel-border) 45%, transparent),
+    0 3px 10px var(--bevel-lo);
+}
+:root[data-skin='aha'] .hero-stats div::after {
+  content: '';
+  position: absolute;
+  right: 5px;
+  bottom: 4px;
+  width: 58px;
+  height: 36px;
+  pointer-events: none;
+  background: var(--aha-gold);
+  opacity: 0.75;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 40' fill='none' stroke='black' stroke-width='1.1' stroke-linecap='round'%3E%3Cpath d='M62 38C48 38 40 33 37 26C35 20 39 16 43 18C46 20 45 24 42 24'/%3E%3Cpath d='M62 30C56 30 52 27 53 23C54 21 57 21 57 24'/%3E%3Cpath d='M37 26C30 29 23 26 18 30C23 33 30 33 37 26'/%3E%3Cpath d='M62 38L62 20'/%3E%3Cpath d='M26 38L50 38'/%3E%3Ccircle cx='12' cy='34' r='1.3'/%3E%3Ccircle cx='59' cy='15' r='1.1'/%3E%3C/svg%3E")
+    no-repeat right bottom / contain;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 40' fill='none' stroke='black' stroke-width='1.1' stroke-linecap='round'%3E%3Cpath d='M62 38C48 38 40 33 37 26C35 20 39 16 43 18C46 20 45 24 42 24'/%3E%3Cpath d='M62 30C56 30 52 27 53 23C54 21 57 21 57 24'/%3E%3Cpath d='M37 26C30 29 23 26 18 30C23 33 30 33 37 26'/%3E%3Cpath d='M62 38L62 20'/%3E%3Cpath d='M26 38L50 38'/%3E%3Ccircle cx='12' cy='34' r='1.3'/%3E%3Ccircle cx='59' cy='15' r='1.1'/%3E%3C/svg%3E")
+    no-repeat right bottom / contain;
+}
+:root[data-skin='aha'] .hero-value {
+  text-shadow: 0 0 24px color-mix(in srgb, var(--deco) 25%, transparent);
+}
+:root[data-skin='aha'] .hero-unit {
+  font-weight: 400;
+}
+
+/* Forms */
+.grid-2,
+.grid-3,
+.grid-4 {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (min-width: 640px) {
+  .grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .grid-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+/* Campos alineados por abajo: si una etiqueta ocupa dos líneas, las casillas siguen a la misma altura. */
+.grid-4 {
+  align-items: end;
+}
+/* Campo de pity con su interruptor de garantizado debajo. */
+.pity-field {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+.field {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  min-width: 0;
+}
+.field-label {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+/* Icono (i) de ayuda junto a una etiqueta: el texto sale al pasar el ratón. */
+.info {
+  display: inline-grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  margin-left: 5px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 0.625rem;
+  font-weight: 700;
+  font-style: normal;
+  line-height: 1;
+  vertical-align: 1px;
+  color: var(--text-muted);
+  cursor: help;
+}
+.info:hover,
+.info:focus-visible {
+  color: var(--text);
+}
+.field-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+input[type='number'],
+input[type='text'],
+input[type='date'],
+select {
+  font: inherit;
+  color: var(--text);
+  background: var(--page);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  /*
+   * 1px menos arriba que abajo en todos los campos: Segoe UI reserva más espacio sobre las letras
+   * que bajo ellas y, con el mismo padding, el texto se ve 1px más bajo de lo que toca.
+   */
+  padding: 7px 10px 9px;
+  width: 100%;
+  min-width: 0;
+}
+/*
+ * Chevron propio: el nativo de Chrome ignora el padding y queda pegado al borde.
+ * Dos triángulos con el color atenuado del tema, a 10px del borde derecho.
+ */
+select {
+  appearance: none;
+  padding-right: 30px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+    linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+  background-position:
+    right 15px center,
+    right 10px center;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+}
+.field-compact input {
+  padding: 5px 8px 7px;
+}
+.field-compact select {
+  padding: 5px 28px 7px 8px;
+}
+input:focus-visible,
+select:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.check input {
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+}
+/* Un poco más de aire entre grupos de campos dentro de una tarjeta (p. ej. inventario → pity → fecha). */
+.group-gap {
+  margin-top: 8px;
+}
+.target-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+.target-row .field {
+  flex: 0 1 200px;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Buttons */
+.btn,
+.chip {
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+.btn:hover {
+  border-color: var(--axis);
+}
+.chip:hover {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  color: var(--accent-text);
+}
+input:focus,
+select:focus {
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
+}
+.chip {
+  border-radius: 999px;
+  padding: 6px 12px;
+}
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-secondary);
+}
+.btn-ghost:hover {
+  background: var(--surface-2);
+}
+.btn-danger {
+  color: var(--danger);
+}
+
+/* Sources */
+.source-group {
+  display: grid;
+}
+.source {
+  border-top: 1px solid var(--grid);
+}
+.source-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 0;
+}
+.source.is-off .source-main,
+.source.is-off .source-contrib {
+  opacity: 0.5;
+}
+.source-name {
+  font-weight: 600;
+}
+.source-meta {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+.source-contrib {
+  text-align: right;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.source-edit {
+  display: grid;
+  gap: 10px;
+  background: var(--surface-2);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+.source-edit-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+@media (max-width: 520px) {
+  .source-row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .source-contrib {
+    grid-column: 2;
+    text-align: left;
+  }
+  .source-row .btn {
+    grid-column: 3;
+    grid-row: 1;
+  }
+}
+
+/* Switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  cursor: pointer;
+}
+.switch input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+/*
+ * El círculo es un degradado pintado dentro de la propia pista, no un elemento aparte:
+ * así queda centrado aunque la pantalla o el zoom estén al 125 % (con un elemento a 2px
+ * del borde, el redondeo de medio píxel lo dejaba un píxel más abajo).
+ */
+.switch span {
+  position: absolute;
+  inset: 0;
+  background-color: var(--axis);
+  background-image: radial-gradient(circle closest-side, #fff calc(100% - 2.5px), transparent calc(100% - 2px));
+  background-size: 20px 100%;
+  background-position: 0 50%;
+  background-repeat: no-repeat;
+  border-radius: 999px;
+  transition:
+    background-color 0.15s,
+    background-position 0.15s;
+  pointer-events: none;
+}
+.switch input:checked + span {
+  background-color: var(--accent);
+  background-position: 100% 50%;
+}
+.switch input:focus-visible + span {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* Interruptor con etiqueta (opciones): el input ocupa todo el interruptor, no los 16px de .check. */
+.toggle .switch {
+  flex: none;
+}
+.toggle .switch input {
+  width: auto;
+  height: auto;
+}
+
+/* Tables */
+.table-wrap {
+  overflow-x: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+th {
+  text-align: left;
+  font-weight: 500;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--axis);
+}
+td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--grid);
+  vertical-align: middle;
+}
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+tfoot td {
+  font-weight: 600;
+  border-bottom: none;
+}
+/* Tiradas futuras */
+/*
+ * Una línea por tirada: orden · nombre · tipo · 50/50 · coste · quitar.
+ * Las filas comparten columnas (subgrid) para que todo quede alineado.
+ */
+.pull-list {
+  --pull-gap: 8px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto auto;
+  column-gap: var(--pull-gap);
+}
+.pull-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: center;
+}
+.pull-row {
+  padding: 8px 0;
+  border-top: 1px solid var(--grid);
+}
+.pull-row input[type='text'],
+.pull-row select {
+  padding: 5px 8px 7px;
+}
+.pull-row select {
+  width: auto;
+  min-width: 7.25em;
+  /* El ancho sale de la opción más larga ("Cono de Luz"); esto deja aire entre el texto y el chevron. */
+  padding-right: 32px;
+}
+/* Asa para arrastrar y reordenar. */
+.drag-handle {
+  display: grid;
+  place-items: center;
+  align-self: stretch;
+  color: var(--text-muted);
+  cursor: grab;
+  touch-action: none;
+}
+.drag-handle:hover {
+  color: var(--text);
+}
+.drag-handle svg {
+  fill: currentColor;
+}
+.pull-row.is-dragging {
+  position: relative;
+  z-index: 2;
+  background: var(--surface-2);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.pull-row.is-dragging .drag-handle {
+  cursor: grabbing;
+  color: var(--accent-text);
+}
+.btn-icon {
+  padding: 2px 6px;
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+.btn-icon:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.pull-win {
+  white-space: nowrap;
+}
+/* Coste: ticket y número grandes, pegados a la derecha. */
+.pull-cost {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  font-size: 1.375rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+/*
+ * Hueco fijo para signo + 3 cifras, igual en filas y balance, para que los tickets queden en la
+ * misma columna. El signo (− o +) es más ancho que una cifra, así que se le reserva 0,8em, no 1ch.
+ */
+.pull-cost strong {
+  display: inline-block;
+  min-width: calc(3ch + 0.8em);
+  text-align: right;
+}
+.status-ok {
+  color: var(--success-text);
+}
+.status-short {
+  color: var(--danger);
+}
+.pull-row.is-short .pull-name {
+  border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
+}
+/* El botón de quitar tiene ancho fijo para que el balance se alinee con los costes de las filas. */
+.pull-row > .btn-icon {
+  width: 28px;
+}
+/*
+ * El balance va fuera de las columnas de las filas: así su ancho nunca ensancha la columna
+ * de costes. Se alinea con ellos dejando a la derecha el hueco del botón de quitar.
+ */
+.pull-summary {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid var(--axis);
+  padding-top: 10px;
+  padding-right: calc(28px + var(--pull-gap));
+}
+@media (max-width: 560px) {
+  /* En móvil se aprieta un poco más para que siga cabiendo en una línea. */
+  .pull-list {
+    --pull-gap: 5px;
+  }
+  .pull-row input[type='text'] {
+    padding: 5px 5px 7px;
+  }
+  .pull-row select {
+    padding: 5px 26px 7px 5px;
+    background-position:
+      right 13px center,
+      right 8px center;
+  }
+  .pull-cost {
+    font-size: 1.125rem;
+  }
+  .pull-cost .icon {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* Patches & events */
+.patch-block {
+  border-top: 1px solid var(--grid);
+  padding-top: 12px;
+  display: grid;
+  gap: 8px;
+}
+.patch-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+}
+.patch-head input[type='date'] {
+  width: auto;
+}
+.input-version {
+  width: 5em !important;
+}
+.patch-total {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+.event-list {
+  display: grid;
+  gap: 6px;
+}
+.event-row {
+  display: grid;
+  /* En rem, no em: la cabecera tiene letra más pequeña y con em sus columnas saldrían más estrechas. */
+  grid-template-columns: minmax(0, 1fr) 9rem 6.25rem 5.75rem 2.25rem;
+  gap: 6px;
+  align-items: center;
+}
+.event-row input[type='text'],
+.event-row input[type='date'],
+.event-row input[type='number'] {
+  padding: 5px 8px 7px;
+}
+.event-row input[type='number'] {
+  text-align: right;
+}
+.event-row .input-wrap.has-icon input {
+  padding-left: 32px;
+}
+/* Jades sin flechas de ±1; en los Pases se mantienen, separadas de la cifra. */
+.no-spin input {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.no-spin input::-webkit-inner-spin-button,
+.no-spin input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.event-row input[type='number']::-webkit-inner-spin-button {
+  margin-left: 6px;
+}
+.event-row .btn {
+  padding: 6px 0;
+}
+.event-header {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+/* Probabilidades: una barra por objetivo (objetivo · barra · porcentaje) y debajo cuatro cifras resumen. */
+.odds-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(60px, 40%) 3.5em;
+  column-gap: 12px;
+  row-gap: 10px;
+  align-items: center;
+}
+.odds-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: center;
+}
+.odds-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.odds-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--grid);
+  overflow: hidden;
+}
+.odds-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+}
+.odds-pct {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+/* Dos filas: probabilidad y objetivos (mitad y mitad), y debajo las tres cifras de singles. */
+.odds-stats {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+.odds-stats > div {
+  grid-column: span 2;
+}
+.odds-stats > div:nth-child(-n + 2) {
+  grid-column: span 3;
+}
+/* Cifra siempre abajo, para que quede alineada aunque alguna etiqueta ocupe dos líneas. */
+.odds-stats div {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: var(--surface-2);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.odds-stats dt {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+.odds-stats dd {
+  margin: 2px 0 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.odds-stats dd .muted {
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+
+/* Paquetes de cristales: pack · precio · cristales por compra · cantidad · x2 · total. */
+.pack-list {
+  display: grid;
+  /* Cantidad: hueco para 2 cifras más las flechas. */
+  grid-template-columns: minmax(0, 1fr) auto auto 4rem auto auto;
+  column-gap: 16px;
+  row-gap: 6px;
+  align-items: center;
+}
+.pack-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: center;
+}
+/* Cabecera: texto a la izquierda y cifras a la derecha, cada título encima del final de su cifra. */
+.pack-header {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.pack-qty-header {
+  /* El número del campo termina antes del borde: su padding derecho más el borde. */
+  padding-right: 9px;
+}
+.pack-shards {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+/* Flechas separadas de la cifra. */
+.pack-row input[type='number'] {
+  padding: 5px 8px 7px;
+  text-align: right;
+}
+.pack-row input[type='number']::-webkit-inner-spin-button {
+  margin-left: 6px;
+}
+.pack-price {
+  font-variant-numeric: tabular-nums;
+}
+/* Hueco fijo para 6 cifras con punto de miles (999.999): la columna no cambia de ancho. */
+.pack-total {
+  font-size: 1.0625rem;
+  font-variant-numeric: tabular-nums;
+  /* En rem y no en ch: las filas vacías no van en negrita y su "ch" es más estrecho. */
+  min-width: 4.25rem;
+}
+.pack-price {
+  color: var(--text-secondary);
+}
+@media (max-width: 560px) {
+  /* En móvil se aprietan las columnas para que el nombre del pack no se parta en tres líneas. */
+  .pack-list {
+    grid-template-columns: minmax(0, 1fr) auto auto 3.75rem auto auto;
+    column-gap: 8px;
+  }
+  .pack-row {
+    font-size: 0.875rem;
+  }
+  .pack-row input[type='number'] {
+    padding: 5px 6px 7px;
+  }
+  .pack-qty-header {
+    padding-right: 7px;
+  }
+  .pack-shards {
+    gap: 4px;
+  }
+  .pack-total {
+    font-size: 0.9375rem;
+    min-width: 3.75rem;
+  }
+}
+.pack-row.is-empty .pack-total {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+.event-row.is-ignored > :not(.event-status):not(.btn) {
+  opacity: 0.5;
+}
+.event-status {
+  grid-column: 1 / -1;
+  font-size: 0.75rem;
+  color: var(--warning-text);
+  margin-top: -2px;
+}
+.btn-add {
+  justify-self: start;
+}
+@media (max-width: 640px) {
+  .event-header {
+    display: none;
+  }
+  .event-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 2.25em;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--grid);
+  }
+  .event-row > input[type='text'] {
+    grid-column: 1 / 3;
+  }
+  .event-row > input[type='date'] {
+    grid-column: 1 / 3;
+    grid-row: 2;
+  }
+  .event-row > .btn {
+    grid-column: 3;
+    grid-row: 1;
+  }
+  .event-row > .field:nth-child(3) {
+    grid-column: 1;
+    grid-row: 3;
+  }
+  .event-row > .field:nth-child(4) {
+    grid-column: 2;
+    grid-row: 3;
+  }
+}
+.tag {
+  font-size: 0.75rem;
+  background: var(--surface-2);
+  border-radius: 999px;
+  padding: 2px 8px;
+  color: var(--text-secondary);
+}
+.bar-col {
+  width: 30%;
+}
+.bar {
+  height: 8px;
+  background: var(--series-1);
+  border-radius: 0 4px 4px 0;
+  min-width: 2px;
+}
+
+/* Notices */
+.notice {
+  background: var(--accent-soft);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 16px;
+  cursor: pointer;
+}
+.warning {
+  background: var(--warning-bg);
+  color: var(--warning-text);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.875rem;
+}
