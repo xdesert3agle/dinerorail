@@ -741,7 +741,9 @@ p {
     display: grid;
     gap: 8px;
     width: var(--dupe-size);
+    /* Solo decoración: el hueco no captura el ratón (solo la imagen, para inclinarse) y nada se selecciona. */
     pointer-events: none;
+    user-select: none;
   }
   .dupes-left {
     left: calc((var(--dupe-gutter) - var(--dupe-size)) / 2);
@@ -751,18 +753,55 @@ p {
   }
   .dupe-slot {
     aspect-ratio: 1;
+    /* La sombra va en el hueco (no en la imagen) para que la animación de flotar la mueva sin chocar con la de entrada. */
+    filter: drop-shadow(var(--dupe-shadow-low));
   }
   .dupe-img {
     display: block;
     width: 100%;
     height: 100%;
     object-fit: contain;
-    filter: drop-shadow(0 6px 18px color-mix(in srgb, var(--text) 25%, transparent));
+    pointer-events: auto;
+    /*
+     * Borde blanco que sigue la silueta (el arte tiene forma irregular con transparencia, así que border
+     * no sirve): sombras sin difuminar de 1px en 4 direcciones.
+     */
+    filter: drop-shadow(1px 0 0 var(--dupe-outline)) drop-shadow(-1px 0 0 var(--dupe-outline))
+      drop-shadow(0 1px 0 var(--dupe-outline)) drop-shadow(0 -1px 0 var(--dupe-outline));
   }
+}
+/* Sombra pegada al fondo (abajo) y despegada (arriba): al subir se aleja, se difumina y se aclara. */
+:root {
+  --dupe-outline: #fff;
+  --dupe-shadow-low: 0 4px 8px color-mix(in srgb, var(--text) 30%, transparent);
+  --dupe-shadow-high: 0 18px 24px color-mix(in srgb, var(--text) 14%, transparent);
 }
 @media (prefers-reduced-motion: no-preference) {
   .dupe-img {
     animation: dupe-in 0.4s ease-out;
+  }
+  /*
+   * Flotar sobre el fondo, sin desplazarse: 3 s subiendo hacia la pantalla (algo más grande y con la
+   * sombra más lejos) y 3 s bajando. Cada hueco va desfasado para que no suban todos a la vez.
+   */
+  /* Al pasar el ratón, la tarjeta se inclina muy poco hacia él (ver DupeGallery.tsx); al salir, vuelve despacio. */
+  .dupe-img {
+    transform: perspective(700px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+    transition: transform 0.5s ease-out;
+  }
+  .dupe-slot {
+    animation: dupe-float 3s ease-in-out infinite alternate;
+    animation-delay: calc(var(--dupe-index, 0) * -1s);
+  }
+}
+@keyframes dupe-float {
+  from {
+    transform: scale(1);
+    filter: drop-shadow(var(--dupe-shadow-low));
+  }
+  to {
+    transform: scale(1.04);
+    filter: drop-shadow(var(--dupe-shadow-high));
   }
 }
 @keyframes dupe-in {
