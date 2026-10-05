@@ -21,7 +21,7 @@ interface Props {
 
 /**
  * Campo de texto libre con sugerencias del catálogo mientras se escribe. Solo se autocompleta si se
- * elige una sugerencia (clic, o flechas + Intro); si no, se queda lo escrito tal cual.
+ * elige una sugerencia (clic, flechas + Intro, o Intro si solo queda una); si no, se queda lo escrito tal cual.
  */
 export function NameCombobox({
   value,
@@ -35,12 +35,14 @@ export function NameCombobox({
 }: Props) {
   const listId = useId();
   const [open, setOpen] = useState(false);
-  // -1: ninguna marcada, así Intro no elige nada por su cuenta.
+  // -1: ninguna marcada a mano; con varias sugerencias, Intro no elige nada por su cuenta.
   const [active, setActive] = useState(-1);
   const suggestions = useMemo(() => searchCatalog(entries, value), [entries, value]);
   // Si lo escrito ya es exactamente la única sugerencia, no hace falta la lista.
   const exact = suggestions.length === 1 && suggestions[0].name === value;
   const shown = open && suggestions.length > 0 && !exact;
+  // Con una sola sugerencia, ya va marcada: Intro la elige sin tener que bajar con la flecha.
+  const highlighted = active >= 0 ? active : suggestions.length === 1 ? 0 : -1;
 
   const close = () => {
     setOpen(false);
@@ -70,8 +72,11 @@ export function NameCombobox({
       setActive((i) => (i <= 0 ? n - 1 : i - 1));
     } else if (e.key === 'Enter' && shown) {
       e.preventDefault();
-      if (active >= 0) pick(suggestions[active]);
-      else close();
+      if (highlighted >= 0) {
+        pick(suggestions[highlighted]);
+        // Elegido con Intro, el campo se suelta: el nombre ya está puesto.
+        e.currentTarget.blur();
+      } else close();
     } else if (e.key === 'Escape' && shown) {
       e.preventDefault();
       close();
@@ -92,7 +97,7 @@ export function NameCombobox({
         aria-autocomplete="list"
         aria-expanded={shown}
         aria-controls={listId}
-        aria-activedescendant={shown && active >= 0 ? `${listId}-${active}` : undefined}
+        aria-activedescendant={shown && highlighted >= 0 ? `${listId}-${highlighted}` : undefined}
         onChange={(e) => {
           onChange(e.target.value);
           setOpen(true);
@@ -108,7 +113,7 @@ export function NameCombobox({
               key={s.id}
               id={`${listId}-${i}`}
               role="option"
-              aria-selected={i === active}
+              aria-selected={i === highlighted}
               className="combo-option"
               // mousedown en vez de click: así el campo no pierde el foco (y la lista no se cierra) antes de elegir.
               onMouseDown={(e) => {
