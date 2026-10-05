@@ -18,6 +18,8 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Result } from '../engine/calculate';
+import type { Catalog, CatalogEntry } from '../engine/catalog';
+import { nameWithDupe } from '../engine/dupes';
 import { formatDate } from '../engine/dates';
 import {
   FOUR_STAR_RATE,
@@ -34,11 +36,13 @@ import type { AppState, PlannedPull, PullKind } from '../engine/types';
 import { fmtInt } from './format';
 import { Icon } from './Icon';
 import { Toggle } from './Toggle';
-import { PLAIN_TEXT_INPUT } from './inputs';
+import { NameCombobox } from './NameCombobox';
 
 interface Props {
   state: AppState;
   result: Result;
+  /** Personajes y conos 5★ sincronizados, para sugerir nombres (null si aún no se ha sincronizado). */
+  catalog: Catalog | null;
   onChange: (update: (s: AppState) => AppState) => void;
 }
 
@@ -50,9 +54,11 @@ const pct = new Intl.NumberFormat('es-ES', { style: 'percent', maximumFractionDi
 const dec = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2 });
 const dec1 = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 });
 
+const NO_SUGGESTIONS: CatalogEntry[] = [];
+
 const newId = () => `pull-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
-export function FuturePulls({ state, result, onChange }: Props) {
+export function FuturePulls({ state, result, catalog, onChange }: Props) {
   const plan = state.plannedPulls;
   const countStarlight = state.settings.countStarlight;
   const rows = planPulls(plan, state.pity, result.wholeSingles, result.timeline, {
@@ -71,6 +77,12 @@ export function FuturePulls({ state, result, onChange }: Props) {
     onChange((s) => ({ ...s, plannedPulls: update(s.plannedPulls) }));
   const updatePull = (id: string, patch: Partial<PlannedPull>) =>
     setPlan((p) => p.map((x) => (x.id === id ? { ...x, ...patch } : x)));
+  // Al elegir un personaje que ya sale antes en el plan, se le añade el dupe: "Kafka | E1".
+  const commitName = (id: string, kind: PullKind, entry: CatalogEntry) =>
+    setPlan((p) => {
+      const name = kind === 'character' ? nameWithDupe(p, id, entry, catalog?.character ?? NO_SUGGESTIONS) : entry.name;
+      return p.map((x) => (x.id === id ? { ...x, name } : x));
+    });
   const add = (kind: PullKind) =>
     setPlan((p) => [...p, { id: newId(), name: '', kind, winsFiftyFifty: false }]);
 
@@ -154,7 +166,9 @@ export function FuturePulls({ state, result, onChange }: Props) {
                   key={pull.id}
                   pull={pull}
                   row={rows[i]}
+                  suggestions={catalog?.[pull.kind] ?? NO_SUGGESTIONS}
                   onUpdate={(patch) => updatePull(pull.id, patch)}
+                  onCommitName={(entry) => commitName(pull.id, pull.kind, entry)}
                   onRemove={() => setPlan((p) => p.filter((x) => x.id !== pull.id))}
                 />
               ))}
@@ -210,11 +224,13 @@ export function FuturePulls({ state, result, onChange }: Props) {
 interface RowProps {
   pull: PlannedPull;
   row: PlannedPullResult;
+  suggestions: CatalogEntry[];
+  onCommitName: (entry: CatalogEntry) => void;
   onUpdate: (patch: Partial<PlannedPull>) => void;
   onRemove: () => void;
 }
 
-function SortablePullRow({ pull, row, onUpdate, onRemove }: RowProps) {
+function SortablePullRow({ pull, row, suggestions, onUpdate, onCommitName, onRemove }: RowProps) {
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({
     id: pull.id,
   });
@@ -245,21 +261,22 @@ function SortablePullRow({ pull, row, onUpdate, onRemove }: RowProps) {
         </svg>
       </button>
 
-      <input
-        type="text"
-        {...PLAIN_TEXT_INPUT}
-        className="pull-name"
+      <NameCombobox
+        inputClassName="pull-name"
         value={pull.name}
+        entries={suggestions}
         placeholder={pull.kind === 'character' ? 'Nombre del personaje' : 'Nombre del cono de luz'}
         aria-label="Nombre"
-        onChange={(e) => onUpdate({ name: e.target.value })}
+        onChange={(name) => onUpdate({ name })}
+        onCommit={onCommitName}
       />
 
       <select
         className="pull-kind"
         value={pull.kind}
         aria-label="Tipo"
-        onChange={(e) => onUpdate({ kind: e.target.value as PullKind })}
+        // Un nombre de personaje no vale para un cono (ni al revés): al cambiar de tipo se vacía.
+        onChange={(e) => onUpdate({ kind: e.target.value as PullKind, name: '' })}
       >
         {(Object.keys(KIND_LABEL) as PullKind[]).map((k) => (
           <option key={k} value={k}>

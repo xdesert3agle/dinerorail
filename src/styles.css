@@ -675,11 +675,20 @@ p {
   border-bottom-color: var(--accent);
 }
 /* Vista de una sola columna (pestaña de fuentes). */
-.layout-single {
-  max-width: 820px;
+/* Pestaña de configuración: columna principal y, a su derecha, una estrecha (sincronizar contenido). */
+.layout-settings {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 16px;
+  align-items: start;
+}
+.col-settings,
+.col-aside {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-content: start;
+  min-width: 0;
 }
 .layout {
   display: grid;
@@ -705,6 +714,61 @@ p {
   }
   .col-results {
     order: 0;
+  }
+  .layout-settings {
+    grid-template-columns: minmax(0, 820px) 16rem;
+  }
+  .col-aside {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
+
+/*
+ * Eidolones del primer personaje del plan, en los márgenes a los lados de la app (1280px).
+ * Solo cuando el margen da para verlos; tamaño según el margen y el alto de la ventana.
+ */
+.dupes {
+  display: none;
+}
+@media (min-width: 1480px) {
+  .dupes {
+    --dupe-gutter: calc((100vw - 1280px) / 2);
+    --dupe-size: min(240px, calc(var(--dupe-gutter) - 24px), calc((100vh - 80px) / 3));
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    display: grid;
+    gap: 8px;
+    width: var(--dupe-size);
+    pointer-events: none;
+  }
+  .dupes-left {
+    left: calc((var(--dupe-gutter) - var(--dupe-size)) / 2);
+  }
+  .dupes-right {
+    right: calc((var(--dupe-gutter) - var(--dupe-size)) / 2);
+  }
+  .dupe-slot {
+    aspect-ratio: 1;
+  }
+  .dupe-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 6px 18px color-mix(in srgb, var(--text) 25%, transparent));
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .dupe-img {
+    animation: dupe-in 0.4s ease-out;
+  }
+}
+@keyframes dupe-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
   }
 }
 
@@ -1046,6 +1110,12 @@ button:focus-visible {
 .btn:hover {
   border-color: var(--axis);
 }
+/* Desactivado (p. ej. sincronizar durante la espera): atenuado y sin reaccionar al ratón. */
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
 .chip:hover {
   border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
   color: var(--accent-text);
@@ -1296,6 +1366,47 @@ tfoot td {
   /* El ancho sale de la opción más larga ("Cono de Luz"); esto deja aire entre el texto y el chevron. */
   padding-right: 32px;
 }
+/* Nombre con sugerencias del catálogo: la lista flota bajo el campo, por encima de las filas siguientes. */
+.combo {
+  position: relative;
+  min-width: 0;
+}
+.combo-list {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 4px);
+  left: 0;
+  /* Tan ancha como el nombre más largo, para no cortarlo; como mínimo, como el campo. */
+  width: max-content;
+  min-width: 100%;
+  max-width: min(24rem, calc(100vw - 32px));
+  max-height: 16rem;
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--text) 18%, transparent);
+}
+.combo-option {
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.combo-option[aria-selected='true'] {
+  background: var(--surface-2);
+  color: var(--accent-text);
+}
+/* Con la lista abierta, la tarjeta pasa por encima de las de debajo (algunas crean su propio apilamiento). */
+.card:has(.combo.is-open) {
+  position: relative;
+  z-index: 5;
+}
 /* Asa para arrastrar y reordenar. */
 .drag-handle {
   display: grid;
@@ -1357,6 +1468,22 @@ tfoot td {
   color: var(--success-text);
 }
 .status-short {
+  color: var(--danger);
+}
+.content-sync p.muted {
+  margin: 0;
+  font-size: 0.875rem;
+}
+.content-sync .btn {
+  justify-self: start;
+}
+.content-sync-wait {
+  margin: -4px 0 0;
+  font-variant-numeric: tabular-nums;
+}
+.content-sync-error {
+  margin: 0;
+  font-size: 0.875rem;
   color: var(--danger);
 }
 .pull-row.is-short .pull-name {

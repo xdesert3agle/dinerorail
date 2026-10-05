@@ -1,5 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { ContentSync } from './components/ContentSync';
 import { CurrentInventory } from './components/CurrentInventory';
+import { DupeGallery } from './components/DupeGallery';
 import { FuturePulls } from './components/FuturePulls';
 import { Icon } from './components/Icon';
 import { Odds } from './components/Odds';
@@ -10,7 +12,9 @@ import { ShardPacks } from './components/ShardPacks';
 import { SourcesPanel } from './components/SourcesPanel';
 import { calculate } from './engine/calculate';
 import { todayISO } from './engine/dates';
+import { countDupes } from './engine/dupes';
 import type { Skin, ThemeMode } from './engine/types';
+import { useCatalog } from './state/catalog';
 import { exportState, HIDDEN_SKINS, importState, useAppState } from './state/store';
 
 const SKINS: { id: Skin; label: string; title: string }[] = [
@@ -79,6 +83,7 @@ const tabFromHash = (): Tab => {
 
 export default function App() {
   const [state, setState] = useAppState();
+  const catalogSync = useCatalog();
   const [today] = useState(todayISO);
   const [message, setMessage] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>(tabFromHash);
@@ -110,6 +115,7 @@ export default function App() {
   };
 
   const result = useMemo(() => calculate(state, today), [state, today]);
+  const dupes = useMemo(() => countDupes(state.plannedPulls, catalogSync.catalog), [state.plannedPulls, catalogSync.catalog]);
   const totals = useMemo(() => new Map(result.bySource.map((t) => [t.sourceId, t])), [result]);
   const skin = state.settings.skin;
   const theme = state.settings.theme;
@@ -228,6 +234,7 @@ export default function App() {
         </p>
       )}
 
+      {tab === 'main' && <DupeGallery count={dupes} />}
       {tab === 'main' ? (
         <main className="layout" role="tabpanel" id="panel-main" aria-labelledby="tab-main">
           <div className="col-inputs">
@@ -237,15 +244,21 @@ export default function App() {
           </div>
           <aside className="col-results">
             <ResultSummary result={result} skin={skin} />
-            <FuturePulls state={state} result={result} onChange={setState} />
+            <FuturePulls state={state} result={result} catalog={catalogSync.catalog} onChange={setState} />
             <Odds state={state} result={result} />
             <Breakdown result={result} />
           </aside>
         </main>
       ) : (
-        <main className="layout-single" role="tabpanel" id="panel-settings" aria-labelledby="tab-settings">
-          <PitySettings state={state} onChange={setState} />
-          <SourcesPanel state={state} today={today} totals={totals} onChange={setState} />
+        <main className="layout-settings" role="tabpanel" id="panel-settings" aria-labelledby="tab-settings">
+          {/* Columna estrecha a la derecha en escritorio; en móvil va arriba del todo. */}
+          <aside className="col-aside">
+            <ContentSync {...catalogSync} />
+          </aside>
+          <div className="col-settings">
+            <PitySettings state={state} onChange={setState} />
+            <SourcesPanel state={state} today={today} totals={totals} onChange={setState} />
+          </div>
         </main>
       )}
     </div>
