@@ -61,7 +61,10 @@ export function FuturePulls({ state, result, onChange }: Props) {
     guaranteed: state.guaranteed,
     initialStarlight: result.starlightLeftover,
   });
+  // Las filas muestran el coste sin Cosmiluz; lo que devuelve solo se descuenta del total.
   const total = rows.at(-1)?.cumulative ?? 0;
+  const grossTotal = rows.reduce((sum, r) => sum + r.cost, 0);
+  const refunded = grossTotal - total;
   const left = result.wholeSingles - total;
 
   const setPlan = (update: (p: PlannedPull[]) => PlannedPull[]) =>
@@ -151,7 +154,6 @@ export function FuturePulls({ state, result, onChange }: Props) {
                   key={pull.id}
                   pull={pull}
                   row={rows[i]}
-                  countStarlight={countStarlight}
                   onUpdate={(patch) => updatePull(pull.id, patch)}
                   onRemove={() => setPlan((p) => p.filter((x) => x.id !== pull.id))}
                 />
@@ -184,7 +186,12 @@ export function FuturePulls({ state, result, onChange }: Props) {
             </Toggle>
             <div
               className={`pull-cost ${left >= 0 ? 'status-ok' : 'status-short'}`}
-              title={`${fmtInt(result.wholeSingles)} singles el ${formatDate(result.targetDate)} − ${fmtInt(total)} de las tiradas`}
+              title={[
+                `${fmtInt(result.wholeSingles)} singles el ${formatDate(result.targetDate)} − ${fmtInt(grossTotal)} de las tiradas`,
+                countStarlight
+                  ? `+ ${fmtInt(refunded)} de vuelta por la Cosmiluz Inextinguible`
+                  : 'Sin contar la Cosmiluz Inextinguible',
+              ].join('\n')}
             >
               <Icon kind="pass" size={26} decorative />
               <strong>
@@ -203,12 +210,11 @@ export function FuturePulls({ state, result, onChange }: Props) {
 interface RowProps {
   pull: PlannedPull;
   row: PlannedPullResult;
-  countStarlight: boolean;
   onUpdate: (patch: Partial<PlannedPull>) => void;
   onRemove: () => void;
 }
 
-function SortablePullRow({ pull, row, countStarlight, onUpdate, onRemove }: RowProps) {
+function SortablePullRow({ pull, row, onUpdate, onRemove }: RowProps) {
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({
     id: pull.id,
   });
@@ -278,16 +284,10 @@ function SortablePullRow({ pull, row, countStarlight, onUpdate, onRemove }: RowP
 
       <div
         className="pull-cost"
-        title={[
-          `${row.costDetail} = ${fmtInt(row.cost)} tiradas${row.usesPity ? ' (descuenta tu pity actual)' : ''}`,
-          countStarlight
-            ? `+${fmtInt(row.starlight)} de Cosmiluz Inextinguible: ${fmtInt(row.cost - row.netCost)} singles de vuelta`
-            : 'Sin contar la Cosmiluz Inextinguible',
-          `Coste neto: ${fmtInt(row.netCost)} · acumulado ${fmtInt(row.cumulative)}`,
-        ].join('\n')}
+        title={`${row.costDetail} = ${fmtInt(row.cost)} tiradas${row.usesPity ? ' (descuenta tu pity actual)' : ''}`}
       >
         <Icon kind="pass" size={26} decorative />
-        <strong>{fmtInt(row.netCost)}</strong>
+        <strong>{fmtInt(row.cost)}</strong>
       </div>
 
       <button type="button" className="btn btn-ghost btn-icon" aria-label={`Quitar ${label}`} onClick={onRemove}>

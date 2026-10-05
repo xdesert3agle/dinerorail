@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import type { SourceTotal } from '../engine/calculate';
-import { formatDate, fromDayNum, isValidISO, toDayNum, WEEKDAYS } from '../engine/dates';
+import { formatDate, fromDayNum, toDayNum, WEEKDAYS } from '../engine/dates';
 import { occurrences } from '../engine/sources';
 import type { AppState, Reward, Schedule, Source, SourceCategory } from '../engine/types';
 import { describeSchedule, fmtInt, fmtSingles, pendingLabel } from './format';
 import { Icon } from './Icon';
+import { DateField } from './DateField';
 import { NumberField } from './NumberField';
 import { PLAIN_TEXT_INPUT } from './inputs';
 
@@ -263,11 +264,7 @@ function SourceEditor({ source, today, onUpdate, onDelete }: EditorProps) {
         <div className="grid-2">
           <label className="field field-compact">
             <span className="field-label">Fecha de un reinicio (referencia)</span>
-            <input
-              type="date"
-              value={schedule.anchor}
-              onChange={(e) => isValidISO(e.target.value) && onUpdate({ schedule: { ...schedule, anchor: e.target.value } })}
-            />
+            <DateField value={schedule.anchor} onChange={(anchor) => onUpdate({ schedule: { ...schedule, anchor } })} />
           </label>
           <NumberField
             compact

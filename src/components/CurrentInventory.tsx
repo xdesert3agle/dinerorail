@@ -1,10 +1,11 @@
 import { useId } from 'react';
-import { addDays, isValidISO } from '../engine/dates';
+import { addDays } from '../engine/dates';
 import { JADES_PER_PULL } from '../engine/defaults';
 import { clampPity, STARLIGHT_PER_PASS } from '../engine/pulls';
 import type { AppState, Inventory, PullKind } from '../engine/types';
 import { fmtSinglesShort } from './format';
 import { Icon } from './Icon';
+import { DateField } from './DateField';
 import { NumberField } from './NumberField';
 import { Toggle } from './Toggle';
 
@@ -109,15 +110,11 @@ export function CurrentInventory({ state, today, onChange }: Props) {
           Fecha objetivo
         </label>
         <div className="target-row">
-          <input
+          <DateField
             id={targetDateId}
-            type="date"
             value={state.targetDate}
             min={today}
-            onChange={(e) => {
-              const v = e.target.value;
-              if (isValidISO(v)) onChange((s) => ({ ...s, targetDate: v }));
-            }}
+            onChange={(v) => onChange((s) => ({ ...s, targetDate: v }))}
           />
           <div className="chips">
             {QUICK_TARGETS.map((q) => (

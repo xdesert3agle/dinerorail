@@ -44,6 +44,28 @@ const THEMES: { id: ManualTheme; title: string }[] = [
 ];
 
 type Tab = 'main' | 'settings';
+
+// Iconos de 16px con el color del texto de la pestaña: calculadora y deslizadores de ajustes.
+const TAB_ICONS: Record<Tab, ReactNode> = {
+  main: (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="1.5" width="10" height="13" rx="1.5" />
+      <rect x="5.25" y="3.75" width="5.5" height="2.5" rx="0.5" />
+      <g fill="currentColor" stroke="none">
+        {[5.75, 8, 10.25].map((x) => [9, 11.75].map((y) => <circle key={`${x}-${y}`} cx={x} cy={y} r="0.8" />))}
+      </g>
+    </svg>
+  ),
+  settings: (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+      <path d="M2 4h1.25M6.75 4H14M2 8h7.25M12.75 8H14M2 12h3.25M8.75 12H14" />
+      <circle cx="5" cy="4" r="1.75" />
+      <circle cx="11" cy="8" r="1.75" />
+      <circle cx="7" cy="12" r="1.75" />
+    </svg>
+  ),
+};
+
 const TABS: { id: Tab; label: string; hash: string }[] = [
   { id: 'main', label: 'Calculadora', hash: '' },
   { id: 'settings', label: 'Configuración', hash: '#configuracion' },
@@ -128,7 +150,7 @@ export default function App() {
       <header className="app-header">
         <h1 className="title">
           <Icon kind="jade" size={36} decorative />
-          Calculadora de Jades
+          Dinero Rail
         </h1>
         <div className="header-actions">
           <div className="skin-switch" role="group" aria-label="Tema">
@@ -195,6 +217,7 @@ export default function App() {
             tabIndex={tab === t.id ? 0 : -1}
             onClick={() => selectTab(t.id)}
           >
+            {TAB_ICONS[t.id]}
             {t.label}
           </button>
         ))}

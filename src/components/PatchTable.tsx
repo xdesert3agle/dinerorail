@@ -1,9 +1,10 @@
 import { toSingles } from '../engine/calculate';
-import { addDays, isValidISO } from '../engine/dates';
+import { addDays } from '../engine/dates';
 import { defaultEventDate, PATCH_LENGTH_DAYS } from '../engine/defaults';
 import { nextVersion } from '../engine/sources';
 import type { AppState, Patch, PatchEvent } from '../engine/types';
 import { fmtSingles } from './format';
+import { DateField } from './DateField';
 import { NumberField } from './NumberField';
 import { PLAIN_TEXT_INPUT } from './inputs';
 
@@ -67,14 +68,7 @@ export function PatchTable({ state, today, onChange }: Props) {
             </label>
             <label className="field field-compact">
               <span className="field-label">Inicio</span>
-              <input
-                type="date"
-                value={p.start}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  if (isValidISO(v)) updatePatch(p.id, (x) => ({ ...x, start: v }));
-                }}
-              />
+              <DateField value={p.start} onChange={(v) => updatePatch(p.id, (x) => ({ ...x, start: v }))} />
             </label>
             <div className="patch-total">
               <span>
@@ -117,14 +111,10 @@ export function PatchTable({ state, today, onChange }: Props) {
                     aria-label="Nombre del evento"
                     onChange={(e) => updateEvent(p.id, ev.id, { name: e.target.value })}
                   />
-                  <input
-                    type="date"
+                  <DateField
                     value={ev.date}
                     aria-label="Fecha de cobro"
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      if (isValidISO(v)) updateEvent(p.id, ev.id, { date: v });
-                    }}
+                    onChange={(v) => updateEvent(p.id, ev.id, { date: v })}
                   />
                   <NumberField
                     compact

@@ -477,6 +477,76 @@ p {
 .field-compact .input-wrap.has-icon input {
   padding-left: 32px;
 }
+/* Campo de fecha (air-datepicker): solo lectura, se abre el calendario al pulsarlo; icono a la derecha. */
+.date-field input {
+  padding-right: 32px;
+  cursor: pointer;
+}
+.date-field-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.event-row .date-field input {
+  padding-right: 28px;
+}
+.event-row .date-field-icon {
+  right: 8px;
+}
+
+/* Calendario de air-datepicker, con los colores del tema. Se monta en <body>, fuera de las tarjetas. */
+.air-datepicker {
+  --adp-font-family: inherit;
+  --adp-font-size: 0.875rem;
+  --adp-width: 264px;
+  --adp-padding: 6px;
+  --adp-border-radius: 10px;
+  --adp-cell-border-radius: 6px;
+  --adp-color: var(--text);
+  --adp-color-secondary: var(--text-muted);
+  --adp-accent-color: var(--accent);
+  --adp-background-color: var(--surface);
+  --adp-background-color-hover: var(--surface-2);
+  --adp-background-color-active: var(--accent-soft);
+  --adp-border-color: var(--border);
+  --adp-border-color-inner: var(--grid);
+  --adp-cell-background-color-selected: var(--accent);
+  --adp-cell-background-color-selected-hover: var(--accent);
+  --adp-color-current-date: var(--accent-text);
+  --adp-day-name-color: var(--accent-text);
+  --adp-day-name-color-hover: var(--accent);
+  --adp-color-other-month: var(--axis);
+  --adp-color-other-month-hover: var(--text-muted);
+  --adp-color-disabled: var(--axis);
+  --adp-nav-arrow-color: var(--text-muted);
+  --adp-btn-color: var(--accent-text);
+  --adp-border-color-inline: var(--border);
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--text) 18%, transparent);
+}
+/* Día seleccionado: círculo del alto de la celda, centrado (la celda es más ancha que alta). */
+.air-datepicker-cell.-day-.-selected- {
+  position: relative;
+  isolation: isolate;
+  background: none;
+}
+.air-datepicker-cell.-day-.-selected-::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: var(--adp-day-cell-height);
+  height: var(--adp-day-cell-height);
+  margin: auto;
+  border-radius: 50%;
+  background: var(--adp-cell-background-color-selected);
+}
+/* La flechita que apunta al campo trae el fondo blanco fijo. */
+.air-datepicker--pointer::after {
+  background: var(--adp-background-color);
+}
 .title {
   display: flex;
   align-items: center;
@@ -583,6 +653,9 @@ p {
   overflow-x: auto;
 }
 .tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font: inherit;
   font-size: 0.9375rem;
   color: var(--text-secondary);
@@ -781,6 +854,13 @@ p {
   font-size: 1.125rem;
   letter-spacing: 0.02em;
 }
+/* El título de la app, en la misma letra de naipe (solo tiene mayúsculas). */
+:root[data-skin='aha'] .title {
+  font-family: 'Card Characters', system-ui, sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
 /* Aha: recuadros de color plano con el mismo borde que la tarjeta, y cifra con un leve resplandor. */
 :root[data-skin='aha'] .hero-stats div {
   border-radius: 10px;
@@ -875,7 +955,6 @@ p {
 }
 input[type='number'],
 input[type='text'],
-input[type='date'],
 select {
   font: inherit;
   color: var(--text);
@@ -890,12 +969,6 @@ select {
   padding: calc(8px - var(--input-nudge)) 10px calc(8px + var(--input-nudge));
   width: 100%;
   min-width: 0;
-}
-/* Chrome da padding vertical a la parte editable y al icono del calendario: sin esto la fecha sale 2px más alta que el resto. */
-input[type='date']::-webkit-datetime-edit,
-input[type='date']::-webkit-datetime-edit-fields-wrapper,
-input[type='date']::-webkit-calendar-picker-indicator {
-  padding-block: 0;
 }
 /*
  * Chevron propio: el nativo de Chrome ignora el padding y queda pegado al borde.
@@ -949,7 +1022,7 @@ button:focus-visible {
   gap: 12px;
   align-items: center;
 }
-.target-row input {
+.target-row .date-field {
   flex: 0 1 200px;
 }
 .chips {
@@ -1348,8 +1421,8 @@ tfoot td {
   align-items: flex-end;
   gap: 10px;
 }
-.patch-head input[type='date'] {
-  width: auto;
+.patch-head .date-field {
+  width: 9.5rem;
 }
 .input-version {
   width: 5em !important;
@@ -1374,7 +1447,6 @@ tfoot td {
   align-items: center;
 }
 .event-row input[type='text'],
-.event-row input[type='date'],
 .event-row input[type='number'] {
   padding: calc(6px - var(--input-nudge)) 8px calc(6px + var(--input-nudge));
 }
@@ -1596,7 +1668,7 @@ tfoot td {
   .event-row > input[type='text'] {
     grid-column: 1 / 3;
   }
-  .event-row > input[type='date'] {
+  .event-row > .date-field {
     grid-column: 1 / 3;
     grid-row: 2;
   }
@@ -1733,7 +1805,7 @@ tfoot td {
 }
 
 /* Campos: relleno translúcido y borde fino, esquinas de 6px. */
-:where(:root[data-skin='grafito']) :is(input[type='number'], input[type='text'], input[type='date'], select) {
+:where(:root[data-skin='grafito']) :is(input[type='number'], input[type='text'], select) {
   background-color: var(--control);
   border-color: var(--border-strong);
   border-radius: 6px;
@@ -1971,12 +2043,18 @@ tfoot td {
 }
 
 /* Campos: barras blancas con marco de tinta y letra de máquina de escribir. */
-:where(:root[data-skin='sparxie']) :is(input[type='number'], input[type='text'], input[type='date'], select) {
+:where(:root[data-skin='sparxie']) :is(input[type='number'], input[type='text'], select) {
   font-family: var(--font-type);
   background-color: var(--surface);
   border-color: var(--border);
   border-radius: 3px;
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text) 10%, transparent);
+}
+/* Calendario: esquinas casi rectas, como las ventanas, y la misma letra de máquina de escribir. */
+:where(:root[data-skin='sparxie']) .air-datepicker {
+  --adp-font-family: var(--font-type);
+  --adp-border-radius: 3px;
+  --adp-cell-border-radius: 2px;
 }
 :where(:root[data-skin='sparxie']) :is(input, select):focus {
   border-color: var(--border);
