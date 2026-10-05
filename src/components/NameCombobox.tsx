@@ -15,13 +15,24 @@ interface Props {
   placeholder?: string;
   inputClassName?: string;
   'aria-label'?: string;
+  /** Enfocar el campo al aparecer (fila recién añadida). */
+  autoFocus?: boolean;
 }
 
 /**
  * Campo de texto libre con sugerencias del catálogo mientras se escribe. Solo se autocompleta si se
  * elige una sugerencia (clic, o flechas + Intro); si no, se queda lo escrito tal cual.
  */
-export function NameCombobox({ value, onChange, onCommit, entries, placeholder, inputClassName, 'aria-label': ariaLabel }: Props) {
+export function NameCombobox({
+  value,
+  onChange,
+  onCommit,
+  entries,
+  placeholder,
+  inputClassName,
+  'aria-label': ariaLabel,
+  autoFocus,
+}: Props) {
   const listId = useId();
   const [open, setOpen] = useState(false);
   // -1: ninguna marcada, así Intro no elige nada por su cuenta.
@@ -76,6 +87,7 @@ export function NameCombobox({ value, onChange, onCommit, entries, placeholder, 
         value={value}
         placeholder={placeholder}
         aria-label={ariaLabel}
+        autoFocus={autoFocus}
         role="combobox"
         aria-autocomplete="list"
         aria-expanded={shown}

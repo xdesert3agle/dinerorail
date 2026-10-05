@@ -17,6 +17,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useState } from 'react';
 import type { Result } from '../engine/calculate';
 import type { Catalog, CatalogEntry } from '../engine/catalog';
 import { nameWithDupe } from '../engine/dupes';
@@ -83,8 +84,13 @@ export function FuturePulls({ state, result, catalog, onChange }: Props) {
       const name = kind === 'character' ? nameWithDupe(p, id, entry, catalog?.character ?? NO_SUGGESTIONS) : entry.name;
       return p.map((x) => (x.id === id ? { ...x, name } : x));
     });
-  const add = (kind: PullKind) =>
-    setPlan((p) => [...p, { id: newId(), name: '', kind, winsFiftyFifty: false }]);
+  // La fila recién añadida enfoca su nombre para poder escribir directamente.
+  const [focusId, setFocusId] = useState<string | null>(null);
+  const add = (kind: PullKind) => {
+    const id = newId();
+    setFocusId(id);
+    setPlan((p) => [...p, { id, name: '', kind, winsFiftyFifty: false }]);
+  };
 
   const sensors = useSensors(
     // Un pequeño margen para que un clic en el asa no cuente como arrastre.
@@ -169,6 +175,7 @@ export function FuturePulls({ state, result, catalog, onChange }: Props) {
                   suggestions={catalog?.[pull.kind] ?? NO_SUGGESTIONS}
                   onUpdate={(patch) => updatePull(pull.id, patch)}
                   onCommitName={(entry) => commitName(pull.id, pull.kind, entry)}
+                  autoFocus={pull.id === focusId}
                   onRemove={() => setPlan((p) => p.filter((x) => x.id !== pull.id))}
                 />
               ))}
@@ -226,11 +233,12 @@ interface RowProps {
   row: PlannedPullResult;
   suggestions: CatalogEntry[];
   onCommitName: (entry: CatalogEntry) => void;
+  autoFocus: boolean;
   onUpdate: (patch: Partial<PlannedPull>) => void;
   onRemove: () => void;
 }
 
-function SortablePullRow({ pull, row, suggestions, onUpdate, onCommitName, onRemove }: RowProps) {
+function SortablePullRow({ pull, row, suggestions, onUpdate, onCommitName, autoFocus, onRemove }: RowProps) {
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({
     id: pull.id,
   });
@@ -269,6 +277,7 @@ function SortablePullRow({ pull, row, suggestions, onUpdate, onCommitName, onRem
         aria-label="Nombre"
         onChange={(name) => onUpdate({ name })}
         onCommit={onCommitName}
+        autoFocus={autoFocus}
       />
 
       <select
