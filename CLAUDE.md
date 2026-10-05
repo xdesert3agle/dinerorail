@@ -64,7 +64,7 @@ Everything is computed in Jades (1 single = 160 Jades, `JADES_PER_PULL`). Specia
 - **Normalization:** every load and import goes through `normalizeState`. It validates each field, fills defaults and contains the **migrations** for older saved shapes.
 - **When you add a field to `AppState`:** add it to `defaultState` (`engine/defaults.ts`) and to `normalizeState`, plus a store test if it needs migration.
 - **Built-in sources:** their name and description always come from the current defaults. New built-in sources are appended automatically to old saves.
-- **Content catalog (`engine/catalog.ts`, `state/catalog.ts`):** the 5★ characters and light cones from nanoka.cc (a beta `.51` build, English names only), synced with the "Sincronizar contenido" button in Configuración (1 min cooldown, also persisted). It is a cache outside `AppState`, under `hsr-jades:catalog:v1`, and is not exported. The planner only uses it to suggest names; names stay free text.
+- **Content catalog (`engine/catalog.ts`, `state/catalog.ts`):** the 5★ characters and light cones from nanoka.cc (a beta `.51` build, English names only), synced with the "Sincronizar contenido" button in Configuración (1 min cooldown, also persisted), and fetched in the background on load when nothing is cached. It is a cache outside `AppState`, under `hsr-jades:catalog:v1`, and is not exported. The planner only uses it to suggest names; names stay free text.
 
 ### UI conventions
 

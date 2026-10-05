@@ -1,8 +1,15 @@
 import { useEffect, useState } from 'react';
-import { formatDate, todayISO } from '../engine/dates';
 import { SYNC_COOLDOWN_MS, type CatalogSync } from '../state/catalog';
 
 const timeFmt = new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digit' });
+// A mano y no con Intl: según el navegador, es-ES sale con punto ("nov.") o sin él ("nov").
+const MONTHS = ['ene.', 'feb.', 'mar.', 'abr.', 'may.', 'jun.', 'jul.', 'ago.', 'sept.', 'oct.', 'nov.', 'dic.'];
+
+/** Fecha de la sincronización, como "5 nov. 2026". */
+const fmtSyncDate = (ms: number) => {
+  const d = new Date(ms);
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+};
 
 /** Segundos que quedan, como "0:42". */
 const fmtWait = (ms: number) => {
@@ -28,6 +35,7 @@ export function ContentSync({ catalog, syncing, error, lastAttempt, sync }: Cata
   }, [lastAttempt]);
 
   const cooling = remaining > 0;
+  const disabled = syncing || cooling;
 
   return (
     <section className="card content-sync">
@@ -35,23 +43,20 @@ export function ContentSync({ catalog, syncing, error, lastAttempt, sync }: Cata
         <h2>Contenido</h2>
       </header>
       <p className="muted">
-        {catalog ? (
-          <>
-            {catalog.character.length} personajes y {catalog.lightCone.length} conos de luz 5★.
-            <br />
-            Sincronizado el {formatDate(todayISO(new Date(catalog.syncedAt)))} a las {timeFmt.format(catalog.syncedAt)}.
-          </>
-        ) : (
-          'Descarga los personajes y conos de luz 5★ para sugerirlos en la planificación.'
-        )}
+        {catalog
+          ? `Sincronizado el ${fmtSyncDate(catalog.syncedAt)} a las ${timeFmt.format(catalog.syncedAt)}.`
+          : 'Descarga los personajes y conos de luz 5★ para sugerirlos en la planificación.'}
       </p>
-      <button type="button" className="btn" disabled={syncing || cooling} onClick={() => void sync()}>
-        {syncing ? 'Sincronizando…' : 'Sincronizar contenido'}
-      </button>
-      {/* La línea de espera se reserva siempre para que la tarjeta no cambie de alto. */}
-      <p className="field-hint content-sync-wait" style={{ visibility: cooling && !syncing ? 'visible' : 'hidden' }}>
-        Disponible de nuevo en {fmtWait(cooling ? remaining : SYNC_COOLDOWN_MS)}
-      </p>
+      <div className="content-sync-row">
+        <button type="button" className="btn" disabled={disabled} onClick={() => void sync()}>
+          Sincronizar contenido
+        </button>
+        {/* Spinner y cuenta atrás mientras el botón está desactivado; el hueco se reserva siempre. */}
+        <span className="content-sync-wait" style={{ visibility: disabled ? 'visible' : 'hidden' }}>
+          <span className="spinner" aria-hidden="true" />
+          <span title="Tiempo hasta poder sincronizar de nuevo">{fmtWait(cooling ? remaining : SYNC_COOLDOWN_MS)}</span>
+        </span>
+      </div>
       {error && (
         <p className="content-sync-error" role="alert">
           {error}

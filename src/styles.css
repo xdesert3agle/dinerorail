@@ -716,7 +716,7 @@ p {
     order: 0;
   }
   .layout-settings {
-    grid-template-columns: minmax(0, 820px) 16rem;
+    grid-template-columns: minmax(0, 820px) 18rem;
   }
   .col-aside {
     grid-column: 2;
@@ -1474,12 +1474,36 @@ tfoot td {
   margin: 0;
   font-size: 0.875rem;
 }
-.content-sync .btn {
-  justify-self: start;
+.content-sync-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.content-sync-row .btn {
+  white-space: nowrap;
 }
 .content-sync-wait {
-  margin: -4px 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
+}
+/* Spinner: aro con un tramo de acento girando; más pequeño que el alto del botón. */
+.spinner {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border: 2px solid var(--grid);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 .content-sync-error {
   margin: 0;

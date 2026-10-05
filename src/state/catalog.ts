@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { CATALOG_URLS, normalizeCatalog, parseCatalogEntries, type Catalog } from '../engine/catalog';
 
 // Va aparte del estado de la app: es una caché de datos del juego, no se exporta ni se importa.
@@ -69,6 +69,17 @@ export function useCatalog(): CatalogSync {
     } finally {
       setSyncing(false);
     }
+  }, []);
+
+  // Primera visita (o caché borrada): se descarga de fondo al abrir, sin esperar al botón. Si hace menos
+  // de un minuto de otro intento (p. ej. falló y se ha recargado), se respeta la espera.
+  // La ref evita la doble descarga del doble montaje de StrictMode en desarrollo.
+  const autoSynced = useRef(false);
+  useEffect(() => {
+    if (autoSynced.current) return;
+    autoSynced.current = true;
+    if (!catalog && Date.now() - lastAttempt >= SYNC_COOLDOWN_MS) void sync();
+    // Solo al abrir la app: con el catálogo y el último intento con los que arranca.
   }, []);
 
   // Otra pestaña abierta que sincroniza: se recoge su catálogo y su tiempo de espera.
