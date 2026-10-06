@@ -20,7 +20,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useState } from 'react';
 import type { Result } from '../engine/calculate';
 import type { Catalog, CatalogEntry } from '../engine/catalog';
-import { nameWithDupe } from '../engine/dupes';
+import { nameWithDupe, renumberDupes } from '../engine/dupes';
 import { formatDate } from '../engine/dates';
 import {
   FOUR_STAR_RATE,
@@ -84,6 +84,9 @@ export function FuturePulls({ state, result, catalog, onChange }: Props) {
       const name = kind === 'character' ? nameWithDupe(p, id, entry, catalog?.character ?? NO_SUGGESTIONS) : entry.name;
       return p.map((x) => (x.id === id ? { ...x, name } : x));
     });
+  // Al quitar una fila, los dupes que venían detrás se renumeran: sin "Aha | E2", "Aha | E3" pasa a E2.
+  const remove = (id: string) =>
+    setPlan((p) => renumberDupes(p.filter((x) => x.id !== id), catalog?.character ?? NO_SUGGESTIONS));
   // La fila recién añadida enfoca su nombre para poder escribir directamente.
   const [focusId, setFocusId] = useState<string | null>(null);
   const add = (kind: PullKind) => {
@@ -176,7 +179,7 @@ export function FuturePulls({ state, result, catalog, onChange }: Props) {
                   onUpdate={(patch) => updatePull(pull.id, patch)}
                   onCommitName={(entry) => commitName(pull.id, pull.kind, entry)}
                   autoFocus={pull.id === focusId}
-                  onRemove={() => setPlan((p) => p.filter((x) => x.id !== pull.id))}
+                  onRemove={() => remove(pull.id)}
                 />
               ))}
             </SortableContext>

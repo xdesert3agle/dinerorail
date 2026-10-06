@@ -1,65 +1,75 @@
 import type { CSSProperties, PointerEvent } from 'react';
-import { dupeImageUrl, MAX_DUPES, type DupeCount } from '../engine/dupes';
+import { dupeImageUrl, lightConeImageUrl, type Dupe } from '../engine/dupes';
 
 interface Props {
-  count: DupeCount | null;
+  /** Dupes de los personajes del plan, hasta 6. */
+  dupes: Dupe[];
+  /** Ids de los conos del plan, hasta 6. */
+  lightCones: string[];
 }
 
-// Impares a la izquierda y pares a la derecha, de arriba abajo: 1 | 2, 3 | 4, 5 | 6.
-const SIDES = {
-  left: Array.from({ length: MAX_DUPES / 2 }, (_, i) => i * 2 + 1),
-  right: Array.from({ length: MAX_DUPES / 2 }, (_, i) => i * 2 + 2),
-};
-
 /** Inclinación máxima al pasar el ratón, en grados (con el ratón en el borde de la imagen). */
-const MAX_TILT = 9;
+const MAX_TILT = 16;
 
-// La inclinación va en variables CSS del propio elemento, sin estado de React: no re-renderiza al mover el ratón.
-const tilt = (e: PointerEvent<HTMLImageElement>) => {
+// La inclinación y el reflejo van en variables CSS del propio elemento, sin estado de React: no re-renderiza al mover el ratón.
+const tilt = (e: PointerEvent<HTMLDivElement>) => {
   const el = e.currentTarget;
   const r = el.getBoundingClientRect();
-  // -0,5…0,5 desde el centro de la imagen.
-  const x = (e.clientX - r.left) / r.width - 0.5;
-  const y = (e.clientY - r.top) / r.height - 0.5;
+  // 0…1 desde la esquina de arriba a la izquierda.
+  const x = (e.clientX - r.left) / r.width;
+  const y = (e.clientY - r.top) / r.height;
   // El lado bajo el ratón se hunde, como una tarjeta que se empuja.
-  el.style.setProperty('--tilt-x', `${(-y * 2 * MAX_TILT).toFixed(2)}deg`);
-  el.style.setProperty('--tilt-y', `${(x * 2 * MAX_TILT).toFixed(2)}deg`);
+  el.style.setProperty('--tilt-x', `${(-(y - 0.5) * 2 * MAX_TILT).toFixed(2)}deg`);
+  el.style.setProperty('--tilt-y', `${((x - 0.5) * 2 * MAX_TILT).toFixed(2)}deg`);
+  // El reflejo del cristal, en el lado contrario: el que se levanta hacia la pantalla y coge la luz.
+  el.style.setProperty('--glare-x', `${((1 - x) * 100).toFixed(1)}%`);
+  el.style.setProperty('--glare-y', `${((1 - y) * 100).toFixed(1)}%`);
 };
-const untilt = (e: PointerEvent<HTMLImageElement>) => {
+// El reflejo se queda donde estaba mientras se apaga (al mismo ritmo que la tarjeta vuelve a su sitio).
+const untilt = (e: PointerEvent<HTMLDivElement>) => {
   e.currentTarget.style.removeProperty('--tilt-x');
   e.currentTarget.style.removeProperty('--tilt-y');
 };
 
 /**
- * Arte de los Eidolones del primer personaje del plan, en los márgenes de la página.
- * Cada hueco tiene su sitio fijo y solo se llena cuando el plan llega a ese dupe.
- * Solo se ve en pantallas lo bastante anchas para que haya margen.
+ * Un margen con sus imágenes en orden; el CSS reserva el sitio de las 6. Cada imagen va en una tarjeta
+ * que se inclina con el ratón y lleva encima un reflejo de cristal recortado con la propia imagen como
+ * máscara. La tarjeta va con la URL como clave: si cambia la de un hueco, vuelve a animar la entrada.
  */
-export function DupeGallery({ count }: Props) {
-  if (!count || count.dupes === 0) return null;
+function Side({ side, images }: { side: 'left' | 'right'; images: string[] }) {
+  if (images.length === 0) return null;
   return (
-    <>
-      {(Object.keys(SIDES) as (keyof typeof SIDES)[]).map((side) => (
-        <div key={side} className={`dupes dupes-${side}`} aria-hidden="true">
-          {SIDES[side].map((dupe) => (
-            // --dupe-index desfasa la animación de flotar de cada hueco.
-            <div key={dupe} className="dupe-slot" style={{ '--dupe-index': dupe } as CSSProperties}>
-              {dupe <= count.dupes && (
-                <img
-                  key={`${count.characterId}-${dupe}`}
-                  className="dupe-img"
-                  src={dupeImageUrl(count.characterId, dupe)}
-                  alt=""
-                  decoding="async"
-                  draggable={false}
-                  onPointerMove={tilt}
-                  onPointerLeave={untilt}
-                />
-              )}
-            </div>
-          ))}
+    <div className={`dupes dupes-${side}`} aria-hidden="true">
+      {images.map((src, i) => (
+        // --dupe-index desfasa la animación de flotar de cada hueco (el lado derecho, medio ciclo más).
+        <div key={i} className="dupe-slot" style={{ '--dupe-index': i + (side === 'right' ? 0.5 : 0) } as CSSProperties}>
+          <div
+            key={src}
+            className="dupe-card"
+            style={{ '--dupe-src': `url("${src}")` } as CSSProperties}
+            onPointerMove={tilt}
+            onPointerLeave={untilt}
+          >
+            <img className="dupe-img" src={src} alt="" decoding="async" draggable={false} />
+            <span className="dupe-glare" />
+          </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+/**
+ * En los márgenes de la página: a la izquierda, el arte de los Eidolones de los dupes del plan (de
+ * cualquier personaje, a partir de su segunda copia); a la derecha, los conos de luz del plan.
+ * Se llenan en orden (los Eidolones por filas y los conos por columnas); ver la disposición en styles.css.
+ * Solo se ve en pantallas lo bastante anchas para que haya margen.
+ */
+export function DupeGallery({ dupes, lightCones }: Props) {
+  return (
+    <>
+      <Side side="left" images={dupes.map((d) => dupeImageUrl(d.characterId, d.eidolon))} />
+      <Side side="right" images={lightCones.map(lightConeImageUrl)} />
     </>
   );
 }

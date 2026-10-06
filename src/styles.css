@@ -725,8 +725,12 @@ p {
 }
 
 /*
- * Eidolones del primer personaje del plan, en los márgenes a los lados de la app (1280px).
- * Solo cuando el margen da para verlos; tamaño según el margen y el alto de la ventana.
+ * En los márgenes a los lados de la app (1280px): Eidolones de los dupes del plan a la izquierda y conos
+ * de luz a la derecha, hasta 6 por lado. Solo cuando el margen da para verlos; tamaño según el margen y
+ * el alto de la ventana. Con poco margen, una columna de 6 por lado. Con margen de sobra, 3 filas: los
+ * Eidolones pasan a 2 columnas desde el segundo y los conos desde el cuarto (la primera, llena de arriba
+ * abajo); mientras hay una sola, va centrada. El tamaño se calcula siempre para las 2 columnas, así que
+ * nada cambia de tamaño al llenarse, y los dos lados empiezan a la altura de la primera fila de Eidolones.
  */
 .dupes {
   display: none;
@@ -734,34 +738,75 @@ p {
 @media (min-width: 1480px) {
   .dupes {
     --dupe-gutter: calc((100vw - 1280px) / 2);
-    --dupe-size: min(240px, calc(var(--dupe-gutter) - 24px), calc((100vh - 80px) / 3));
+    --dupe-gap: 8px;
+    /* Columnas y filas posibles por lado, y tamaño de los Eidolones: de ellos salen la altura y las filas de los dos lados. */
+    --eidolon-cols: 1;
+    --eidolon-rows: 6;
+    --eidolon-size: min(
+      200px,
+      calc((var(--dupe-gutter) - 24px - (var(--eidolon-cols) - 1) * var(--dupe-gap)) / var(--eidolon-cols)),
+      calc((100vh - 80px - (var(--eidolon-rows) - 1) * var(--dupe-gap)) / var(--eidolon-rows))
+    );
+    /* El bloque de Eidolones, centrado en vertical. */
+    --dupe-top: calc(
+      (100vh - var(--eidolon-rows) * var(--eidolon-size) - (var(--eidolon-rows) - 1) * var(--dupe-gap)) / 2
+    );
+    /* Ancho / alto de cada hueco: el arte de los Eidolones es cuadrado y el icono de los conos, 348 × 408. */
+    --dupe-ratio: 1;
+    /* Columnas en uso: las que pide el contenido (ver los :has de abajo), sin pasar de las que caben. */
+    --dupe-wanted: 1;
+    --dupe-cols: min(var(--eidolon-cols), var(--dupe-wanted));
+    --dupe-width: calc(var(--dupe-cols) * var(--dupe-size) + (var(--dupe-cols) - 1) * var(--dupe-gap));
     position: fixed;
-    top: 50%;
-    transform: translateY(-50%);
-    display: grid;
-    gap: 8px;
-    width: var(--dupe-size);
+    top: var(--dupe-top);
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: var(--dupe-gap);
+    width: var(--dupe-width);
+    height: calc(
+      var(--eidolon-rows) * var(--dupe-size) / var(--dupe-ratio) + (var(--eidolon-rows) - 1) * var(--dupe-gap)
+    );
     /* Solo decoración: el hueco no captura el ratón (solo la imagen, para inclinarse) y nada se selecciona. */
     pointer-events: none;
     user-select: none;
   }
   .dupes-left {
-    left: calc((var(--dupe-gutter) - var(--dupe-size)) / 2);
+    --dupe-size: var(--eidolon-size);
+    left: calc((var(--dupe-gutter) - var(--dupe-width)) / 2);
   }
+  .dupes-left:has(> :nth-child(2)) {
+    --dupe-wanted: 2;
+  }
+  /* Los conos, por columnas y con el alto de fila de los Eidolones (más estrechos si no caben a lo ancho). */
   .dupes-right {
-    right: calc((var(--dupe-gutter) - var(--dupe-size)) / 2);
+    --dupe-ratio: calc(348 / 408);
+    --dupe-size: min(
+      calc(var(--eidolon-size) * var(--dupe-ratio)),
+      calc((var(--dupe-gutter) - 24px - (var(--eidolon-cols) - 1) * var(--dupe-gap)) / var(--eidolon-cols))
+    );
+    flex-direction: column;
+    right: calc((var(--dupe-gutter) - var(--dupe-width)) / 2);
+  }
+  .dupes-right:has(> :nth-child(4)) {
+    --dupe-wanted: 2;
   }
   .dupe-slot {
-    aspect-ratio: 1;
+    width: var(--dupe-size);
+    aspect-ratio: var(--dupe-ratio);
     /* La sombra va en el hueco (no en la imagen) para que la animación de flotar la mueva sin chocar con la de entrada. */
     filter: drop-shadow(var(--dupe-shadow-low));
+  }
+  .dupe-card {
+    position: relative;
+    height: 100%;
+    pointer-events: auto;
   }
   .dupe-img {
     display: block;
     width: 100%;
     height: 100%;
     object-fit: contain;
-    pointer-events: auto;
     /*
      * Borde blanco que sigue la silueta (el arte tiene forma irregular con transparencia, así que border
      * no sirve): sombras sin difuminar de 1px en 4 direcciones.
@@ -769,25 +814,79 @@ p {
     filter: drop-shadow(1px 0 0 var(--dupe-outline)) drop-shadow(-1px 0 0 var(--dupe-outline))
       drop-shadow(0 1px 0 var(--dupe-outline)) drop-shadow(0 -1px 0 var(--dupe-outline));
   }
+  /*
+   * Cristal al pasar el ratón: un brillo redondo en el lado contrario al ratón (el que se levanta) y
+   * una franja diagonal que se desplaza con él. Va recortado con la propia imagen como máscara (mismo
+   * encaje que object-fit: contain), así que solo brilla la silueta. Las imágenes de nanoka.cc permiten
+   * CORS, que las máscaras necesitan.
+   */
+  .dupe-glare {
+    position: absolute;
+    inset: 0;
+    /*
+     * Para que parezca cristal y no plástico, la franja tiene el borde bastante marcado (2,5 puntos de
+     * transición: menos se ve recortado, más vuelve a parecer plástico). El brillo redondo cae rápido.
+     */
+    --glare-x0: var(--glare-x, 50%);
+    background:
+      linear-gradient(
+        115deg,
+        transparent calc(var(--glare-x0) - 11.5%),
+        var(--dupe-glare-band) calc(var(--glare-x0) - 9%),
+        var(--dupe-glare-band) calc(var(--glare-x0) + 9%),
+        transparent calc(var(--glare-x0) + 11.5%)
+      ),
+      radial-gradient(
+        circle at var(--glare-x0) var(--glare-y, 50%),
+        var(--dupe-glare) 0%,
+        var(--dupe-glare-soft) 14%,
+        transparent 28%
+      );
+    mix-blend-mode: screen;
+    mask: var(--dupe-src) center / contain no-repeat;
+    opacity: 0;
+    /* Igual que la vuelta de la tarjeta (.dupe-card), para que se apague a la vez que se endereza. */
+    transition: opacity 0.6s ease-out;
+  }
+  .dupe-card:hover .dupe-glare {
+    opacity: 1;
+    transition-duration: 0.15s;
+  }
+}
+@media (min-width: 2000px) {
+  .dupes {
+    --eidolon-cols: 2;
+    --eidolon-rows: 3;
+  }
 }
 /* Sombra pegada al fondo (abajo) y despegada (arriba): al subir se aleja, se difumina y se aclara. */
 :root {
   --dupe-outline: #fff;
+  --dupe-glare: rgb(255 255 255 / 0.3);
+  --dupe-glare-soft: rgb(255 255 255 / 0.09);
+  --dupe-glare-band: rgb(255 255 255 / 0.22);
   --dupe-shadow-low: 0 4px 8px color-mix(in srgb, var(--text) 30%, transparent);
   --dupe-shadow-high: 0 18px 24px color-mix(in srgb, var(--text) 14%, transparent);
 }
 @media (prefers-reduced-motion: no-preference) {
-  .dupe-img {
+  .dupe-card {
     animation: dupe-in 0.4s ease-out;
   }
   /*
    * Flotar sobre el fondo, sin desplazarse: 3 s subiendo hacia la pantalla (algo más grande y con la
    * sombra más lejos) y 3 s bajando. Cada hueco va desfasado para que no suban todos a la vez.
    */
-  /* Al pasar el ratón, la tarjeta se inclina muy poco hacia él (ver DupeGallery.tsx); al salir, vuelve despacio. */
-  .dupe-img {
-    transform: perspective(700px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
-    transition: transform 0.5s ease-out;
+  /*
+   * Al pasar el ratón, la tarjeta se acerca un poco y se inclina hacia él (ver DupeGallery.tsx),
+   * siguiéndolo casi sin retraso; al salir, vuelve despacio.
+   */
+  .dupe-card {
+    transform: perspective(600px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+    transition: transform 0.6s ease-out;
+  }
+  .dupe-card:hover {
+    transform: perspective(600px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) scale(1.06);
+    transition-duration: 0.12s;
   }
   .dupe-slot {
     animation: dupe-float 3s ease-in-out infinite alternate;

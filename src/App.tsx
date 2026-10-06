@@ -12,7 +12,7 @@ import { ShardPacks } from './components/ShardPacks';
 import { SourcesPanel } from './components/SourcesPanel';
 import { calculate } from './engine/calculate';
 import { todayISO } from './engine/dates';
-import { countDupes } from './engine/dupes';
+import { planDupes, planLightCones } from './engine/dupes';
 import type { Skin, ThemeMode } from './engine/types';
 import { useCatalog } from './state/catalog';
 import { exportState, HIDDEN_SKINS, importState, useAppState } from './state/store';
@@ -115,7 +115,11 @@ export default function App() {
   };
 
   const result = useMemo(() => calculate(state, today), [state, today]);
-  const dupes = useMemo(() => countDupes(state.plannedPulls, catalogSync.catalog), [state.plannedPulls, catalogSync.catalog]);
+  const dupes = useMemo(() => planDupes(state.plannedPulls, catalogSync.catalog), [state.plannedPulls, catalogSync.catalog]);
+  const lightCones = useMemo(
+    () => planLightCones(state.plannedPulls, catalogSync.catalog),
+    [state.plannedPulls, catalogSync.catalog],
+  );
   const totals = useMemo(() => new Map(result.bySource.map((t) => [t.sourceId, t])), [result]);
   const skin = state.settings.skin;
   const theme = state.settings.theme;
@@ -234,7 +238,7 @@ export default function App() {
         </p>
       )}
 
-      {tab === 'main' && <DupeGallery count={dupes} />}
+      {tab === 'main' && <DupeGallery dupes={dupes} lightCones={lightCones} />}
       {tab === 'main' ? (
         <main className="layout" role="tabpanel" id="panel-main" aria-labelledby="tab-main">
           <div className="col-inputs">

@@ -8,11 +8,17 @@ export const MAX_DUPES = 6;
 export const dupeImageUrl = (characterId: string, dupe: number) =>
   `https://static.nanoka.cc/assets/hsr/rank/_dependencies/textures/${characterId}/${characterId}_Rank_${dupe}.webp`;
 
-export interface DupeCount {
+/** Conos de luz que se muestran a la derecha, como mucho. */
+export const MAX_LIGHT_CONES = 6;
+
+/** Icono mediano de un cono de luz. */
+export const lightConeImageUrl = (lightConeId: string) =>
+  `https://static.nanoka.cc/assets/hsr/lightconemediumicon/${lightConeId}.webp`;
+
+export interface Dupe {
   characterId: string;
-  name: string;
-  /** Copias de más en el plan (0 = solo la primera), hasta 6. */
-  dupes: number;
+  /** Eidolón que da esta copia: 1…6. */
+  eidolon: number;
 }
 
 const key = (name: string) => name.trim().toLowerCase();
@@ -32,19 +38,30 @@ export function resolve(name: string, entries: CatalogEntry[]): CatalogEntry | n
 }
 
 /**
- * Dupes del primer personaje del plan: cuántas veces más aparece ese mismo personaje. Cuenta cada fila
- * cuyo nombre empieza por el del personaje, así se pueden anotar ("Kafka E1", "Kafka E2"…).
- * Solo cuenta si el personaje está en el catálogo (hace falta su id para las imágenes).
+ * Dupes de todos los personajes del plan, en orden: la segunda copia de un personaje es su E1, la
+ * tercera su E2… (hasta E6). Cuenta cada fila cuyo nombre empieza por el del personaje, así se pueden
+ * anotar ("Kafka E1", "Kafka E2"…). Solo los personajes del catálogo (hace falta su id para las
+ * imágenes), y como mucho 6 en total.
  */
-export function countDupes(plan: PlannedPull[], catalog: Catalog | null): DupeCount | null {
-  if (!catalog) return null;
-  const first = plan.find((p) => p.kind === 'character' && p.name.trim());
-  if (!first) return null;
-  const entry = resolve(first.name, catalog.character);
-  if (!entry) return null;
-  const copies = plan.filter((p) => p.kind === 'character' && resolve(p.name, catalog.character)?.id === entry.id).length;
-  return { characterId: entry.id, name: entry.name, dupes: Math.min(MAX_DUPES, copies - 1) };
+export function planDupes(plan: PlannedPull[], catalog: Catalog | null): Dupe[] {
+  if (!catalog) return [];
+  const copies = new Map<string, number>();
+  const dupes: Dupe[] = [];
+  for (const p of plan) {
+    if (p.kind !== 'character') continue;
+    const entry = resolve(p.name, catalog.character);
+    if (!entry) continue;
+    const eidolon = copies.get(entry.id) ?? 0;
+    copies.set(entry.id, eidolon + 1);
+    if (eidolon >= 1 && eidolon <= MAX_DUPES) dupes.push({ characterId: entry.id, eidolon });
+    if (dupes.length === MAX_DUPES) break;
+  }
+  return dupes;
 }
+
+/** Nombre de la copia número `earlier` (0 = la primera) de un personaje: "Kafka", "Kafka | E1"… Más allá de E6, sin dupe. */
+const dupeName = (entry: CatalogEntry, earlier: number) =>
+  earlier >= 1 && earlier <= MAX_DUPES ? `${entry.name} | E${earlier}` : entry.name;
 
 /**
  * Nombre para una fila de personaje al elegirlo: si ya sale antes en el plan, se le añade el dupe que
@@ -55,5 +72,41 @@ export function nameWithDupe(plan: PlannedPull[], pullId: string, entry: Catalog
   const earlier = plan
     .slice(0, Math.max(0, index))
     .filter((p) => p.kind === 'character' && resolve(p.name, entries)?.id === entry.id).length;
-  return earlier >= 1 && earlier <= MAX_DUPES ? `${entry.name} | E${earlier}` : entry.name;
+  return dupeName(entry, earlier);
+}
+
+/**
+ * Vuelve a numerar los dupes según su orden en el plan (al borrar una fila, "Kafka | E3" pasa a ser
+ * "Kafka | E2"). Solo toca los nombres que son el del personaje con o sin dupe ("Kafka", "Kafka | E3",
+ * "kafka e3"); lo que lleve otro texto se deja como está, aunque cuente como copia.
+ */
+export function renumberDupes(plan: PlannedPull[], entries: CatalogEntry[]): PlannedPull[] {
+  const copies = new Map<string, number>();
+  return plan.map((p) => {
+    if (p.kind !== 'character') return p;
+    const entry = resolve(p.name, entries);
+    if (!entry) return p;
+    const earlier = copies.get(entry.id) ?? 0;
+    copies.set(entry.id, earlier + 1);
+    const rest = key(p.name).slice(key(entry.name).length);
+    if (!/^(\s*\|?\s*e\d+)?$/.test(rest)) return p;
+    const name = dupeName(entry, earlier);
+    return name === p.name ? p : { ...p, name };
+  });
+}
+
+/**
+ * Ids de los conos del plan, en orden y con repetidos (cada copia es un icono), hasta 6.
+ * Solo los que están en el catálogo (hace falta su id para las imágenes).
+ */
+export function planLightCones(plan: PlannedPull[], catalog: Catalog | null): string[] {
+  if (!catalog) return [];
+  const ids: string[] = [];
+  for (const p of plan) {
+    if (p.kind !== 'lightCone') continue;
+    const entry = resolve(p.name, catalog.lightCone);
+    if (entry) ids.push(entry.id);
+    if (ids.length === MAX_LIGHT_CONES) break;
+  }
+  return ids;
 }
