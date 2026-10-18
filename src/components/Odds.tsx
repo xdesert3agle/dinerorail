@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
 import type { Result } from '../engine/calculate';
 import { formatDate } from '../engine/dates';
+import { dupeOf, type RowCopy } from '../engine/dupes';
 import { guaranteedNeeded, planOdds, simulatePlan } from '../engine/odds';
 import { BANNERS, STARLIGHT_PER_4_STAR, type BannerModel } from '../engine/rules';
 import type { AppState } from '../engine/types';
+import { DupeBadge } from './DupeBadge';
 import { fmtInt, fmtSingles } from './format';
 import { Icon } from './Icon';
 import { KIND_GLYPH, KIND_LABEL } from './kinds';
@@ -11,6 +13,8 @@ import { KIND_GLYPH, KIND_LABEL } from './kinds';
 interface Props {
   state: AppState;
   result: Result;
+  /** Qué copia es cada fila del plan, para mostrar su dupe. */
+  copies: (RowCopy | null)[];
 }
 
 const RUNS = 10000;
@@ -51,7 +55,7 @@ const WORST_CASE_HELP =
   `El peor caso absoluto: todos los 5★ en el pity duro (${BANNERS.character.hardPity} personaje, ${BANNERS.lightCone.hardPity} cono), ` +
   'todos los 50/50 perdidos y solo el 4★ garantizado, del tipo que menos Cosmiluz da';
 
-export function Odds({ state, result }: Props) {
+export function Odds({ state, result, copies }: Props) {
   const plan = state.plannedPulls;
   const { pity, guaranteed } = state;
   const { countStarlight } = state.settings;
@@ -91,14 +95,18 @@ export function Odds({ state, result }: Props) {
                 title={KIND_LABEL[p.kind]}
                 aria-hidden="true"
               />
-              {p.name ? (
-                <>
-                  <span className="sr-only">{KIND_LABEL[p.kind]}: </span>
-                  {p.name}
-                </>
-              ) : (
-                KIND_LABEL[p.kind]
-              )}
+              {/* El nombre se corta con puntos suspensivos; la etiqueta del dupe queda siempre a la vista. */}
+              <span className="odds-name-text">
+                {p.name ? (
+                  <>
+                    <span className="sr-only">{KIND_LABEL[p.kind]}: </span>
+                    {p.name}
+                  </>
+                ) : (
+                  KIND_LABEL[p.kind]
+                )}
+              </span>
+              <DupeBadge eidolon={dupeOf(copies[i] ?? null)} />
             </span>
             <span className="odds-bar" aria-hidden="true">
               <span style={{ width: `${odds.chances[i] * 100}%` }} />

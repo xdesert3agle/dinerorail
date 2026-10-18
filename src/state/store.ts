@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
+import { byName, clampEidolon } from '../engine/account';
 import { isValidISO } from '../engine/dates';
 import { defaultEventDate, defaultState } from '../engine/defaults';
 import { SHARD_PACKS } from '../engine/packs';
 import { clampPity } from '../engine/pulls';
 import { DEFAULT_HARD_PITY } from '../engine/rules';
 import type {
+  Account,
   AppState,
+  OwnedCharacter,
   Patch,
   PatchEvent,
   PlannedPull,
@@ -130,13 +133,30 @@ function normalizePatch(v: unknown, defaults: Patch[]): Patch | null {
 
 const PULL_KINDS: PullKind[] = ['character', 'lightCone'];
 
+/** Migración: el dupe iba escrito delante del nombre ("E1 | Kafka"); ahora se calcula y el nombre va solo. */
+const OLD_DUPE_PREFIX = /^E\d+ \| /;
+
 function normalizePlannedPull(v: unknown): PlannedPull | null {
   if (!isObj(v) || !PULL_KINDS.includes(v.kind as PullKind)) return null;
   return {
     id: str(v.id, newId('pull')),
-    name: str(v.name),
+    name: str(v.name).replace(OLD_DUPE_PREFIX, ''),
     kind: v.kind as PullKind,
     winsFiftyFifty: v.winsFiftyFifty === true,
+  };
+}
+
+/** Personajes de la cuenta: con id, sin repetidos y con el Eidolón entre 0 y 6. */
+function normalizeAccount(v: unknown): Account {
+  const o = isObj(v) ? v : {};
+  const byId = new Map<string, OwnedCharacter>();
+  for (const c of Array.isArray(o.characters) ? o.characters : []) {
+    if (!isObj(c) || typeof c.id !== 'string' || byId.has(c.id)) continue;
+    byId.set(c.id, { id: c.id, name: str(c.name, c.id), eidolon: clampEidolon(num(c.eidolon)) });
+  }
+  return {
+    characters: [...byId.values()].sort(byName),
+    importedAt: typeof o.importedAt === 'number' && Number.isFinite(o.importedAt) ? o.importedAt : null,
   };
 }
 
@@ -200,6 +220,7 @@ export function normalizeState(raw: unknown): AppState {
     plannedPulls: Array.isArray(raw.plannedPulls)
       ? raw.plannedPulls.map(normalizePlannedPull).filter((p): p is PlannedPull => p !== null)
       : d.plannedPulls,
+    account: normalizeAccount(raw.account),
     targetDate: date(raw.targetDate, d.targetDate),
     sources,
     patches: Array.isArray(raw.patches)

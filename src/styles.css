@@ -1470,13 +1470,13 @@ tfoot td {
 }
 /* Tiradas futuras */
 /*
- * Una línea por tirada: orden · nombre · tipo · 50/50 · coste · quitar.
+ * Una línea por tirada: orden · miniatura · nombre · 50/50 · coste · quitar.
  * Las filas comparten columnas (subgrid) para que todo quede alineado.
  */
 .pull-list {
   --pull-gap: 8px;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto auto auto;
+  grid-template-columns: auto auto minmax(0, 1fr) auto auto auto;
   column-gap: var(--pull-gap);
 }
 .pull-row {
@@ -1494,20 +1494,147 @@ tfoot td {
   padding-top: 0;
   border-top: none;
 }
-.pull-row input[type='text'],
-.pull-row select {
+.pull-row input[type='text'] {
   padding: calc(6px - var(--input-nudge)) 8px calc(6px + var(--input-nudge));
+  /* Nombre largo cortado con puntos suspensivos (mientras no se escribe en él). */
+  text-overflow: ellipsis;
 }
-.pull-row select {
-  width: auto;
-  min-width: 7.25em;
-  /* El ancho sale de la opción más larga ("Cono de Luz"); esto deja aire entre el texto y el chevron. */
-  padding-right: 32px;
+/*
+ * Miniatura de la fila: el retrato redondo del personaje (en un hueco redondo) o el icono del cono.
+ * Debajo, el icono del tipo, que se ve si no hay imagen.
+ */
+.pull-portrait {
+  position: relative;
+  display: grid;
+  place-items: center;
+  /* Del mismo alto que el campo del nombre (.pull-field), para que queden a la par. */
+  width: 3.375rem;
+  height: 3.375rem;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: 1rem;
+}
+.pull-portrait img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 0;
+  /* Opaca: el icono del tipo no asoma por la parte transparente de la imagen. */
+  background: var(--surface-2);
+}
+.pull-portrait-character {
+  border-radius: 50%;
+}
+/* Algo de zoom: la cara llena más el círculo (el hueco recorta lo que sobra). */
+.pull-portrait-character img {
+  transform: scale(1.25);
+}
+/*
+ * El tipo va dentro del recuadro del nombre: sin nombre, centrado y a tamaño normal, como un placeholder;
+ * al entrar a escribir o con nombre, sube arriba a la izquierda en pequeño y el nombre queda debajo.
+ * El campo gana relleno por arriba para dejarle sitio y mide lo mismo que la miniatura (3,375rem).
+ */
+.pull-field {
+  position: relative;
+}
+.pull-field .field-label {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 9px;
+  transform: translateY(-50%);
+  font-size: 1rem;
+  line-height: 1.2;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.pull-field:is(:focus-within, .has-value) .field-label {
+  top: 7px;
+  transform: none;
+  font-size: 0.6875rem;
+  /* Arriba, más apagada aún: es una pista, el nombre es lo que manda. */
+  opacity: 0.8;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .pull-field .field-label {
+    transition:
+      top 150ms ease,
+      transform 150ms ease,
+      font-size 150ms ease,
+      opacity 150ms ease;
+  }
+}
+.pull-row .pull-field input[type='text'] {
+  height: 3.375rem;
+  padding-top: calc(18px - var(--input-nudge));
+  padding-bottom: calc(6px + var(--input-nudge));
+}
+/*
+ * La etiqueta del dupe y el nombre pintado encima, a la altura del texto del input (no del centro del
+ * recuadro). El texto del input queda a (relleno de arriba − relleno de abajo) / 2 = 6px − nudge del
+ * centro; así el nombre no salta al entrar a escribir, en ningún tema.
+ */
+.pull-field .combo-badge {
+  top: calc(50% + 6.5px - var(--input-nudge));
+}
+.pull-field .combo-value {
+  top: calc(50% + 6px - var(--input-nudge));
 }
 /* Nombre con sugerencias del catálogo: la lista flota bajo el campo, por encima de las filas siguientes. */
 .combo {
   position: relative;
   min-width: 0;
+}
+/*
+ * Nombre elegido, pintado encima del campo mientras no se escribe en él (el texto del input queda
+ * transparente): así no lo mueve un carácter de otra fuente, como la ★ (ver NameCombobox). Empieza donde
+ * el texto del input (borde + relleno) y se corta con puntos suspensivos antes del dupe.
+ */
+.combo.is-masked input[type='text'] {
+  color: transparent;
+}
+.combo-value {
+  position: absolute;
+  left: 9px;
+  right: 9px;
+  top: 50%;
+  transform: translateY(-50%);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+.combo.has-badge .combo-value {
+  right: calc(3rem + 1px);
+}
+/* Etiqueta dentro del campo, a la derecha (el dupe); el nombre largo se corta antes de llegar a ella. */
+.combo-badge {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  pointer-events: none;
+}
+.combo.has-badge input[type='text'] {
+  padding-right: 3rem;
+}
+/* Dupe de una fila ("E1"): píldora con el acento del tema, aparte del nombre. */
+.dupe-badge {
+  flex: none;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
 }
 .combo-list {
   position: absolute;
@@ -1539,6 +1666,12 @@ tfoot td {
 .combo-option[aria-selected='true'] {
   background: var(--surface-2);
   color: var(--accent-text);
+}
+/* Lo escrito no coincide con ningún nombre: aviso, no se puede elegir. */
+.combo-empty {
+  padding: 6px 8px;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 /* Con la lista abierta, la tarjeta pasa por encima de las de debajo (algunas crean su propio apilamiento). */
 .card:has(.combo.is-open) {
@@ -1648,12 +1781,57 @@ tfoot td {
   font-size: 0.875rem;
   color: var(--danger);
 }
+/* Cuenta: importación del perfil (columna estrecha) y lista de personajes con su Eidolón. */
+.account-import p.muted:not(.small) {
+  font-size: 0.875rem;
+}
+.account-error {
+  font-size: 0.875rem;
+  color: var(--danger);
+}
+/* Varias columnas de personajes según el ancho; cada fila, nombre a la izquierda y Eidolón a la derecha. */
+.account-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 6px 20px;
+}
+.account-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.account-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.account-eidolon {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  color: var(--text-secondary);
+}
+/* Ancho fijo: una cifra y las flechas. */
+.account-eidolon .field {
+  width: 4.25rem;
+}
+.account-eidolon input {
+  text-align: right;
+}
 .pull-row.is-short .pull-name {
   border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
 }
 /* El botón de quitar tiene ancho fijo para que el balance se alinee con los costes de las filas. */
 .pull-row > .btn-icon {
   width: 28px;
+}
+/* El asa, con su propio relleno pero sin el ancho fijo de .btn-icon (el del botón de quitar). */
+.pull-row > .drag-handle {
+  width: auto;
 }
 /*
  * El balance va fuera de las columnas de las filas: así su ancho nunca ensancha la columna
@@ -1677,11 +1855,8 @@ tfoot td {
   .pull-row input[type='text'] {
     padding: calc(6px - var(--input-nudge)) 5px calc(6px + var(--input-nudge));
   }
-  .pull-row select {
-    padding: calc(6px - var(--input-nudge)) 26px calc(6px + var(--input-nudge)) 5px;
-    background-position:
-      right 13px center,
-      right 8px center;
+  .pull-row .combo-value {
+    left: 6px;
   }
   .pull-cost {
     font-size: 1.125rem;
@@ -1780,11 +1955,19 @@ tfoot td {
   align-items: center;
 }
 /* Icono del tipo delante del nombre; el nombre sigue cortándose con puntos suspensivos si no cabe. */
-.odds-name .glyph {
-  margin-right: 4px;
-  vertical-align: middle;
-}
+/* Icono · nombre (se corta con puntos suspensivos) · dupe, que queda siempre a la vista. */
 .odds-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+/* Entre el icono y el nombre, 4px (como antes); entre el nombre y el dupe, los 6px del gap. */
+.odds-name .glyph {
+  margin-right: -2px;
+}
+.odds-name-text {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2338,6 +2521,10 @@ tfoot td {
   border-color: var(--border);
   border-radius: 3px;
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text) 10%, transparent);
+}
+/* El nombre pintado encima del campo del planificador, con la misma letra que el campo. */
+:where(:root[data-skin='sparxie']) .combo-value {
+  font-family: var(--font-type);
 }
 /* Calendario: esquinas casi rectas, como las ventanas, y la misma letra de máquina de escribir. */
 :where(:root[data-skin='sparxie']) .air-datepicker {

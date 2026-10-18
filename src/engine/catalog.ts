@@ -28,7 +28,7 @@ export interface Catalog {
 const isFiveStar = (rank: unknown) => typeof rank === 'string' && rank.endsWith('5');
 
 /** Quita el marcado del juego ("LV.<unbreak>999</unbreak>") y los espacios de sobra. */
-const cleanName = (name: string) => name.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+export const cleanName = (name: string) => name.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
 
 /**
  * Convierte el JSON de un endpoint en la lista de 5★, sin repetidos.

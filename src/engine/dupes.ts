@@ -1,12 +1,18 @@
+import { ownedCopies } from './account';
 import type { Catalog, CatalogEntry } from './catalog';
-import type { PlannedPull } from './types';
+import { MAX_EIDOLON } from './rules';
+import type { OwnedCharacter, PlannedPull } from './types';
 
-/** Un 5★ llega como mucho a E6. */
+/** Dupes que se muestran a la izquierda, como mucho. */
 export const MAX_DUPES = 6;
 
 /** Arte de cada Eidolón (dupe) de un personaje: 1…6. */
 export const dupeImageUrl = (characterId: string, dupe: number) =>
   `https://static.nanoka.cc/assets/hsr/rank/_dependencies/textures/${characterId}/${characterId}_Rank_${dupe}.webp`;
+
+/** Retrato redondo de un personaje (128×128, centrado en la cara): para la miniatura de cada fila del plan. */
+export const characterPortraitUrl = (characterId: string) =>
+  `https://static.nanoka.cc/assets/hsr/avatarroundicon/${characterId}.webp`;
 
 /** Conos de luz que se muestran a la derecha, como mucho. */
 export const MAX_LIGHT_CONES = 6;
@@ -21,11 +27,18 @@ export interface Dupe {
   eidolon: number;
 }
 
+/** Copia de un personaje en una fila del plan. */
+export interface RowCopy {
+  characterId: string;
+  /** Copias de ese personaje que hay antes (cuenta + filas anteriores): 0 es la primera, 1 su E1… */
+  eidolon: number;
+}
+
 const key = (name: string) => name.trim().toLowerCase();
 
 /**
- * Personaje del catálogo por el que empieza un nombre ("Kafka E1" → Kafka). Si encajan varios, el más
- * largo: "Silver Wolf LV.999 E1" es Silver Wolf LV.999, no Silver Wolf.
+ * Personaje del catálogo de un nombre. Vale con que el nombre empiece por el del personaje; si encajan
+ * varios, el más largo: "Silver Wolf LV.999" es Silver Wolf LV.999, no Silver Wolf.
  */
 export function resolve(name: string, entries: CatalogEntry[]): CatalogEntry | null {
   const k = key(name);
@@ -38,61 +51,41 @@ export function resolve(name: string, entries: CatalogEntry[]): CatalogEntry | n
 }
 
 /**
- * Dupes de todos los personajes del plan, en orden: la segunda copia de un personaje es su E1, la
- * tercera su E2… (hasta E6). Cuenta cada fila cuyo nombre empieza por el del personaje, así se pueden
- * anotar ("Kafka E1", "Kafka E2"…). Solo los personajes del catálogo (hace falta su id para las
- * imágenes), y como mucho 6 en total.
+ * Qué copia es cada fila del plan (null si no es un personaje del catálogo). El dupe no se guarda en el
+ * nombre: sale de aquí, del orden del plan y de las copias de la cuenta, que van antes. Con Kafka en E1
+ * en la cuenta, la primera Kafka del plan es su E2 y la siguiente su E3. Así, al quitar, reordenar o
+ * cambiar la cuenta, los dupes se recalculan solos.
  */
-export function planDupes(plan: PlannedPull[], catalog: Catalog | null): Dupe[] {
-  if (!catalog) return [];
-  const copies = new Map<string, number>();
-  const dupes: Dupe[] = [];
-  for (const p of plan) {
-    if (p.kind !== 'character') continue;
-    const entry = resolve(p.name, catalog.character);
-    if (!entry) continue;
+export function planCopies(
+  plan: PlannedPull[],
+  entries: CatalogEntry[] | null,
+  owned: OwnedCharacter[] = [],
+): (RowCopy | null)[] {
+  if (!entries) return plan.map(() => null);
+  const copies = ownedCopies(owned);
+  return plan.map((p) => {
+    if (p.kind !== 'character') return null;
+    const entry = resolve(p.name, entries);
+    if (!entry) return null;
     const eidolon = copies.get(entry.id) ?? 0;
     copies.set(entry.id, eidolon + 1);
-    if (eidolon >= 1 && eidolon <= MAX_DUPES) dupes.push({ characterId: entry.id, eidolon });
+    return { characterId: entry.id, eidolon };
+  });
+}
+
+/** Eidolón que da una copia (1…6), o null si es la primera o pasa de E6 (ya no es un dupe). */
+export const dupeOf = (copy: RowCopy | null): number | null =>
+  copy && copy.eidolon >= 1 && copy.eidolon <= MAX_EIDOLON ? copy.eidolon : null;
+
+/** Dupes del plan en orden (de cualquier personaje, a partir de su segunda copia), como mucho 6. */
+export function planDupes(copies: (RowCopy | null)[]): Dupe[] {
+  const dupes: Dupe[] = [];
+  for (const copy of copies) {
+    const eidolon = dupeOf(copy);
+    if (copy && eidolon !== null) dupes.push({ characterId: copy.characterId, eidolon });
     if (dupes.length === MAX_DUPES) break;
   }
   return dupes;
-}
-
-/** Nombre de la copia número `earlier` (0 = la primera) de un personaje: "Kafka", "Kafka | E1"… Más allá de E6, sin dupe. */
-const dupeName = (entry: CatalogEntry, earlier: number) =>
-  earlier >= 1 && earlier <= MAX_DUPES ? `${entry.name} | E${earlier}` : entry.name;
-
-/**
- * Nombre para una fila de personaje al elegirlo: si ya sale antes en el plan, se le añade el dupe que
- * le toca ("Kafka | E1" para la segunda copia). Más allá de E6 se deja el nombre tal cual.
- */
-export function nameWithDupe(plan: PlannedPull[], pullId: string, entry: CatalogEntry, entries: CatalogEntry[]): string {
-  const index = plan.findIndex((p) => p.id === pullId);
-  const earlier = plan
-    .slice(0, Math.max(0, index))
-    .filter((p) => p.kind === 'character' && resolve(p.name, entries)?.id === entry.id).length;
-  return dupeName(entry, earlier);
-}
-
-/**
- * Vuelve a numerar los dupes según su orden en el plan (al borrar una fila, "Kafka | E3" pasa a ser
- * "Kafka | E2"). Solo toca los nombres que son el del personaje con o sin dupe ("Kafka", "Kafka | E3",
- * "kafka e3"); lo que lleve otro texto se deja como está, aunque cuente como copia.
- */
-export function renumberDupes(plan: PlannedPull[], entries: CatalogEntry[]): PlannedPull[] {
-  const copies = new Map<string, number>();
-  return plan.map((p) => {
-    if (p.kind !== 'character') return p;
-    const entry = resolve(p.name, entries);
-    if (!entry) return p;
-    const earlier = copies.get(entry.id) ?? 0;
-    copies.set(entry.id, earlier + 1);
-    const rest = key(p.name).slice(key(entry.name).length);
-    if (!/^(\s*\|?\s*e\d+)?$/.test(rest)) return p;
-    const name = dupeName(entry, earlier);
-    return name === p.name ? p : { ...p, name };
-  });
 }
 
 /**

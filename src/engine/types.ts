@@ -100,6 +100,22 @@ export interface ShardPackPurchase {
   firstBonus: boolean;
 }
 
+/** Personaje que ya se tiene en la cuenta. */
+export interface OwnedCharacter {
+  /** Id del juego: el mismo que en el catálogo. */
+  id: string;
+  name: string;
+  /** Eidolón actual: 0…6. */
+  eidolon: number;
+}
+
+/** Personajes de la cuenta, importados del perfil del juego (y editables a mano). */
+export interface Account {
+  characters: OwnedCharacter[];
+  /** Momento de la última importación (ms desde 1970), o null si nunca se ha importado. */
+  importedAt: number | null;
+}
+
 export interface AppState {
   version: 1;
   inventory: Inventory;
@@ -107,6 +123,7 @@ export interface AppState {
   /** Se perdió el último 50/50 de ese banner: el próximo 5★ es el destacado seguro. */
   guaranteed: Record<PullKind, boolean>;
   plannedPulls: PlannedPull[];
+  account: Account;
   targetDate: ISODate;
   sources: Source[];
   patches: Patch[];

@@ -13,6 +13,16 @@ export const fmtSingles = (n: number, digits: 1 | 2 = 2) => (digits === 1 ? dec1
 /** Como fmtSingles, pero sin decimales cuando la cifra es entera (81 en vez de 81,00). */
 export const fmtSinglesShort = (n: number) => (Math.abs(n - Math.round(n)) < 1e-9 ? int.format(Math.round(n)) : dec2.format(n));
 
+const timeFmt = new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digit' });
+// A mano y no con Intl: según el navegador, es-ES sale con punto ("nov.") o sin él ("nov").
+const MONTHS = ['ene.', 'feb.', 'mar.', 'abr.', 'may.', 'jun.', 'jul.', 'ago.', 'sept.', 'oct.', 'nov.', 'dic.'];
+
+/** Fecha y hora de un momento (ms), como "5 nov. 2026 a las 18:30". */
+export const fmtMoment = (ms: number) => {
+  const d = new Date(ms);
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()} a las ${timeFmt.format(d)}`;
+};
+
 export function describeSchedule(s: Schedule): string {
   switch (s.type) {
     case 'daily':

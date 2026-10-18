@@ -187,6 +187,7 @@ export function defaultState(today = todayISO()): AppState {
     pity: { character: 0, lightCone: 0 },
     guaranteed: { character: false, lightCone: false },
     plannedPulls: [],
+    account: { characters: [], importedAt: null },
     shardPacks: {},
     targetDate: addDays(today, 42),
     sources: defaultSources(today),

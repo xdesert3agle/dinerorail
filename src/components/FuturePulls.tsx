@@ -20,7 +20,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useState } from 'react';
 import type { Result } from '../engine/calculate';
 import type { Catalog, CatalogEntry } from '../engine/catalog';
-import { nameWithDupe, renumberDupes } from '../engine/dupes';
+import { characterPortraitUrl, dupeOf, lightConeImageUrl, resolve, type RowCopy } from '../engine/dupes';
 import { formatDate } from '../engine/dates';
 import { planPulls, type PlannedPullResult } from '../engine/pulls';
 import {
@@ -35,6 +35,7 @@ import {
 import type { AppState, PlannedPull, PullKind } from '../engine/types';
 import { newId } from '../engine/util';
 import { withSettings } from '../state/store';
+import { DupeBadge } from './DupeBadge';
 import { fmtInt } from './format';
 import { Icon } from './Icon';
 import { KIND_GLYPH, KIND_LABEL } from './kinds';
@@ -46,11 +47,11 @@ interface Props {
   result: Result;
   /** Personajes y conos 5★ sincronizados, para sugerir nombres (null si aún no se ha sincronizado). */
   catalog: Catalog | null;
+  /** Qué copia es cada fila del plan, para mostrar su dupe. */
+  copies: (RowCopy | null)[];
   onChange: (update: (s: AppState) => AppState) => void;
 }
 
-/** Etiquetas cortas para el selector, para que cada tirada quepa en una sola línea. */
-const KIND_SHORT: Record<PullKind, string> = { character: 'Personaje', lightCone: 'Cono de Luz' };
 
 const pct = new Intl.NumberFormat('es-ES', { style: 'percent', maximumFractionDigits: 1 });
 const dec = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2 });
@@ -58,7 +59,7 @@ const dec1 = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 });
 
 const NO_SUGGESTIONS: CatalogEntry[] = [];
 
-export function FuturePulls({ state, result, catalog, onChange }: Props) {
+export function FuturePulls({ state, result, catalog, copies, onChange }: Props) {
   const plan = state.plannedPulls;
   const countStarlight = state.settings.countStarlight;
   const rows = planPulls(plan, state.pity, result.wholeSingles, {
@@ -77,15 +78,14 @@ export function FuturePulls({ state, result, catalog, onChange }: Props) {
     onChange((s) => ({ ...s, plannedPulls: update(s.plannedPulls) }));
   const updatePull = (id: string, patch: Partial<PlannedPull>) =>
     setPlan((p) => p.map((x) => (x.id === id ? { ...x, ...patch } : x)));
-  // Al elegir un personaje que ya sale antes en el plan, se le añade el dupe: "Kafka | E1".
-  const commitName = (id: string, kind: PullKind, entry: CatalogEntry) =>
-    setPlan((p) => {
-      const name = kind === 'character' ? nameWithDupe(p, id, entry, catalog?.character ?? NO_SUGGESTIONS) : entry.name;
-      return p.map((x) => (x.id === id ? { ...x, name } : x));
-    });
-  // Al quitar una fila, los dupes que venían detrás se renumeran: sin "Aha | E2", "Aha | E3" pasa a E2.
-  const remove = (id: string) =>
-    setPlan((p) => renumberDupes(p.filter((x) => x.id !== id), catalog?.character ?? NO_SUGGESTIONS));
+  // El nombre es solo el del catálogo: el dupe de cada fila se calcula aparte (ver planCopies).
+  const remove = (id: string) => setPlan((p) => p.filter((x) => x.id !== id));
+  // Miniatura de cada fila: el retrato del personaje o el icono del cono (null si no está en el catálogo).
+  const portraitOf = (pull: PlannedPull) => {
+    const entry = catalog ? resolve(pull.name, catalog[pull.kind]) : null;
+    if (!entry) return null;
+    return pull.kind === 'character' ? characterPortraitUrl(entry.id) : lightConeImageUrl(entry.id);
+  };
   // La fila recién añadida enfoca su nombre para poder escribir directamente.
   const [focusId, setFocusId] = useState<string | null>(null);
   const add = (kind: PullKind) => {
@@ -175,8 +175,9 @@ export function FuturePulls({ state, result, catalog, onChange }: Props) {
                   pull={pull}
                   row={rows[i]}
                   suggestions={catalog?.[pull.kind] ?? NO_SUGGESTIONS}
+                  dupe={dupeOf(copies[i] ?? null)}
+                  portrait={portraitOf(pull)}
                   onUpdate={(patch) => updatePull(pull.id, patch)}
-                  onCommitName={(entry) => commitName(pull.id, pull.kind, entry)}
                   autoFocus={pull.id === focusId}
                   onRemove={() => remove(pull.id)}
                 />
@@ -234,13 +235,16 @@ interface RowProps {
   pull: PlannedPull;
   row: PlannedPullResult;
   suggestions: CatalogEntry[];
-  onCommitName: (entry: CatalogEntry) => void;
+  /** Eidolón que da esta fila (1…6), o null si no es un dupe. */
+  dupe: number | null;
+  /** URL de la miniatura, o null si la fila no tiene nombre del catálogo. */
+  portrait: string | null;
   autoFocus: boolean;
   onUpdate: (patch: Partial<PlannedPull>) => void;
   onRemove: () => void;
 }
 
-function SortablePullRow({ pull, row, suggestions, onUpdate, onCommitName, autoFocus, onRemove }: RowProps) {
+function SortablePullRow({ pull, row, suggestions, dupe, portrait, onUpdate, autoFocus, onRemove }: RowProps) {
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({
     id: pull.id,
   });
@@ -271,30 +275,45 @@ function SortablePullRow({ pull, row, suggestions, onUpdate, onCommitName, autoF
         </svg>
       </button>
 
-      <NameCombobox
-        inputClassName="pull-name"
-        value={pull.name}
-        entries={suggestions}
-        placeholder={pull.kind === 'character' ? 'Nombre del personaje' : 'Nombre del cono de luz'}
-        aria-label="Nombre"
-        onChange={(name) => onUpdate({ name })}
-        onCommit={onCommitName}
-        autoFocus={autoFocus}
-      />
+      {/*
+        Miniatura: el retrato (o el icono del cono) tapa el icono del tipo, que queda debajo para las filas
+        sin nombre o si la imagen no carga. El tipo se elige al añadir la fila y no se cambia.
+      */}
+      <span className={`pull-portrait pull-portrait-${pull.kind}`} aria-hidden="true">
+        <span className={`glyph ${KIND_GLYPH[pull.kind]}`} />
+        {portrait && (
+          <img
+            key={portrait}
+            src={portrait}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            draggable={false}
+            onError={(e) => {
+              e.currentTarget.style.visibility = 'hidden';
+            }}
+          />
+        )}
+      </span>
 
-      <select
-        className="pull-kind"
-        value={pull.kind}
-        aria-label="Tipo"
-        // Un nombre de personaje no vale para un cono (ni al revés): al cambiar de tipo se vacía.
-        onChange={(e) => onUpdate({ kind: e.target.value as PullKind, name: '' })}
-      >
-        {(Object.keys(KIND_LABEL) as PullKind[]).map((k) => (
-          <option key={k} value={k}>
-            {KIND_SHORT[k]}
-          </option>
-        ))}
-      </select>
+      {/*
+        El tipo, dentro del recuadro del nombre: hace de placeholder y sube al escribir o con nombre
+        (ver .pull-field en styles.css).
+      */}
+      <div className={`field pull-field${pull.name ? ' has-value' : ''}`}>
+        <span className="field-label" aria-hidden="true">
+          {KIND_LABEL[pull.kind]}
+        </span>
+        <NameCombobox
+          inputClassName="pull-name"
+          value={pull.name}
+          entries={suggestions}
+          aria-label={`Nombre (${KIND_LABEL[pull.kind].toLowerCase()})`}
+          badge={dupe !== null && <DupeBadge eidolon={dupe} />}
+          onChange={(name) => onUpdate({ name })}
+          autoFocus={autoFocus}
+        />
+      </div>
 
       {/* Con el garantizado, la primera fila de ese banner se gana seguro: la casilla queda fija. */}
       <label

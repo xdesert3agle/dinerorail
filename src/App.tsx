@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { AccountPanel } from './components/AccountPanel';
 import { ContentSync } from './components/ContentSync';
 import { CurrentInventory } from './components/CurrentInventory';
 import { DupeGallery } from './components/DupeGallery';
@@ -12,7 +13,7 @@ import { ShardPacks } from './components/ShardPacks';
 import { SourcesPanel } from './components/SourcesPanel';
 import { calculate } from './engine/calculate';
 import { todayISO } from './engine/dates';
-import { planDupes, planLightCones } from './engine/dupes';
+import { planCopies, planDupes, planLightCones } from './engine/dupes';
 import type { Skin, ThemeMode } from './engine/types';
 import { useCatalog } from './state/catalog';
 import { exportState, HIDDEN_SKINS, importState, useAppState, withSettings } from './state/store';
@@ -47,9 +48,9 @@ const THEMES: { id: ManualTheme; title: string }[] = [
   { id: 'dark', title: 'Modo oscuro' },
 ];
 
-type Tab = 'main' | 'settings';
+type Tab = 'main' | 'account' | 'settings';
 
-// Iconos de 16px con el color del texto de la pestaña: calculadora y deslizadores de ajustes.
+// Iconos de 16px con el color del texto de la pestaña: calculadora, persona y deslizadores de ajustes.
 const TAB_ICONS: Record<Tab, ReactNode> = {
   main: (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" aria-hidden="true">
@@ -58,6 +59,12 @@ const TAB_ICONS: Record<Tab, ReactNode> = {
       <g fill="currentColor" stroke="none">
         {[5.75, 8, 10.25].map((x) => [9, 11.75].map((y) => <circle key={`${x}-${y}`} cx={x} cy={y} r="0.8" />))}
       </g>
+    </svg>
+  ),
+  account: (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+      <circle cx="8" cy="5.25" r="2.75" />
+      <path d="M2.75 14.25a5.25 5.25 0 0 1 10.5 0" />
     </svg>
   ),
   settings: (
@@ -72,6 +79,7 @@ const TAB_ICONS: Record<Tab, ReactNode> = {
 
 const TABS: { id: Tab; label: string; hash: string }[] = [
   { id: 'main', label: 'Calculadora', hash: '' },
+  { id: 'account', label: 'Cuenta', hash: '#cuenta' },
   { id: 'settings', label: 'Configuración', hash: '#configuracion' },
 ];
 // La pestaña vive en el hash de la URL: sobrevive a recargas y el botón Atrás vuelve a la anterior.
@@ -115,7 +123,12 @@ export default function App() {
   };
 
   const result = useMemo(() => calculate(state, today), [state, today]);
-  const dupes = useMemo(() => planDupes(state.plannedPulls, catalogSync.catalog), [state.plannedPulls, catalogSync.catalog]);
+  // Qué copia es cada fila (su dupe): lo usan la planificación, la previsión y la galería de dupes.
+  const copies = useMemo(
+    () => planCopies(state.plannedPulls, catalogSync.catalog?.character ?? null, state.account.characters),
+    [state.plannedPulls, catalogSync.catalog, state.account.characters],
+  );
+  const dupes = useMemo(() => planDupes(copies), [copies]);
   const lightCones = useMemo(
     () => planLightCones(state.plannedPulls, catalogSync.catalog),
     [state.plannedPulls, catalogSync.catalog],
@@ -248,10 +261,14 @@ export default function App() {
           </div>
           <aside className="col-results">
             <ResultSummary result={result} skin={skin} />
-            <FuturePulls state={state} result={result} catalog={catalogSync.catalog} onChange={setState} />
-            <Odds state={state} result={result} />
+            <FuturePulls state={state} result={result} catalog={catalogSync.catalog} copies={copies} onChange={setState} />
+            <Odds state={state} result={result} copies={copies} />
             <Breakdown result={result} />
           </aside>
+        </main>
+      ) : tab === 'account' ? (
+        <main className="layout-settings" role="tabpanel" id="panel-account" aria-labelledby="tab-account">
+          <AccountPanel state={state} catalog={catalogSync.catalog} onChange={setState} />
         </main>
       ) : (
         <main className="layout-settings" role="tabpanel" id="panel-settings" aria-labelledby="tab-settings">

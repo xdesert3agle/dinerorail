@@ -8,6 +8,9 @@ import type { PullKind } from './types';
 /** Jades que cuesta una tirada (1 single). */
 export const JADES_PER_PULL = 160;
 
+/** Eidolón máximo de un personaje: E6 (la 7.ª copia). */
+export const MAX_EIDOLON = 6;
+
 /** Tiradas que se cuentan por cada 5★ en el peor caso de la planificación, si no se configura otra cosa. */
 export const DEFAULT_HARD_PITY: Record<PullKind, number> = { character: 80, lightCone: 70 };
 

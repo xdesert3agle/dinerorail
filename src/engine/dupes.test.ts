@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Catalog } from './catalog';
-import { nameWithDupe, planDupes, planLightCones, renumberDupes } from './dupes';
-import type { PlannedPull, PullKind } from './types';
+import { dupeOf, planCopies, planDupes, planLightCones } from './dupes';
+import type { OwnedCharacter, PlannedPull, PullKind } from './types';
 
 const catalog: Catalog = {
   syncedAt: 0,
@@ -26,87 +26,75 @@ const pull = (name: string, kind: PullKind = 'character'): PlannedPull => ({
   winsFiftyFifty: false,
 });
 
-describe('dupes del plan', () => {
-  const kafka = (eidolon: number) => ({ characterId: '1005', eidolon });
+describe('copias del plan', () => {
+  const ids = (plan: PlannedPull[], owned: OwnedCharacter[] = []) =>
+    planCopies(plan, catalog.character, owned).map((c) => (c ? `${c.characterId}:${c.eidolon}` : null));
 
-  it('saca los dupes de cada personaje en orden, a partir de su segunda copia', () => {
+  it('cada fila de personaje es la copia que le toca, por orden; lo demás es null', () => {
     const plan = [
       pull(''),
       pull('Kafka'),
       pull('Patience Is All You Need', 'lightCone'),
       pull('Acheron'),
       pull(' kafka '),
-      pull('Acheron | E1'),
-      pull('Kafka | E2'),
+      pull('Acheron'),
+      pull('Kafkita'),
     ];
-    expect(planDupes(plan, catalog)).toEqual([kafka(1), { characterId: '1308', eidolon: 1 }, kafka(2)]);
-  });
-
-  it('cuenta los nombres que empiezan por el del personaje', () => {
-    const plan = [pull('Aeon ★ Aha'), pull('Aeon ★ Aha E1'), pull('aeon ★ aha e2')];
-    expect(planDupes(plan, catalog).map((d) => d.eidolon)).toEqual([1, 2]);
+    expect(ids(plan)).toEqual([null, '1005:0', null, '1308:0', '1005:1', '1308:1', null]);
   });
 
   it('si encajan varios personajes, se queda con el nombre más largo', () => {
-    const plan = [pull('Silver Wolf LV.999 E0'), pull('Silver Wolf'), pull('Silver Wolf LV.999 E1')];
-    expect(planDupes(plan, catalog)).toEqual([{ characterId: '1506', eidolon: 1 }]);
+    expect(ids([pull('Silver Wolf LV.999'), pull('Silver Wolf'), pull('Silver Wolf LV.999')])).toEqual([
+      '1506:0',
+      '1006:0',
+      '1506:1',
+    ]);
   });
 
-  it('una sola copia no tiene dupes', () => {
-    expect(planDupes([pull('Kafka'), pull('Acheron')], catalog)).toEqual([]);
+  it('las copias de la cuenta van antes: con Kafka en E1, la primera del plan es su E2', () => {
+    const owned = [{ id: '1005', name: 'Kafka', eidolon: 1 }];
+    expect(ids([pull('Kafka'), pull('Acheron'), pull('Kafka')], owned)).toEqual(['1005:2', '1308:0', '1005:3']);
+  });
+
+  it('se recalculan solas: al quitar una fila o reordenar, las demás cambian de dupe', () => {
+    const [a, b, c] = [pull('Kafka'), pull('Kafka'), pull('Kafka')];
+    expect(ids([a, b, c])).toEqual(['1005:0', '1005:1', '1005:2']);
+    expect(ids([a, c])).toEqual(['1005:0', '1005:1']);
+    expect(planCopies([c, a], catalog.character).map((x) => x?.eidolon)).toEqual([0, 1]);
+  });
+
+  it('sin catálogo no se sabe qué copia es ninguna', () => {
+    expect(planCopies([pull('Kafka'), pull('Kafka')], null)).toEqual([null, null]);
+  });
+});
+
+describe('dupe de una copia', () => {
+  it('la primera copia no es un dupe; de la segunda a la séptima, E1…E6; más allá, tampoco', () => {
+    const copy = (eidolon: number) => ({ characterId: '1005', eidolon });
+    expect([0, 1, 6, 7].map((e) => dupeOf(copy(e)))).toEqual([null, 1, 6, null]);
+    expect(dupeOf(null)).toBeNull();
+  });
+});
+
+describe('dupes del plan', () => {
+  const kafka = (eidolon: number) => ({ characterId: '1005', eidolon });
+  const dupes = (plan: PlannedPull[], owned: OwnedCharacter[] = []) => planDupes(planCopies(plan, catalog.character, owned));
+
+  it('saca los dupes de cada personaje en orden, a partir de su segunda copia', () => {
+    const plan = [pull('Kafka'), pull('Acheron'), pull('Kafka'), pull('Acheron'), pull('Kafka')];
+    expect(dupes(plan)).toEqual([kafka(1), { characterId: '1308', eidolon: 1 }, kafka(2)]);
   });
 
   it('cada personaje llega como mucho a E6 y en total no hay más de 6', () => {
-    expect(planDupes(Array.from({ length: 9 }, () => pull('Kafka')), catalog)).toEqual([1, 2, 3, 4, 5, 6].map(kafka));
+    expect(dupes(Array.from({ length: 9 }, () => pull('Kafka')))).toEqual([1, 2, 3, 4, 5, 6].map(kafka));
     const mixed = [pull('Kafka'), pull('Acheron'), ...Array.from({ length: 4 }, () => [pull('Kafka'), pull('Acheron')]).flat()];
-    expect(planDupes(mixed, catalog)).toHaveLength(6);
+    expect(dupes(mixed)).toHaveLength(6);
   });
 
-  it('sin catálogo o con un nombre que no está, no cuenta', () => {
-    expect(planDupes([pull('Kafka'), pull('Kafka')], null)).toEqual([]);
-    expect(planDupes([pull('Kafkita'), pull('Kafkita')], catalog)).toEqual([]);
-  });
-});
-
-describe('nombre con el dupe al elegir un personaje', () => {
-  const kafka = catalog.character[0];
-
-  it('la primera copia va sin dupe y las siguientes con el que les toca', () => {
-    const plan = [pull('Kafka'), pull('Acheron'), pull('Kafka | E1'), pull('')];
-    expect(nameWithDupe(plan, plan[0].id, kafka, catalog.character)).toBe('Kafka');
-    expect(nameWithDupe(plan, plan[3].id, kafka, catalog.character)).toBe('Kafka | E2');
-  });
-
-  it('los conos no cuentan y de E6 no pasa', () => {
-    const cone = [pull('Kafka', 'lightCone'), pull('')];
-    expect(nameWithDupe(cone, cone[1].id, kafka, catalog.character)).toBe('Kafka');
-    const many = [...Array.from({ length: 7 }, () => pull('Kafka')), pull('')];
-    expect(nameWithDupe(many, many[7].id, kafka, catalog.character)).toBe('Kafka');
-  });
-});
-
-describe('renumerar dupes', () => {
-  const names = (plan: PlannedPull[]) => renumberDupes(plan, catalog.character).map((p) => p.name);
-
-  it('al quitar un dupe, los siguientes bajan uno', () => {
-    const plan = [pull('Aeon ★ Aha'), pull('Aeon ★ Aha | E1'), pull('Aeon ★ Aha | E3'), pull('Kafka')];
-    expect(names(plan)).toEqual(['Aeon ★ Aha', 'Aeon ★ Aha | E1', 'Aeon ★ Aha | E2', 'Kafka']);
-  });
-
-  it('al quitar la primera copia, la siguiente se queda sin dupe', () => {
-    expect(names([pull('Kafka | E1'), pull('Acheron'), pull('Kafka | E2')])).toEqual(['Kafka', 'Acheron', 'Kafka | E1']);
-  });
-
-  it('acepta el dupe escrito a mano y deja los nombres con otro texto', () => {
-    const plan = [pull('Kafka'), pull('kafka e2'), pull('Kafka (rerun)'), pull('Kafka E9')];
-    expect(names(plan)).toEqual(['Kafka', 'Kafka | E1', 'Kafka (rerun)', 'Kafka | E3']);
-  });
-
-  it('no toca los conos ni lo que no está en el catálogo, y conserva las filas sin cambios', () => {
-    const plan = [pull('Kafka | E1', 'lightCone'), pull('Kafkita | E3'), pull('Kafka')];
-    const out = renumberDupes(plan, catalog.character);
-    expect(out.map((p) => p.name)).toEqual(['Kafka | E1', 'Kafkita | E3', 'Kafka']);
-    expect(out[2]).toBe(plan[2]);
+  it('con la cuenta: Kafka en E1 → la primera del plan da su E2; ya en E6, ninguna es un dupe', () => {
+    const owned = [{ id: '1005', name: 'Kafka', eidolon: 1 }];
+    expect(dupes([pull('Kafka'), pull('Acheron')], owned)).toEqual([kafka(2)]);
+    expect(dupes([pull('Kafka')], [{ ...owned[0], eidolon: 6 }])).toEqual([]);
   });
 });
 

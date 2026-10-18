@@ -1,15 +1,6 @@
 import { useEffect, useState } from 'react';
 import { SYNC_COOLDOWN_MS, type CatalogSync } from '../state/catalog';
-
-const timeFmt = new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digit' });
-// A mano y no con Intl: según el navegador, es-ES sale con punto ("nov.") o sin él ("nov").
-const MONTHS = ['ene.', 'feb.', 'mar.', 'abr.', 'may.', 'jun.', 'jul.', 'ago.', 'sept.', 'oct.', 'nov.', 'dic.'];
-
-/** Fecha de la sincronización, como "5 nov. 2026". */
-const fmtSyncDate = (ms: number) => {
-  const d = new Date(ms);
-  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
-};
+import { fmtMoment } from './format';
 
 /** Segundos que quedan, como "0:42". */
 const fmtWait = (ms: number) => {
@@ -44,7 +35,7 @@ export function ContentSync({ catalog, syncing, error, lastAttempt, sync }: Cata
       </header>
       <p className="muted">
         {catalog
-          ? `Sincronizado el ${fmtSyncDate(catalog.syncedAt)} a las ${timeFmt.format(catalog.syncedAt)}.`
+          ? `Sincronizado el ${fmtMoment(catalog.syncedAt)}.`
           : 'Descarga los personajes y conos de luz 5★ para sugerirlos en la planificación.'}
       </p>
       <div className="content-sync-row">

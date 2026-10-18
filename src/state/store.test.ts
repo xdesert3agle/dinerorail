@@ -94,4 +94,38 @@ describe('normalizeState', () => {
   it('rechaza archivos que no son copias de seguridad', () => {
     expect(() => normalizeState({ foo: 1 })).toThrow();
   });
+
+  it('la cuenta: vacía si falta (datos antiguos), sin repetidos y con el Eidolón entre 0 y 6', () => {
+    const old = JSON.parse(JSON.stringify(defaultState())) as Record<string, any>;
+    delete old.account;
+    expect(normalizeState(old).account).toEqual({ characters: [], importedAt: null });
+
+    old.account = {
+      importedAt: 1760000000000,
+      characters: [
+        { id: '1308', name: 'Acheron', eidolon: 2 },
+        { id: '1005', name: 'Kafka', eidolon: 9 },
+        { id: '1005', name: 'Kafka', eidolon: 1 },
+        { name: 'Sin id', eidolon: 1 },
+        { id: '1006', eidolon: -1 },
+      ],
+    };
+    expect(normalizeState(old).account).toEqual({
+      importedAt: 1760000000000,
+      characters: [
+        { id: '1006', name: '1006', eidolon: 0 },
+        { id: '1308', name: 'Acheron', eidolon: 2 },
+        { id: '1005', name: 'Kafka', eidolon: 6 },
+      ],
+    });
+  });
+
+  it('quita el dupe escrito delante del nombre (ahora se calcula aparte)', () => {
+    const old = JSON.parse(JSON.stringify(defaultState())) as Record<string, any>;
+    old.plannedPulls = [
+      { id: 'a', name: 'E1 | Silver Wolf LV.999', kind: 'character', winsFiftyFifty: false },
+      { id: 'b', name: 'Kafka', kind: 'character', winsFiftyFifty: false },
+    ];
+    expect(normalizeState(old).plannedPulls.map((p) => p.name)).toEqual(['Silver Wolf LV.999', 'Kafka']);
+  });
 });
