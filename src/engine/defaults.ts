@@ -1,8 +1,7 @@
 import { addDays, todayISO } from './dates';
-import { DEFAULT_HARD_PITY } from './pulls';
+import { DEFAULT_HARD_PITY } from './rules';
 import type { AppState, Reward, Source } from './types';
 
-export const JADES_PER_PULL = 160;
 /** Duración habitual de un parche: se usa para proponer la fecha de inicio de un parche nuevo. */
 export const PATCH_LENGTH_DAYS = 42;
 

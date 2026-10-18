@@ -22,20 +22,22 @@ import type { Result } from '../engine/calculate';
 import type { Catalog, CatalogEntry } from '../engine/catalog';
 import { nameWithDupe, renumberDupes } from '../engine/dupes';
 import { formatDate } from '../engine/dates';
+import { planPulls, type PlannedPullResult } from '../engine/pulls';
 import {
   FOUR_STAR_RATE,
-  planPulls,
   PULLS_PER_4_STAR,
   STARLIGHT_PER_4_STAR,
   STARLIGHT_PER_5_STAR,
   STARLIGHT_PER_5_STAR_E6,
   STARLIGHT_PER_AVERAGE_4_STAR,
   STARLIGHT_PER_PASS,
-  type PlannedPullResult,
-} from '../engine/pulls';
+} from '../engine/rules';
 import type { AppState, PlannedPull, PullKind } from '../engine/types';
+import { newId } from '../engine/util';
+import { withSettings } from '../state/store';
 import { fmtInt } from './format';
 import { Icon } from './Icon';
+import { KIND_GLYPH, KIND_LABEL } from './kinds';
 import { Toggle } from './Toggle';
 import { NameCombobox } from './NameCombobox';
 
@@ -47,7 +49,6 @@ interface Props {
   onChange: (update: (s: AppState) => AppState) => void;
 }
 
-const KIND_LABEL: Record<PullKind, string> = { character: 'Personaje', lightCone: 'Cono de luz' };
 /** Etiquetas cortas para el selector, para que cada tirada quepa en una sola línea. */
 const KIND_SHORT: Record<PullKind, string> = { character: 'Personaje', lightCone: 'Cono de Luz' };
 
@@ -57,12 +58,10 @@ const dec1 = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 });
 
 const NO_SUGGESTIONS: CatalogEntry[] = [];
 
-const newId = () => `pull-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-
 export function FuturePulls({ state, result, catalog, onChange }: Props) {
   const plan = state.plannedPulls;
   const countStarlight = state.settings.countStarlight;
-  const rows = planPulls(plan, state.pity, result.wholeSingles, result.timeline, {
+  const rows = planPulls(plan, state.pity, result.wholeSingles, {
     countStarlight,
     hardPity: state.settings.hardPity,
     guaranteed: state.guaranteed,
@@ -90,7 +89,7 @@ export function FuturePulls({ state, result, catalog, onChange }: Props) {
   // La fila recién añadida enfoca su nombre para poder escribir directamente.
   const [focusId, setFocusId] = useState<string | null>(null);
   const add = (kind: PullKind) => {
-    const id = newId();
+    const id = newId('pull');
     setFocusId(id);
     setPlan((p) => [...p, { id, name: '', kind, winsFiftyFifty: false }]);
   };
@@ -138,7 +137,7 @@ export function FuturePulls({ state, result, catalog, onChange }: Props) {
             aria-label="Añadir personaje"
             onClick={() => add('character')}
           >
-            +<span className="glyph glyph-character" aria-hidden="true" />
+            +<span className={`glyph ${KIND_GLYPH.character}`} aria-hidden="true" />
           </button>
           <button
             type="button"
@@ -147,7 +146,7 @@ export function FuturePulls({ state, result, catalog, onChange }: Props) {
             aria-label="Añadir cono de luz"
             onClick={() => add('lightCone')}
           >
-            +<span className="glyph glyph-light-cone" aria-hidden="true" />
+            +<span className={`glyph ${KIND_GLYPH.lightCone}`} aria-hidden="true" />
           </button>
         </div>
       </header>
@@ -189,7 +188,7 @@ export function FuturePulls({ state, result, catalog, onChange }: Props) {
           <div className="pull-summary">
             <Toggle
               checked={countStarlight}
-              onChange={(countStarlight) => onChange((s) => ({ ...s, settings: { ...s.settings, countStarlight } }))}
+              onChange={(countStarlight) => onChange(withSettings({ countStarlight }))}
               title={[
                 'Cosmiluz que devuelven las tiradas del plan (la de Recursos actuales ya está sumada)',
                 '',

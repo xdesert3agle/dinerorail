@@ -2,9 +2,11 @@ import { useMemo } from 'react';
 import type { Result } from '../engine/calculate';
 import { formatDate } from '../engine/dates';
 import { guaranteedNeeded, planOdds, simulatePlan } from '../engine/odds';
-import type { AppState, PullKind } from '../engine/types';
+import { BANNERS, STARLIGHT_PER_4_STAR, type BannerModel } from '../engine/rules';
+import type { AppState } from '../engine/types';
 import { fmtInt, fmtSingles } from './format';
 import { Icon } from './Icon';
+import { KIND_GLYPH, KIND_LABEL } from './kinds';
 
 interface Props {
   state: AppState;
@@ -12,7 +14,6 @@ interface Props {
 }
 
 const RUNS = 10000;
-const KIND_LABEL: Record<PullKind, string> = { character: 'Personaje', lightCone: 'Cono de luz' };
 
 /**
  * Porcentaje legible, sin decimales. Solo dice 100 % si llega aunque todo salga en el pity duro,
@@ -26,16 +27,29 @@ function fmtPct(p: number, certain: boolean, impossible: boolean): string {
   return `${Math.round(p * 100)} %`;
 }
 
+// Los textos de ayuda salen de las reglas (rules.ts), para que no se desfasen si cambian.
+const rate = new Intl.NumberFormat('es-ES', { style: 'percent', maximumFractionDigits: 1 });
+
+/** "Personaje: 0,6 %, sube desde la tirada 74, seguro en la 90; 50/50". */
+const describeBanner = (label: string, b: BannerModel) => {
+  const featured = Math.round(b.featuredChance * 100);
+  return `${label}: ${rate.format(b.base)}, sube desde la tirada ${b.softPityFrom}, seguro en la ${b.hardPity}; ${featured}/${100 - featured}`;
+};
+
 const MODEL_HELP = [
   `Simulación de ${fmtInt(RUNS)} intentos con las probabilidades reales:`,
-  'Personaje: 0,6 %, sube desde la tirada 74, seguro en la 90; 50/50',
-  'Cono: 0,8 %, sube desde la tirada 66, seguro en la 80; 75/25',
+  describeBanner('Personaje', BANNERS.character),
+  describeBanner('Cono', BANNERS.lightCone),
   'Empieza en tu pity actual y con tu garantizado. No usa la casilla 50/50 de cada fila.',
   'Solo dice 100 % si llega incluso en el peor caso absoluto.',
   '',
   'Peor caso: todos los 5★ en el pity duro, todos los 50/50 perdidos y solo el 4★ garantizado:',
-  'en conos, siempre cono (8); en personaje, alternando cono (8) y personaje (20).',
+  `en conos, siempre cono (${STARLIGHT_PER_4_STAR.lightCone}); en personaje, alternando cono (${STARLIGHT_PER_4_STAR.lightCone}) y personaje (${STARLIGHT_PER_4_STAR.character}).`,
 ].join('\n');
+
+const WORST_CASE_HELP =
+  `El peor caso absoluto: todos los 5★ en el pity duro (${BANNERS.character.hardPity} personaje, ${BANNERS.lightCone.hardPity} cono), ` +
+  'todos los 50/50 perdidos y solo el 4★ garantizado, del tipo que menos Cosmiluz da';
 
 export function Odds({ state, result }: Props) {
   const plan = state.plannedPulls;
@@ -73,7 +87,7 @@ export function Odds({ state, result }: Props) {
             {/* El tipo va como icono (con su nombre en el tooltip y para lectores de pantalla). */}
             <span className="odds-name">
               <span
-                className={`glyph ${p.kind === 'character' ? 'glyph-character' : 'glyph-light-cone'}`}
+                className={`glyph ${KIND_GLYPH[p.kind]}`}
                 title={KIND_LABEL[p.kind]}
                 aria-hidden="true"
               />
@@ -119,7 +133,7 @@ export function Odds({ state, result }: Props) {
             {fmtInt(odds.p90Needed)}
           </dd>
         </div>
-        <div title="El peor caso absoluto: todos los 5★ en el pity duro (90 personaje, 80 cono), todos los 50/50 perdidos y solo el 4★ garantizado, del tipo que menos Cosmiluz da">
+        <div title={WORST_CASE_HELP}>
           <dt>100 % seguro</dt>
           <dd className="with-icon">
             <Icon kind="pass" size={20} decorative />

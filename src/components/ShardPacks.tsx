@@ -1,6 +1,7 @@
-import { JADES_PER_PULL } from '../engine/defaults';
 import { emptyPurchase, JPY_PER_EUR, packPrice, packShards, packsTotal, SHARD_PACKS } from '../engine/packs';
+import { JADES_PER_PULL } from '../engine/rules';
 import type { AppState, ShardPackPurchase } from '../engine/types';
+import { withSettings } from '../state/store';
 import { fmtInt, fmtSinglesShort } from './format';
 import { Icon } from './Icon';
 import { NumberField } from './NumberField';
@@ -92,7 +93,7 @@ export function ShardPacks({ state, onChange }: Props) {
 
       <Toggle
         checked={inYen}
-        onChange={(packsInYen) => onChange((s) => ({ ...s, settings: { ...s.settings, packsInYen } }))}
+        onChange={(packsInYen) => onChange(withSettings({ packsInYen }))}
         title={`Cambio: ${rate.format(JPY_PER_EUR)} ¥/€`}
       >
         Pagar con precios de Japón (¥)

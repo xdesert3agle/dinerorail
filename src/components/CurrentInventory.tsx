@@ -1,8 +1,10 @@
 import { useId } from 'react';
+import type { Result } from '../engine/calculate';
 import { addDays } from '../engine/dates';
-import { JADES_PER_PULL } from '../engine/defaults';
-import { clampPity, STARLIGHT_PER_PASS } from '../engine/pulls';
+import { clampPity } from '../engine/pulls';
+import { STARLIGHT_PER_PASS } from '../engine/rules';
 import type { AppState, Inventory, PullKind } from '../engine/types';
+import { withSettings } from '../state/store';
 import { fmtSinglesShort } from './format';
 import { Icon } from './Icon';
 import { DateField } from './DateField';
@@ -11,6 +13,7 @@ import { Toggle } from './Toggle';
 
 interface Props {
   state: AppState;
+  result: Result;
   today: string;
   onChange: (update: (s: AppState) => AppState) => void;
 }
@@ -27,15 +30,11 @@ const QUICK_TARGETS = [
   { label: '+3 meses', days: 91 },
 ];
 
-export function CurrentInventory({ state, today, onChange }: Props) {
+export function CurrentInventory({ state, result, today, onChange }: Props) {
   const targetDateId = useId();
   const inv = state.inventory;
   const { hardPity } = state.settings;
   const setInv = (patch: Partial<Inventory>) => onChange((s) => ({ ...s, inventory: { ...s.inventory, ...patch } }));
-  const currentSingles =
-    (inv.jades + (state.settings.includeShards ? inv.shards : 0)) / JADES_PER_PULL +
-    inv.specialPasses +
-    inv.starlight / STARLIGHT_PER_PASS;
   const setGuaranteed = (kind: PullKind, value: boolean) =>
     onChange((s) => ({ ...s, guaranteed: { ...s.guaranteed, [kind]: value } }));
 
@@ -46,7 +45,7 @@ export function CurrentInventory({ state, today, onChange }: Props) {
         <span className="muted with-icon" title="Singles que tienes ahora">
           <Icon kind="pass" size={18} decorative />
           <span className="sr-only">Singles ahora: </span>
-          {fmtSinglesShort(currentSingles)}
+          {fmtSinglesShort(result.currentSingles)}
         </span>
       </header>
 
@@ -72,7 +71,7 @@ export function CurrentInventory({ state, today, onChange }: Props) {
 
       <Toggle
         checked={state.settings.includeShards}
-        onChange={(includeShards) => onChange((s) => ({ ...s, settings: { ...s.settings, includeShards } }))}
+        onChange={(includeShards) => onChange(withSettings({ includeShards }))}
         title="Cada Esquirla Onírica cuenta como 1 Jade"
       >
         Contar Esquirlas como Jades

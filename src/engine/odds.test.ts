@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { BANNERS, fiveStarChance, guaranteedNeeded, planOdds, simulatePlan } from './odds';
+import { guaranteedNeeded, planOdds, simulatePlan } from './odds';
+import { BANNERS, fiveStarChance } from './rules';
 import type { PlannedPull, PullKind } from './types';
 
 const pull = (id: string, kind: PullKind): PlannedPull => ({ id, name: id, kind, winsFiftyFifty: false });

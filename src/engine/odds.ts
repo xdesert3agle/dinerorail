@@ -1,39 +1,18 @@
 import {
+  BANNERS,
+  fiveStarChance,
   FOUR_STAR_RATE,
   STARLIGHT_PER_4_STAR,
   STARLIGHT_PER_5_STAR,
   STARLIGHT_PER_AVERAGE_4_STAR,
   STARLIGHT_PER_PASS,
-} from './pulls';
+} from './rules';
 import type { Pity, PlannedPull, PullKind } from './types';
 
 /*
- * Probabilidades reales de los banners limitados (las publicadas por el juego, con el pity suave
- * que se ha medido en la comunidad):
- * - Personaje: 0,6 % por tirada; desde la 74 sube un 6 % por tirada; garantizado en la 90. 50/50.
- * - Cono: 0,8 % por tirada; desde la 66 sube un 7 % por tirada; garantizado en la 80. 75/25.
- * - 4★: 13 % por tirada con el garantizado (su media), con la Cosmiluz media de cada banner (pulls.ts).
+ * Simulación con las probabilidades reales de los banners limitados (BANNERS, en rules.ts).
+ * Los 4★ se cuentan por su media: 13 % por tirada con la Cosmiluz media de cada banner.
  */
-interface BannerModel {
-  base: number;
-  softPityFrom: number;
-  softPityStep: number;
-  hardPity: number;
-  featuredChance: number;
-}
-
-export const BANNERS: Record<PullKind, BannerModel> = {
-  character: { base: 0.006, softPityFrom: 74, softPityStep: 0.06, hardPity: 90, featuredChance: 0.5 },
-  lightCone: { base: 0.008, softPityFrom: 66, softPityStep: 0.07, hardPity: 80, featuredChance: 0.75 },
-};
-
-/** Probabilidad de 5★ en la tirada número `n` desde el último 5★ (empezando en 1). */
-export function fiveStarChance(kind: PullKind, n: number): number {
-  const b = BANNERS[kind];
-  if (n >= b.hardPity) return 1;
-  if (n < b.softPityFrom) return b.base;
-  return Math.min(1, b.base + b.softPityStep * (n - b.softPityFrom + 1));
-}
 
 /** Generador pseudoaleatorio con semilla: los resultados no cambian de un render a otro. */
 function mulberry32(seed: number) {

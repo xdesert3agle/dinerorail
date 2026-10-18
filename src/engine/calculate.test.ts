@@ -96,7 +96,8 @@ describe('calculate', () => {
 
   it('desactivar una fuente pone su aportación a 0', () => {
     const r = calculate(stateWith([], addDays(today, 100), today), today);
-    expect(r.income).toEqual({ jades: 0, specialPasses: 0 });
+    expect(r.incomeSingles).toBe(0);
+    expect(r.bySource).toEqual([]);
   });
 
   it('eventos del parche: cada uno en su fecha, ignorando los pasados y los posteriores al objetivo', () => {
@@ -120,7 +121,6 @@ describe('calculate', () => {
     const events = r.bySource.find((t) => t.sourceId === PATCH_EVENTS_ID);
     expect(events?.reward).toEqual({ jades: 500, specialPasses: 3 });
     expect(events?.count).toBe(1);
-    expect(r.patches.map((p) => p.version)).toEqual(['4.6']);
   });
 
   it('las fuentes por parche solo cuentan los parches de la tabla', () => {
@@ -134,12 +134,18 @@ describe('calculate', () => {
   it('fecha objetivo anterior a hoy es inválida', () => {
     const r = calculate(stateWith(['daily-training'], '2026-10-01', today), today);
     expect(r.valid).toBe(false);
-    expect(r.timeline).toEqual([]);
+    expect(r.bySource).toEqual([]);
   });
 
-  it('la serie acumulada termina en el total', () => {
-    const r = calculate(stateWith(['daily-training', 'weekly'], addDays(today, 30), today), today);
-    expect(r.timeline.at(-1)?.jades).toBe(r.final.jades);
+  it('las singles de ahora cuentan toda la Cosmiluz, también la que no llega a un Pase', () => {
+    const s = stateWith([], today, today);
+    s.inventory = { jades: 320, specialPasses: 3, shards: 160, starlight: 50 };
+    s.settings.includeShards = true;
+    const r = calculate(s, today);
+    // 320 + 160 Jades = 3, 3 Pases y 50 de Cosmiluz = 2,5.
+    expect(r.currentSingles).toBe(8.5);
+    expect(r.starlightPasses).toBe(2);
+    expect(r.starlightLeftover).toBe(10);
   });
 });
 

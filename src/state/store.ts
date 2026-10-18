@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { isValidISO } from '../engine/dates';
 import { defaultEventDate, defaultState } from '../engine/defaults';
 import { SHARD_PACKS } from '../engine/packs';
-import { clampPity, DEFAULT_HARD_PITY } from '../engine/pulls';
+import { clampPity } from '../engine/pulls';
+import { DEFAULT_HARD_PITY } from '../engine/rules';
 import type {
   AppState,
   Patch,
@@ -11,17 +12,17 @@ import type {
   PullKind,
   Reward,
   Schedule,
+  Settings,
   ShardPackPurchase,
   Skin,
   Source,
   SourceCategory,
   ThemeMode,
 } from '../engine/types';
+import { isObj, newId } from '../engine/util';
 
 const STORAGE_KEY = 'hsr-jades:v1';
 
-type Obj = Record<string, unknown>;
-const isObj = (v: unknown): v is Obj => typeof v === 'object' && v !== null && !Array.isArray(v);
 const num = (v: unknown, fallback = 0) => (typeof v === 'number' && Number.isFinite(v) ? v : fallback);
 const str = (v: unknown, fallback = '') => (typeof v === 'string' ? v : fallback);
 const date = (v: unknown, fallback: string) => (isValidISO(v) ? v : fallback);
@@ -98,7 +99,7 @@ function normalizeSource(v: unknown): Source | null {
 function normalizeEvent(v: unknown, patchStart: string): PatchEvent | null {
   if (!isObj(v)) return null;
   return {
-    id: str(v.id, `event-${Math.random().toString(36).slice(2)}`),
+    id: str(v.id, newId('event')),
     name: str(v.name),
     date: date(v.date, patchStart),
     jades: num(v.jades),
@@ -132,7 +133,7 @@ const PULL_KINDS: PullKind[] = ['character', 'lightCone'];
 function normalizePlannedPull(v: unknown): PlannedPull | null {
   if (!isObj(v) || !PULL_KINDS.includes(v.kind as PullKind)) return null;
   return {
-    id: str(v.id, `pull-${Math.random().toString(36).slice(2)}`),
+    id: str(v.id, newId('pull')),
     name: str(v.name),
     kind: v.kind as PullKind,
     winsFiftyFifty: v.winsFiftyFifty === true,
@@ -226,6 +227,11 @@ function load(): AppState {
   }
   return defaultState();
 }
+
+/** Actualización que cambia solo algunos ajustes: `onChange(withSettings({ includeShards }))`. */
+export const withSettings =
+  (patch: Partial<Settings>) =>
+  (s: AppState): AppState => ({ ...s, settings: { ...s.settings, ...patch } });
 
 export function useAppState() {
   const [state, setState] = useState<AppState>(load);

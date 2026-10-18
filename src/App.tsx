@@ -15,7 +15,7 @@ import { todayISO } from './engine/dates';
 import { planDupes, planLightCones } from './engine/dupes';
 import type { Skin, ThemeMode } from './engine/types';
 import { useCatalog } from './state/catalog';
-import { exportState, HIDDEN_SKINS, importState, useAppState } from './state/store';
+import { exportState, HIDDEN_SKINS, importState, useAppState, withSettings } from './state/store';
 
 const SKINS: { id: Skin; label: string; title: string }[] = [
   { id: 'kafka', label: 'Kafka', title: 'Tema Kafka: magenta y telaraña' },
@@ -171,7 +171,7 @@ export default function App() {
                 className="skin-option"
                 aria-pressed={skin === s.id}
                 title={s.title}
-                onClick={() => setState((st) => ({ ...st, settings: { ...st.settings, skin: s.id } }))}
+                onClick={() => setState(withSettings({ skin: s.id }))}
               >
                 <span className={`swatch swatch-${s.id}`} aria-hidden="true" />
                 {s.label}
@@ -187,7 +187,7 @@ export default function App() {
                 aria-pressed={activeTheme === t.id}
                 aria-label={t.title}
                 title={t.title}
-                onClick={() => setState((st) => ({ ...st, settings: { ...st.settings, theme: t.id } }))}
+                onClick={() => setState(withSettings({ theme: t.id }))}
               >
                 {THEME_ICONS[t.id]}
               </button>
@@ -242,7 +242,7 @@ export default function App() {
       {tab === 'main' ? (
         <main className="layout" role="tabpanel" id="panel-main" aria-labelledby="tab-main">
           <div className="col-inputs">
-            <CurrentInventory state={state} today={today} onChange={setState} />
+            <CurrentInventory state={state} result={result} today={today} onChange={setState} />
             <PatchTable state={state} today={today} onChange={setState} />
             <ShardPacks state={state} onChange={setState} />
           </div>

@@ -1,4 +1,5 @@
 import type { PullKind } from './types';
+import { isObj } from './util';
 
 /*
  * Catálogo de personajes y conos de luz 5★ para sugerir nombres en la planificación.
@@ -22,9 +23,6 @@ export interface Catalog {
   character: CatalogEntry[];
   lightCone: CatalogEntry[];
 }
-
-type Obj = Record<string, unknown>;
-const isObj = (v: unknown): v is Obj => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /** El rango viene como "CombatPowerAvatarRarityType5" o "CombatPowerLightconeRarity5". */
 const isFiveStar = (rank: unknown) => typeof rank === 'string' && rank.endsWith('5');

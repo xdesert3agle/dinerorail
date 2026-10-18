@@ -1,9 +1,8 @@
-import { JADES_PER_PULL } from './defaults';
 import { fromDayNum, toDayNum } from './dates';
 import { packsTotal } from './packs';
-import { STARLIGHT_PER_PASS } from './pulls';
+import { JADES_PER_PULL, STARLIGHT_PER_PASS } from './rules';
 import { occurrences } from './sources';
-import type { AppState, ISODate, IncomeEvent, Patch, Reward } from './types';
+import type { AppState, ISODate, IncomeEvent, Reward } from './types';
 
 export const PATCH_EVENTS_ID = 'patch-events';
 export const SHARD_PACKS_ID = 'shard-packs';
@@ -17,19 +16,15 @@ export interface SourceTotal {
   singles: number;
 }
 
-export interface TimelinePoint {
-  date: ISODate;
-  /** Singles acumuladas (inventario incluido). */
-  singles: number;
-  jades: number;
-}
-
 export interface Result {
   valid: boolean;
-  today: ISODate;
   targetDate: ISODate;
   days: number;
-  income: Reward;
+  /**
+   * Singles que se tienen ahora (con decimales): inventario, Esquirlas si se cuentan y toda la
+   * Cosmiluz, también la que aún no llega a un Pase.
+   */
+  currentSingles: number;
   incomeSingles: number;
   /** Inventario + ingresos. Las Esquirlas ya van sumadas en `jades` si están incluidas. */
   final: Reward;
@@ -44,8 +39,6 @@ export interface Result {
   wholeSingles: number;
   leftoverJades: number;
   bySource: SourceTotal[];
-  timeline: TimelinePoint[];
-  patches: Patch[];
 }
 
 const zero = (): Reward => ({ jades: 0, specialPasses: 0 });
@@ -60,10 +53,8 @@ export function toSingles(r: Reward): number {
   return r.jades / JADES_PER_PULL + r.specialPasses;
 }
 
-const MAX_TIMELINE_POINTS = 400;
-
 /** Genera todos los cobros con fecha entre hoy y la fecha objetivo. */
-export function buildEvents(state: AppState, today: ISODate): { events: IncomeEvent[]; patches: Patch[] } {
+export function buildEvents(state: AppState, today: ISODate): IncomeEvent[] {
   const todayNum = toDayNum(today);
   const from = todayNum + 1;
   const to = toDayNum(state.targetDate);
@@ -99,20 +90,21 @@ export function buildEvents(state: AppState, today: ISODate): { events: IncomeEv
   }
 
   events.sort((a, b) => a.date.localeCompare(b.date));
-  return { events, patches: patches.filter((p) => toDayNum(p.start) <= to) };
+  return events;
 }
 
 export function calculate(state: AppState, today: ISODate): Result {
   const todayNum = toDayNum(today);
   const to = toDayNum(state.targetDate);
   const valid = to >= todayNum;
-  const { events, patches } = valid ? buildEvents(state, today) : { events: [], patches: [] };
+  const events = valid ? buildEvents(state, today) : [];
 
   const inv = state.inventory;
   const shards = state.settings.includeShards ? inv.shards : 0;
   // La Cosmiluz que ya se tiene se cambia por Pases en la tienda (20 = 1); lo que sobra se guarda
   // para juntarlo con la que se saque al tirar.
   const starlightPasses = Math.floor(inv.starlight / STARLIGHT_PER_PASS);
+  const starlightLeftover = inv.starlight - starlightPasses * STARLIGHT_PER_PASS;
   const start: Reward = { jades: inv.jades + shards, specialPasses: inv.specialPasses + starlightPasses };
 
   const income = zero();
@@ -120,7 +112,6 @@ export function calculate(state: AppState, today: ISODate): Result {
   const names = new Map(state.sources.map((s) => [s.id, s.name]));
   names.set(PATCH_EVENTS_ID, 'Eventos de la actualización');
   names.set(SHARD_PACKS_ID, 'Paquetes de Esquirlas Oníricas');
-  const perDay = new Map<ISODate, Reward>();
 
   for (const e of events) {
     add(income, e.reward);
@@ -131,47 +122,26 @@ export function calculate(state: AppState, today: ISODate): Result {
     }
     t.count++;
     add(t.reward, e.reward);
-    const day = perDay.get(e.date) ?? zero();
-    add(day, e.reward);
-    perDay.set(e.date, day);
   }
   for (const t of totals.values()) t.singles = toSingles(t.reward);
 
   const final = { ...start };
   add(final, income);
 
-  // Serie acumulada día a día, con muestreo si el periodo es muy largo (siempre incluye el último día).
-  const timeline: TimelinePoint[] = [];
-  if (valid) {
-    const step = Math.max(1, Math.ceil((to - todayNum + 1) / MAX_TIMELINE_POINTS));
-    const running = { ...start };
-    for (let d = todayNum; d <= to; d++) {
-      const date = fromDayNum(d);
-      const day = perDay.get(date);
-      if (day) add(running, day);
-      if ((d - todayNum) % step === 0 || d === to) {
-        timeline.push({ date, singles: toSingles(running), jades: running.jades });
-      }
-    }
-  }
-
   const jades = Math.max(0, final.jades);
   return {
     valid,
-    today,
     targetDate: state.targetDate,
     days: Math.max(0, to - todayNum),
-    income,
+    currentSingles: toSingles(start) + starlightLeftover / STARLIGHT_PER_PASS,
     incomeSingles: toSingles(income),
     final,
     shards,
     starlightPasses,
-    starlightLeftover: inv.starlight - starlightPasses * STARLIGHT_PER_PASS,
+    starlightLeftover,
     singles: toSingles(final),
     wholeSingles: Math.floor(jades / JADES_PER_PULL) + final.specialPasses,
     leftoverJades: jades % JADES_PER_PULL,
     bySource: [...totals.values()].sort((a, b) => b.singles - a.singles),
-    timeline,
-    patches,
   };
 }

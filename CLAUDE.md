@@ -21,8 +21,10 @@ There is no linter. `tsc -b` is strict, with `noUnusedLocals` and `noUnusedParam
 ## Architecture
 
 - **`src/engine/`**: pure, framework-free logic. All tests live here, next to the code.
-- **`src/state/store.ts`**: the state hook.
-- **`src/components/`**: presentational pieces that receive `state` and an `onChange(updater)`.
+  - **`rules.ts`** holds every game rule: `JADES_PER_PULL`, `DEFAULT_HARD_PITY`, the Starlight and 4★ constants, and the banner model (`BANNERS`, `fiveStarChance`). Put new game constants there, and build UI help text from them instead of copying the numbers.
+  - **`util.ts`** has `isObj` (JSON validation) and `newId(prefix)` for new rows.
+- **`src/state/store.ts`**: the state hook. `withSettings(patch)` is the updater for changing settings: `onChange(withSettings({ includeShards }))`.
+- **`src/components/`**: presentational pieces that receive `state` and an `onChange(updater)`. `components/kinds.ts` has the label and glyph class for each `PullKind`.
 - **`App.tsx`**: owns the state and runs `calculate(state, today)` once in a `useMemo`. It passes the `Result` down.
 
 ### Units: Jades inside, singles outside
@@ -31,12 +33,12 @@ Everything is computed in Jades (1 single = 160 Jades, `JADES_PER_PULL`). Specia
 
 ### Income projection (`calculate.ts`, `sources.ts`)
 
-`buildEvents` turns the enabled sources into a dated list of `IncomeEvent`s. The period runs from **tomorrow through the target date**, plus today when a source has `pendingNow`. That one list feeds the total, the per-source breakdown (`bySource`) and the timeline.
+`buildEvents` turns the enabled sources into a dated list of `IncomeEvent`s. The period runs from **tomorrow through the target date**, plus today when a source has `pendingNow`. That one list feeds the total and the per-source breakdown (`bySource`).
 
 - **Source schedules** are `daily | weekly | monthly | cycle(anchor, periodDays) | perPatch(offsetDays)`. `perPatch` only fires at patch starts from the user's patch table. Future patches are never extrapolated.
 - **Patch events** are dated rows inside each patch.
 - **Shard packs** (`packs.ts`) count as an income event today. Prices are in EUR, or in JPY at the fixed rate `JPY_PER_EUR`. The first purchase gets ×2.
-- **Undying Starlight** in the inventory converts to Special Passes at 20 = 1. The remainder (`starlightLeftover`) is carried into pull planning.
+- **Undying Starlight** in the inventory converts to Special Passes at 20 = 1. The remainder (`starlightLeftover`) is carried into pull planning. `currentSingles` (the "Recursos actuales" header) counts all Starlight, including that remainder.
 
 ### Pull planning (`pulls.ts`): deterministic worst case
 
@@ -49,7 +51,7 @@ Everything is computed in Jades (1 single = 160 Jades, `JADES_PER_PULL`). Specia
 
 ### Odds (`odds.ts`): Monte Carlo
 
-- **Rates:**
+- **Rates** (`BANNERS` in `rules.ts`):
   - Characters: 0.6 % base, soft pity from 74, hard pity at 90, 50/50.
   - Light cones: 0.8 % base, soft pity from 66, hard pity at 80, 75/25.
 

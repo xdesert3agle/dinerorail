@@ -3,6 +3,7 @@ import { addDays } from '../engine/dates';
 import { defaultEventDate, PATCH_LENGTH_DAYS } from '../engine/defaults';
 import { nextVersion } from '../engine/sources';
 import type { AppState, Patch, PatchEvent } from '../engine/types';
+import { newId } from '../engine/util';
 import { fmtSingles } from './format';
 import { DateField } from './DateField';
 import { NumberField } from './NumberField';
@@ -13,8 +14,6 @@ interface Props {
   today: string;
   onChange: (update: (s: AppState) => AppState) => void;
 }
-
-const newId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
 const eventsSingles = (events: PatchEvent[]) =>
   events.reduce((sum, e) => sum + toSingles({ jades: e.jades, specialPasses: e.specialPasses }), 0);

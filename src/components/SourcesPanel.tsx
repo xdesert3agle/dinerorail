@@ -3,6 +3,7 @@ import type { SourceTotal } from '../engine/calculate';
 import { formatDate, fromDayNum, toDayNum, WEEKDAYS } from '../engine/dates';
 import { occurrences } from '../engine/sources';
 import type { AppState, Reward, Schedule, Source, SourceCategory } from '../engine/types';
+import { newId } from '../engine/util';
 import { describeSchedule, fmtInt, fmtSingles, pendingLabel } from './format';
 import { Icon } from './Icon';
 import { DateField } from './DateField';
@@ -86,7 +87,7 @@ export function SourcesPanel({ state, today, totals, onChange }: Props) {
     onChange((s) => ({ ...s, sources: s.sources.map((src) => (src.id === id ? { ...src, ...patch } : src)) }));
 
   const addCustom = () => {
-    const id = `custom-${Date.now()}`;
+    const id = newId('custom');
     onChange((s) => ({
       ...s,
       sources: [

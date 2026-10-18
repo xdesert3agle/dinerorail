@@ -1,5 +1,6 @@
-import { DEFAULT_HARD_PITY } from '../engine/pulls';
+import { DEFAULT_HARD_PITY } from '../engine/rules';
 import type { AppState, PullKind } from '../engine/types';
+import { withSettings } from '../state/store';
 import { NumberField } from './NumberField';
 
 interface Props {
@@ -20,8 +21,7 @@ export function PitySettings({ state, onChange }: Props) {
       const v = Math.floor(value);
       // El pity actual no se recorta aquí: mientras se escribe "80" se pasa por "8" y se perdería.
       // Tiradas futuras ya lo limita al calcular.
-      const hardPity = { ...s.settings.hardPity, [kind]: v >= 1 ? v : DEFAULT_HARD_PITY[kind] };
-      return { ...s, settings: { ...s.settings, hardPity } };
+      return withSettings({ hardPity: { ...s.settings.hardPity, [kind]: v >= 1 ? v : DEFAULT_HARD_PITY[kind] } })(s);
     });
 
   return (
