@@ -337,7 +337,7 @@ function SortablePullRow({ pull, row, suggestions, dupe, portrait, onUpdate, aut
         <strong>{fmtInt(row.cost)}</strong>
       </div>
 
-      <button type="button" className="btn btn-ghost btn-icon" aria-label={`Quitar ${label}`} onClick={onRemove}>
+      <button type="button" className="btn btn-ghost btn-icon pull-remove" aria-label={`Quitar ${label}`} onClick={onRemove}>
         ✕
       </button>
     </div>

@@ -41,9 +41,11 @@ interface Item {
   level: number;
 }
 
-/** Separación entre el popover y la imagen, y margen mínimo con el borde de la ventana (px). */
-const POP_GAP = 12;
+/** Separación entre el popover y la imagen (la flecha ocupa unos 12) y margen mínimo con el borde de la ventana (px). */
+const POP_GAP = 18;
 const POP_EDGE = 8;
+/** Lo más cerca que puede ir la flecha de arriba o de abajo del popover, para no caer en las esquinas redondeadas (px). */
+const ARROW_INSET = 26;
 
 /** El popover de una imagen: qué hace ese Eidolón o el efecto del cono en esa superposición. */
 function Popover({ side, item, anchor }: { side: 'left' | 'right'; item: Item; anchor: HTMLElement }) {
@@ -51,8 +53,9 @@ function Popover({ side, item, anchor }: { side: 'left' | 'right'; item: Item; a
   const ref = useRef<HTMLDivElement>(null);
 
   // Al lado de la imagen, hacia el centro de la página (a la derecha de los Eidolones y a la izquierda
-  // de los conos), a POP_GAP de ella; centrado en vertical con la imagen sin salirse de la ventana. Se
-  // recoloca al cambiar el contenido (al terminar de cargar cambia el tamaño).
+  // de los conos), a POP_GAP de ella; centrado en vertical con la imagen sin salirse de la ventana, con
+  // la flecha apuntando al centro de la imagen. Se recoloca al cambiar el contenido (al terminar de
+  // cargar cambia el tamaño).
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -64,8 +67,10 @@ function Popover({ side, item, anchor }: { side: 'left' | 'right'; item: Item; a
     const slot = anchor.getBoundingClientRect();
     const left = side === 'left' ? slot.right + POP_GAP : slot.left - POP_GAP - w;
     el.style.left = `${Math.max(POP_EDGE, Math.min(left, window.innerWidth - POP_EDGE - w))}px`;
-    const top = slot.top + slot.height / 2 - h / 2;
-    el.style.top = `${Math.max(POP_EDGE, Math.min(top, window.innerHeight - POP_EDGE - h))}px`;
+    const center = slot.top + slot.height / 2;
+    const top = Math.max(POP_EDGE, Math.min(center - h / 2, window.innerHeight - POP_EDGE - h));
+    el.style.top = `${top}px`;
+    el.style.setProperty('--arrow-y', `${Math.max(ARROW_INSET, Math.min(center - top, h - ARROW_INSET))}px`);
   }, [side, anchor, details, failed]);
 
   let owner: string | null = null;
@@ -79,7 +84,7 @@ function Popover({ side, item, anchor }: { side: 'left' | 'right'; item: Item; a
   }
 
   return (
-    <div ref={ref} className="dupe-pop">
+    <div ref={ref} className={`dupe-pop dupe-pop-${side}`}>
       <div className="dupe-pop-head">
         <span className="dupe-badge">
           {item.ref.kind === 'character' ? 'E' : 'S'}
@@ -90,7 +95,7 @@ function Popover({ side, item, anchor }: { side: 'left' | 'right'; item: Item; a
       {effect ? (
         <>
           <div className="dupe-pop-title">{effect.name}</div>
-          {formatDesc(effect.desc, effect.params).map((line, i) => (
+          {formatDesc(effect.desc, effect.params, details?.lang).map((line, i) => (
             <p key={i} className="dupe-pop-desc">
               {line.map((seg, j) =>
                 seg.value ? (

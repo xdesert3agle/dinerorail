@@ -371,6 +371,13 @@
   box-sizing: border-box;
 }
 
+/*
+ * Cifras de toda la app: proporcionales (normal) o de ancho fijo (tabular-nums). Solo se nota en Figtree
+ * (Aha): Courier Prime (Sparxie) es monoespaciada y en Segoe UI ya son de ancho fijo.
+ */
+:root {
+  --num-variant: normal;
+}
 body {
   margin: 0;
   min-height: 100vh;
@@ -490,7 +497,9 @@ p {
   color: var(--text-muted);
   pointer-events: none;
 }
-.event-row .date-field input {
+.event-row .date-field input[type='text'] {
+  /* El icono (16px a 8px del borde) y 4px de aire hasta la fecha. Con [type] para ganar a .event-row input[type='text']. */
+  /* Con cifras de ancho fijo (--num-variant) todas las fechas miden lo mismo; con proporcionales, el hueco cambia con ellas. */
   padding-right: 28px;
 }
 .event-row .date-field-icon {
@@ -919,18 +928,48 @@ p {
   display: grid;
   gap: 6px;
   width: max-content;
-  max-width: 22rem;
+  /* Crece con el texto, para que los párrafos no se alarguen hacia abajo. */
+  max-width: 23.5rem;
   padding: 12px 14px;
   background: var(--surface);
   color: var(--text);
   /* Borde con el acento del tema: con el de siempre se confundía con las tarjetas de detrás. */
-  border: 1px solid var(--accent);
+  border: 2px solid var(--accent);
   border-radius: var(--radius);
   box-shadow: 0 10px 30px color-mix(in srgb, var(--text) 18%, transparent);
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   line-height: 1.45;
   pointer-events: none;
   user-select: none;
+}
+/*
+ * Flecha de bocadillo hacia la imagen: un cuadrado girado 45° con el fondo del popover y el borde solo
+ * en los dos lados de la punta. Va centrado en la línea del borde, así que tapa ese trozo de borde y la
+ * flecha queda abierta hacia dentro. --arrow-y (desde arriba del popover) la pone DupeGallery.tsx.
+ */
+.dupe-pop::before {
+  --arrow-size: 18px;
+  content: '';
+  position: absolute;
+  top: calc(var(--arrow-y, 50%) - 2px - var(--arrow-size) / 2);
+  box-sizing: border-box;
+  width: var(--arrow-size);
+  height: var(--arrow-size);
+  background: var(--surface);
+  border: 0 solid var(--accent);
+  transform: rotate(45deg);
+}
+/* A la izquierda (Eidolones): la punta es la esquina de abajo a la izquierda del cuadrado. */
+.dupe-pop-left::before {
+  left: calc(-1px - var(--arrow-size) / 2);
+  border-bottom-width: 2px;
+  border-left-width: 2px;
+}
+/* A la derecha (conos): la esquina de arriba a la derecha. */
+.dupe-pop-right::before {
+  right: calc(-1px - var(--arrow-size) / 2);
+  border-top-width: 2px;
+  border-right-width: 2px;
 }
 .dupe-pop-head {
   display: flex;
@@ -1218,6 +1257,8 @@ input[type='number'],
 input[type='text'],
 select {
   font: inherit;
+  /* Cifras como en el resto de la app (ver --num-variant). */
+  font-variant-numeric: var(--num-variant);
   color: var(--text);
   background: var(--page);
   border: 1px solid var(--border);
@@ -1411,7 +1452,7 @@ select:focus {
   text-align: right;
   font-size: 0.875rem;
   white-space: nowrap;
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: var(--num-variant);
 }
 .source-edit {
   display: grid;
@@ -1521,7 +1562,7 @@ td {
 }
 .num {
   text-align: right;
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: var(--num-variant);
 }
 tfoot td {
   font-weight: 600;
@@ -1693,7 +1734,7 @@ tfoot td {
   font-size: 0.875rem;
   font-weight: 700;
   line-height: 1.4;
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: var(--num-variant);
 }
 .combo-list {
   position: absolute;
@@ -1783,7 +1824,7 @@ tfoot td {
   gap: 5px;
   font-size: 1.375rem;
   line-height: 1;
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: var(--num-variant);
 }
 /*
  * Hueco fijo para signo + 3 cifras, igual en filas y balance, para que los tickets queden en la
@@ -1818,7 +1859,7 @@ tfoot td {
   gap: 8px;
   font-size: 0.875rem;
   color: var(--text-secondary);
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: var(--num-variant);
 }
 /* Spinner: aro con un tramo de acento girando; más pequeño que el alto del botón. */
 .spinner {
@@ -1884,13 +1925,24 @@ tfoot td {
 .pull-row.is-short .pull-name {
   border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
 }
-/* El botón de quitar tiene ancho fijo para que el balance se alinee con los costes de las filas. */
-.pull-row > .btn-icon {
-  width: 28px;
+/*
+ * Botón de quitar: igual que el asa del otro extremo de la fila (24px de ancho, todo el alto de la fila,
+ * gris que se aclara al pasar el ratón), con la X centrada. Tiene ancho fijo (--pull-remove) para que
+ * el balance se alinee con los costes de las filas.
+ */
+.pull-list {
+  --pull-remove: 24px;
 }
-/* El asa, con su propio relleno pero sin el ancho fijo de .btn-icon (el del botón de quitar). */
-.pull-row > .drag-handle {
-  width: auto;
+.pull-remove {
+  display: grid;
+  place-items: center;
+  align-self: stretch;
+  width: var(--pull-remove);
+  padding: 0;
+  color: var(--text-muted);
+}
+.pull-remove:hover {
+  color: var(--text);
 }
 /*
  * El balance va fuera de las columnas de las filas: así su ancho nunca ensancha la columna
@@ -1904,7 +1956,7 @@ tfoot td {
   gap: 12px;
   border-top: 1px solid var(--axis);
   padding-top: 10px;
-  padding-right: calc(28px + var(--pull-gap));
+  padding-right: calc(var(--pull-remove) + var(--pull-gap));
 }
 @media (max-width: 560px) {
   /* En móvil se aprieta un poco más para que siga cabiendo en una línea. */
@@ -1964,8 +2016,13 @@ tfoot td {
 }
 .event-row {
   display: grid;
-  /* En rem, no em: la cabecera tiene letra más pequeña y con em sus columnas saldrían más estrechas. */
-  grid-template-columns: minmax(0, 1fr) 9rem 6.25rem 5.75rem 2.25rem;
+  /*
+   * En rem, no em: la cabecera tiene letra más pequeña y con em sus columnas saldrían más estrechas.
+   * Lo justo para 4 cifras de Jades y 2 de Pases (con sus flechas) en Figtree y en Courier Prime, que
+   * son las más anchas, y para la fecha más ancha con la fuente de cada tema; el resto es para el nombre.
+   */
+  --event-date-col: 8.5rem;
+  grid-template-columns: minmax(0, 1fr) var(--event-date-col) 5.375rem 5.375rem 2.25rem;
   gap: 6px;
   align-items: center;
 }
@@ -1989,7 +2046,8 @@ tfoot td {
   -webkit-appearance: none;
   margin: 0;
 }
-.event-row input[type='number']::-webkit-inner-spin-button {
+/* Solo donde hay flechas: en los Jades (.no-spin) el margen seguiría ocupando sitio y cortaría la cifra. */
+.event-row .field:not(.no-spin) input[type='number']::-webkit-inner-spin-button {
   margin-left: 6px;
 }
 .event-row .btn {
@@ -2045,7 +2103,7 @@ tfoot td {
 }
 .odds-pct {
   text-align: right;
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: var(--num-variant);
 }
 /* Dos filas: probabilidad y objetivos (mitad y mitad), y debajo las tres cifras de singles. */
 .odds-stats {
@@ -2077,7 +2135,7 @@ tfoot td {
   margin: 2px 0 0;
   font-size: 1.125rem;
   font-weight: 600;
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: var(--num-variant);
 }
 .odds-stats dd .muted {
   font-size: 0.875rem;
@@ -2109,7 +2167,7 @@ tfoot td {
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: var(--num-variant);
 }
 /* Flechas separadas de la cifra. */
 .pack-row input[type='number'] {
@@ -2120,7 +2178,7 @@ tfoot td {
   margin-left: 6px;
 }
 .pack-price {
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: var(--num-variant);
 }
 .pack-total {
   display: flex;
@@ -2128,7 +2186,7 @@ tfoot td {
   justify-content: space-between;
   gap: 6px;
   font-size: 1.0625rem;
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: var(--num-variant);
 }
 /*
  * Hueco fijo para 6 cifras con punto de miles (999.999): la columna no cambia de ancho.
@@ -2186,6 +2244,17 @@ tfoot td {
 }
 .btn-add {
   justify-self: start;
+}
+/*
+ * Fecha de cobro: borde y relleno (9px), icono con su aire (28px) y la fecha más ancha. En Figtree, 92px
+ * con cifras de ancho fijo y 91px con proporcionales ("04/04/2030", con días 01–31, meses 01–12 y años
+ * 2025–2039); en Courier Prime, 96px.
+ */
+:root[data-skin='aha'] .event-row {
+  --event-date-col: 8.125rem;
+}
+:root[data-skin='sparxie'] .event-row {
+  --event-date-col: 8.3125rem;
 }
 @media (max-width: 640px) {
   .event-header {

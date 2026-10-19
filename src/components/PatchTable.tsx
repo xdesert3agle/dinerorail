@@ -123,6 +123,7 @@ export function PatchTable({ state, today, onChange }: Props) {
                     label="Jades"
                     value={ev.jades}
                     min={0}
+                    max={9999}
                     onChange={(jades) => updateEvent(p.id, ev.id, { jades })}
                   />
                   <NumberField
@@ -132,6 +133,7 @@ export function PatchTable({ state, today, onChange }: Props) {
                     label="Pases Especiales"
                     value={ev.specialPasses}
                     min={0}
+                    max={99}
                     onChange={(specialPasses) => updateEvent(p.id, ev.id, { specialPasses })}
                   />
                   <button
