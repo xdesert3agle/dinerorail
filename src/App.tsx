@@ -14,9 +14,9 @@ import { SourcesPanel } from './components/SourcesPanel';
 import { calculate } from './engine/calculate';
 import { todayISO } from './engine/dates';
 import { planCopies, planDupes, planLightCones } from './engine/dupes';
-import type { Skin, ThemeMode } from './engine/types';
+import type { AppState, Skin, ThemeMode } from './engine/types';
 import { useCatalog } from './state/catalog';
-import { exportState, HIDDEN_SKINS, importState, useAppState, withSettings } from './state/store';
+import { exportState, HIDDEN_SKINS, importState, useAppState, withSettings, type ChangeState } from './state/store';
 
 const SKINS: { id: Skin; label: string; title: string }[] = [
   { id: 'kafka', label: 'Kafka', title: 'Tema Kafka: magenta y telaraña' },
@@ -84,6 +84,13 @@ const TABS: { id: Tab; label: string; hash: string }[] = [
 ];
 // La pestaña vive en el hash de la URL: sobrevive a recargas y el botón Atrás vuelve a la anterior.
 // "#fuentes" es el nombre antiguo de la pestaña de configuración.
+/** Aviso de arriba. Con `undo`, ofrece volver a ese estado (el de antes de un borrado o una importación). */
+interface Notice {
+  text: string;
+  undo?: AppState;
+  error?: boolean;
+}
+
 const tabFromHash = (): Tab => {
   const hash = window.location.hash;
   return TABS.find((t) => t.hash && t.hash === hash)?.id ?? 'main';
@@ -93,10 +100,27 @@ export default function App() {
   const [state, setState] = useAppState();
   const catalogSync = useCatalog();
   const [today] = useState(todayISO);
-  const [message, setMessage] = useState<string | null>(null);
+  const [notice, setNotice] = useState<Notice | null>(null);
   const [tab, setTab] = useState<Tab>(tabFromHash);
   const fileInput = useRef<HTMLInputElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
   const tabRefs = useRef<Partial<Record<Tab, HTMLButtonElement | null>>>({});
+
+  // Los borrados guardan el estado de antes para poder deshacerlos desde el aviso.
+  const change: ChangeState = (update, undo) => {
+    if (undo) setNotice({ text: undo, undo: state });
+    setState(update);
+  };
+  const undoLast = () => {
+    if (notice?.undo) setState(notice.undo);
+    setNotice(null);
+  };
+
+  // El título de la pestaña del navegador dice en qué sección se está.
+  useEffect(() => {
+    const label = TABS.find((t) => t.id === tab)!.label;
+    document.title = tab === 'main' ? 'Dinero Rail' : `${label} · Dinero Rail`;
+  }, [tab]);
 
   useEffect(() => {
     const onHash = () => setTab(tabFromHash());
@@ -158,18 +182,29 @@ export default function App() {
     else root.dataset.theme = theme;
   }, [theme]);
 
+  // La barra del navegador en móvil (theme-color) con el fondo de la página del tema activo.
+  useLayoutEffect(() => {
+    const page = getComputedStyle(document.documentElement).getPropertyValue('--page').trim();
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', page);
+  }, [skin, theme, systemDark]);
+
   const onImport = async (file: File | undefined) => {
     if (!file) return;
     try {
-      setState(await importState(file));
-      setMessage('Datos importados.');
+      const imported = await importState(file);
+      setNotice({ text: 'Datos importados.', undo: state });
+      setState(imported);
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : 'No se ha podido leer el archivo.');
+      setNotice({ text: e instanceof Error ? e.message : 'No se ha podido leer el archivo.', error: true });
     }
   };
 
   return (
     <div className="app">
+      {/* Para teclado: salta la cabecera. Es un botón y no un enlace con hash, que aquí cambiaría de pestaña. */}
+      <button type="button" className="btn skip-link" onClick={() => mainRef.current?.focus()}>
+        Saltar al contenido
+      </button>
       <header className="app-header">
         <h1 className="title">
           <Icon kind="jade" size={36} decorative />
@@ -236,7 +271,7 @@ export default function App() {
             id={`tab-${t.id}`}
             className="tab"
             aria-selected={tab === t.id}
-            aria-controls={`panel-${t.id}`}
+            aria-controls={tab === t.id ? `panel-${t.id}` : undefined}
             tabIndex={tab === t.id ? 0 : -1}
             onClick={() => selectTab(t.id)}
           >
@@ -245,43 +280,57 @@ export default function App() {
           </button>
         ))}
       </nav>
-      {message && (
-        <p className="notice" role="status" onClick={() => setMessage(null)}>
-          {message}
-        </p>
-      )}
+      {/* Siempre montado: así los lectores de pantalla anuncian cada aviso nuevo. */}
+      <div role="status">
+        {notice && (
+          <div className={`notice${notice.error ? ' is-error' : ''}`}>
+            <span className="notice-text">{notice.text}</span>
+            {notice.undo && (
+              <button type="button" className="btn btn-ghost notice-action" onClick={undoLast}>
+                Deshacer
+              </button>
+            )}
+            <button type="button" className="btn btn-ghost btn-remove" aria-label="Cerrar aviso" onClick={() => setNotice(null)}>
+              ✕
+            </button>
+          </div>
+        )}
+      </div>
 
       {tab === 'main' && <DupeGallery dupes={dupes} lightCones={lightCones} />}
-      {tab === 'main' ? (
-        <main className="layout" role="tabpanel" id="panel-main" aria-labelledby="tab-main">
-          <div className="col-inputs">
-            <CurrentInventory state={state} result={result} today={today} onChange={setState} />
-            <PatchTable state={state} today={today} onChange={setState} />
-            <ShardPacks state={state} onChange={setState} />
+      {/* Un solo <main> (destino del salto de teclado); dentro, el panel de la pestaña activa. */}
+      <main ref={mainRef} tabIndex={-1} className="main">
+        {tab === 'main' ? (
+          <div className="layout" role="tabpanel" id="panel-main" aria-labelledby="tab-main">
+            <div className="col-inputs">
+              <CurrentInventory state={state} result={result} today={today} onChange={change} />
+              <PatchTable state={state} today={today} onChange={change} />
+              <ShardPacks state={state} onChange={change} />
+            </div>
+            <aside className="col-results">
+              <ResultSummary result={result} skin={skin} />
+              <FuturePulls state={state} result={result} catalog={catalogSync.catalog} copies={copies} onChange={change} />
+              <Odds state={state} result={result} copies={copies} />
+              <Breakdown result={result} />
+            </aside>
           </div>
-          <aside className="col-results">
-            <ResultSummary result={result} skin={skin} />
-            <FuturePulls state={state} result={result} catalog={catalogSync.catalog} copies={copies} onChange={setState} />
-            <Odds state={state} result={result} copies={copies} />
-            <Breakdown result={result} />
-          </aside>
-        </main>
-      ) : tab === 'account' ? (
-        <main className="layout-settings" role="tabpanel" id="panel-account" aria-labelledby="tab-account">
-          <AccountPanel state={state} catalog={catalogSync.catalog} onChange={setState} />
-        </main>
-      ) : (
-        <main className="layout-settings" role="tabpanel" id="panel-settings" aria-labelledby="tab-settings">
-          {/* Columna estrecha a la derecha en escritorio; en móvil va arriba del todo. */}
-          <aside className="col-aside">
-            <ContentSync {...catalogSync} />
-          </aside>
-          <div className="col-settings">
-            <PitySettings state={state} onChange={setState} />
-            <SourcesPanel state={state} today={today} totals={totals} onChange={setState} />
+        ) : tab === 'account' ? (
+          <div className="layout-settings" role="tabpanel" id="panel-account" aria-labelledby="tab-account">
+            <AccountPanel state={state} catalog={catalogSync.catalog} onChange={change} />
           </div>
-        </main>
-      )}
+        ) : (
+          <div className="layout-settings" role="tabpanel" id="panel-settings" aria-labelledby="tab-settings">
+            {/* Columna estrecha a la derecha en escritorio; en móvil va arriba del todo. */}
+            <aside className="col-aside">
+              <ContentSync {...catalogSync} />
+            </aside>
+            <div className="col-settings">
+              <PitySettings state={state} onChange={change} />
+              <SourcesPanel state={state} today={today} totals={totals} onChange={change} />
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }

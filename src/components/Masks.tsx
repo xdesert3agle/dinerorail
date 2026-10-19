@@ -21,7 +21,8 @@ export function Masks() {
         <circle cx={CENTER.x} cy={CENTER.y - 10} r="150" fill="url(#aha-spotlight)" />
       </svg>
       {/* Ilustración con el fondo blanco quitado (transparente); decorativa. */}
-      <img className="hero-art" src={nihilux} alt="" aria-hidden="true" draggable={false} />
+      {/* width/height: proporción de la imagen (el CSS fija el alto), para que no salte al cargar. */}
+      <img className="hero-art" src={nihilux} alt="" aria-hidden="true" draggable={false} width={1024} height={958} />
     </>
   );
 }

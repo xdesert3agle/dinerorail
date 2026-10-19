@@ -1,6 +1,6 @@
 import AirDatepicker, { type AirDatepickerLocale } from 'air-datepicker';
 import 'air-datepicker/air-datepicker.css';
-import { useEffect, useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { formatDate, todayISO } from '../engine/dates';
 import type { ISODate } from '../engine/types';
 
@@ -45,6 +45,9 @@ export function DateField({ value, onChange, min, id, 'aria-label': ariaLabel }:
   const onChangeRef = useRef(onChange);
   valueRef.current = value;
   onChangeRef.current = onChange;
+  // Para los lectores de pantalla: el campo abre un calendario y se dice si está abierto.
+  const [open, setOpen] = useState(false);
+  const hintId = useId();
 
   useEffect(() => {
     const picker = new AirDatepicker(inputRef.current!, {
@@ -57,6 +60,8 @@ export function DateField({ value, onChange, min, id, 'aria-label': ariaLabel }:
       navTitles: { days: 'MMMM <i>yyyy</i>' },
       // En pantallas táctiles, ventana centrada en vez de desplegable.
       isMobile: window.matchMedia('(pointer: coarse)').matches,
+      onShow: (done) => !done && setOpen(true),
+      onHide: (done) => !done && setOpen(false),
       onSelect: ({ date }) => {
         if (!(date instanceof Date)) return;
         const iso = todayISO(date);
@@ -88,7 +93,20 @@ export function DateField({ value, onChange, min, id, 'aria-label': ariaLabel }:
 
   return (
     <span className="input-wrap date-field">
-      <input ref={inputRef} id={id} type="text" readOnly value={formatDate(value)} aria-label={ariaLabel} />
+      <input
+        ref={inputRef}
+        id={id}
+        type="text"
+        readOnly
+        value={formatDate(value)}
+        aria-label={ariaLabel}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        aria-describedby={hintId}
+      />
+      <span id={hintId} className="sr-only">
+        Abre un calendario: elige el día con las flechas y pulsa intro.
+      </span>
       <svg
         className="date-field-icon"
         width="16"

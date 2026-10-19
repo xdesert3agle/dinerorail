@@ -4,17 +4,19 @@ import { formatDate, fromDayNum, toDayNum, WEEKDAYS } from '../engine/dates';
 import { occurrences } from '../engine/sources';
 import type { AppState, Reward, Schedule, Source, SourceCategory } from '../engine/types';
 import { newId } from '../engine/util';
+import type { ChangeState } from '../state/store';
 import { describeSchedule, fmtInt, fmtSingles, pendingLabel } from './format';
 import { Icon } from './Icon';
 import { DateField } from './DateField';
 import { NumberField } from './NumberField';
+import { Toggle } from './Toggle';
 import { PLAIN_TEXT_INPUT } from './inputs';
 
 interface Props {
   state: AppState;
   today: string;
   totals: Map<string, SourceTotal>;
-  onChange: (update: (s: AppState) => AppState) => void;
+  onChange: ChangeState;
 }
 
 const GROUPS: { category: SourceCategory; title: string }[] = [
@@ -69,6 +71,8 @@ function RewardInline({ reward }: { reward: Reward }) {
 
 export function SourcesPanel({ state, today, totals, onChange }: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
+  // La fuente recién creada enfoca su nombre para poder escribirlo directamente.
+  const [addedId, setAddedId] = useState<string | null>(null);
 
   // Próximo cobro de cada fuente (en el próximo año), para mostrarlo en la lista.
   const nextDates = useMemo(() => {
@@ -105,6 +109,7 @@ export function SourcesPanel({ state, today, totals, onChange }: Props) {
       ],
     }));
     setOpenId(id);
+    setAddedId(id);
   };
 
   return (
@@ -132,6 +137,7 @@ export function SourcesPanel({ state, today, totals, onChange }: Props) {
                     <label className="switch" title={src.enabled ? 'Desactivar' : 'Activar'}>
                       <input
                         type="checkbox"
+                        role="switch"
                         checked={src.enabled}
                         onChange={(e) => updateSource(src.id, { enabled: e.target.checked })}
                         aria-label={`Activar ${src.name}`}
@@ -159,13 +165,27 @@ export function SourcesPanel({ state, today, totals, onChange }: Props) {
                       type="button"
                       className="btn btn-ghost"
                       aria-expanded={open}
+                      aria-label={`${open ? 'Cerrar' : 'Editar'} ${src.name}`}
                       onClick={() => setOpenId(open ? null : src.id)}
                     >
                       {open ? 'Cerrar' : 'Editar'}
                     </button>
                   </div>
 
-                  {open && <SourceEditor source={src} today={today} onUpdate={(p) => updateSource(src.id, p)} onDelete={() => onChange((s) => ({ ...s, sources: s.sources.filter((x) => x.id !== src.id) }))} />}
+                  {open && (
+                    <SourceEditor
+                      source={src}
+                      today={today}
+                      focusName={src.id === addedId}
+                      onUpdate={(p) => updateSource(src.id, p)}
+                      onDelete={() =>
+                        onChange(
+                          (s) => ({ ...s, sources: s.sources.filter((x) => x.id !== src.id) }),
+                          `Fuente «${src.name}» eliminada.`,
+                        )
+                      }
+                    />
+                  )}
                 </div>
               );
             })}
@@ -179,11 +199,13 @@ export function SourcesPanel({ state, today, totals, onChange }: Props) {
 interface EditorProps {
   source: Source;
   today: string;
+  /** Enfoca el nombre al abrir (fuente recién creada). */
+  focusName: boolean;
   onUpdate: (patch: Partial<Source>) => void;
   onDelete: () => void;
 }
 
-function SourceEditor({ source, today, onUpdate, onDelete }: EditorProps) {
+function SourceEditor({ source, today, focusName, onUpdate, onDelete }: EditorProps) {
   const { schedule, reward } = source;
   const setReward = (patch: Partial<Reward>) => onUpdate({ reward: { ...reward, ...patch } });
   const pending = pendingLabel(schedule);
@@ -194,11 +216,17 @@ function SourceEditor({ source, today, onUpdate, onDelete }: EditorProps) {
 
       {source.custom && (
         <div className="grid-2">
-          <label className="field">
+          <label className="field field-compact">
             <span className="field-label">Nombre</span>
-            <input type="text" {...PLAIN_TEXT_INPUT} value={source.name} onChange={(e) => onUpdate({ name: e.target.value })} />
+            <input
+              type="text"
+              {...PLAIN_TEXT_INPUT}
+              value={source.name}
+              autoFocus={focusName}
+              onChange={(e) => onUpdate({ name: e.target.value })}
+            />
           </label>
-          <label className="field">
+          <label className="field field-compact">
             <span className="field-label">Frecuencia</span>
             <select
               value={schedule.type}
@@ -279,10 +307,9 @@ function SourceEditor({ source, today, onUpdate, onDelete }: EditorProps) {
 
       <div className="source-edit-footer">
         {pending ? (
-          <label className="check">
-            <input type="checkbox" checked={source.pendingNow} onChange={(e) => onUpdate({ pendingNow: e.target.checked })} />
+          <Toggle checked={source.pendingNow} onChange={(pendingNow) => onUpdate({ pendingNow })}>
             {pending} (se suma hoy)
-          </label>
+          </Toggle>
         ) : (
           <span />
         )}

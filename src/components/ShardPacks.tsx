@@ -30,59 +30,71 @@ export function ShardPacks({ state, onChange }: Props) {
       <header className="card-header">
         <h2>Paquetes de Esquirlas Oníricas</h2>
         {/* Siempre presente (oculto si no hay nada) para que la cabecera no cambie de alto al aparecer. */}
-        <span className="muted with-icon" style={total.shards > 0 ? undefined : { visibility: 'hidden' }}>
+        <span className={`muted with-icon${total.shards > 0 ? '' : ' invisible'}`}>
           <Icon kind="pass" size={18} decorative />
           {fmtSinglesShort(total.shards / JADES_PER_PULL)} singles · {euros.format(total.euros)}
         </span>
       </header>
 
-      <div className="pack-list">
-        <div className="pack-row pack-header" aria-hidden="true">
+      {/* Tabla para los lectores de pantalla (cada cifra con su columna); en pantalla, una rejilla. */}
+      <div className="pack-list" role="table" aria-label="Paquetes de Esquirlas Oníricas">
+        <div className="pack-row pack-header" role="row">
           {/* Cada título al inicio de su columna (sobre el icono o el borde del campo), como en los eventos. */}
-          <span>Pack</span>
-          <span>Precio</span>
-          <span>Cristales</span>
-          <span>Cantidad</span>
-          <span />
-          <span>Total</span>
+          <span role="columnheader">Pack</span>
+          <span role="columnheader">Precio</span>
+          <span role="columnheader">Cristales</span>
+          <span role="columnheader">Cantidad</span>
+          <span role="columnheader">
+            <span className="sr-only">Primera compra</span>
+          </span>
+          <span role="columnheader">Total</span>
         </div>
         {SHARD_PACKS.map((pack) => {
           const purchase = state.shardPacks[pack.id] ?? emptyPurchase();
           // Lo que da una compra suelta, con o sin el x2 de la primera vez.
           const perPack = purchase.firstBonus ? pack.base * 2 : pack.base + pack.bonus;
           const shards = packShards(pack, purchase);
+          const price = euros.format(packPrice(pack, inYen));
           return (
-            <div key={pack.id} className={`pack-row ${shards > 0 ? '' : 'is-empty'}`}>
-              <span className="pack-name">Esquirlas Oníricas ×{fmtInt(pack.base)}</span>
+            <div key={pack.id} className={`pack-row ${shards > 0 ? '' : 'is-empty'}`} role="row">
+              <span className="pack-name" role="cell">
+                Esquirlas Oníricas ×{fmtInt(pack.base)}
+              </span>
               <span
+                role="cell"
                 className="num pack-price"
                 title={inYen ? `¥${fmtInt(pack.priceJpy)} a ${rate.format(JPY_PER_EUR)} ¥/€` : undefined}
               >
-                {euros.format(packPrice(pack, inYen))}
+                {price}
               </span>
               {/* Icono a la izquierda y cifra a la derecha: los iconos quedan en columna. */}
-              <span className="pack-shards">
+              <span className="pack-shards" role="cell">
                 <Icon kind="shard" size={18} decorative />
                 {fmtInt(perPack)}
               </span>
-              <NumberField
-                compact
-                hideLabel
-                label={`Cantidad del paquete de ${euros.format(pack.price)}`}
-                value={purchase.count}
-                min={0}
-                onChange={(count) => update(pack.id, { count: Math.max(0, Math.floor(count)) })}
-              />
-              <label className="check" title="Primera compra: el doble de cristales">
-                <input
-                  type="checkbox"
-                  checked={purchase.firstBonus}
-                  onChange={(e) => update(pack.id, { firstBonus: e.target.checked })}
+              <span role="cell">
+                <NumberField
+                  compact
+                  hideLabel
+                  label={`Cantidad del paquete de ${price}`}
+                  value={purchase.count}
+                  min={0}
+                  onChange={(count) => update(pack.id, { count: Math.max(0, Math.floor(count)) })}
                 />
-                x2
-              </label>
+              </span>
+              <span role="cell">
+                <label className="check" title="Primera compra: el doble de cristales">
+                  <input
+                    type="checkbox"
+                    checked={purchase.firstBonus}
+                    aria-label={`Primera compra (x2) del paquete de ${price}`}
+                    onChange={(e) => update(pack.id, { firstBonus: e.target.checked })}
+                  />
+                  x2
+                </label>
+              </span>
               {/* Como en Cristales: icono a la izquierda y cifra a la derecha. */}
-              <strong className="num pack-total">
+              <strong className="num pack-total" role="cell">
                 <Icon kind="shard" size={18} decorative />
                 <span className="pack-total-value">{shards > 0 ? fmtInt(shards) : '—'}</span>
               </strong>

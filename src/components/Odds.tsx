@@ -24,11 +24,12 @@ const RUNS = 10000;
  * y 0 % si ni siquiera hay una single por objetivo; si no, como mucho ">99 %" y como poco "<1 %".
  */
 function fmtPct(p: number, certain: boolean, impossible: boolean): string {
-  if (certain) return '100 %';
-  if (impossible) return '0 %';
-  if (p > 0.99) return '>99 %';
-  if (p < 0.01) return '<1 %';
-  return `${Math.round(p * 100)} %`;
+  // Espacio de no separación antes del %: no se queda solo en otra línea.
+  if (certain) return '100 %';
+  if (impossible) return '0 %';
+  if (p > 0.99) return '>99 %';
+  if (p < 0.01) return '<1 %';
+  return `${Math.round(p * 100)} %`;
 }
 
 // Los textos de ayuda salen de las reglas (rules.ts), para que no se desfasen si cambian.
@@ -85,9 +86,15 @@ export function Odds({ state, result, copies }: Props) {
         </span>
       </header>
 
-      <div className="odds-list">
+      {/* Lista ordenada para los lectores de pantalla: el orden del plan importa. */}
+      <div className="odds-list" role="list">
         {plan.map((p, i) => (
-          <div key={p.id} className="odds-row" title="Probabilidad de tenerlo, junto con todos los anteriores">
+          <div
+            key={p.id}
+            className="odds-row"
+            role="listitem"
+            title="Probabilidad de tenerlo, junto con todos los anteriores"
+          >
             {/* El tipo va como icono (con su nombre en el tooltip y para lectores de pantalla). */}
             <span className="odds-name">
               <span
@@ -130,21 +137,21 @@ export function Odds({ state, result, copies }: Props) {
         <div title="La mitad de las veces bastan estas singles para conseguirlo todo">
           <dt>Suerte media</dt>
           <dd className="with-icon">
-            <Icon kind="pass" size={20} decorative />
+            <Icon kind="pass" size={28} decorative />
             {fmtInt(odds.medianNeeded)}
           </dd>
         </div>
         <div title="El 90 % de las veces bastan estas singles para conseguirlo todo">
           <dt>90 % seguro</dt>
           <dd className="with-icon">
-            <Icon kind="pass" size={20} decorative />
+            <Icon kind="pass" size={28} decorative />
             {fmtInt(odds.p90Needed)}
           </dd>
         </div>
         <div title={WORST_CASE_HELP}>
           <dt>100 % seguro</dt>
           <dd className="with-icon">
-            <Icon kind="pass" size={20} decorative />
+            <Icon kind="pass" size={28} decorative />
             {fmtInt(sure.at(-1) ?? 0)}
           </dd>
         </div>

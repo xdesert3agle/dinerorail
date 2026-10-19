@@ -113,7 +113,7 @@ export function NameCombobox({
         role={free ? undefined : 'combobox'}
         aria-autocomplete={free ? undefined : 'list'}
         aria-expanded={free ? undefined : shown}
-        aria-controls={free ? undefined : listId}
+        aria-controls={free || !shown ? undefined : listId}
         aria-activedescendant={shown && highlighted >= 0 ? `${listId}-${highlighted}` : undefined}
         // Al entrar se selecciona todo: lo que se escriba empieza una búsqueda nueva.
         onFocus={(e) => {
@@ -155,12 +155,16 @@ export function NameCombobox({
             </li>
           ))}
           {suggestions.length === 0 && (
-            <li className="combo-empty" aria-disabled="true">
+            <li className="combo-empty" role="option" aria-selected={false} aria-disabled="true">
               Sin coincidencias
             </li>
           )}
         </ul>
       )}
+      {/* Cuántas sugerencias hay, para el lector de pantalla (la lista en sí no se anuncia al cambiar). */}
+      <span className="sr-only" role="status">
+        {shown && (suggestions.length === 0 ? 'Sin coincidencias' : `${suggestions.length} ${suggestions.length === 1 ? 'sugerencia' : 'sugerencias'}`)}
+      </span>
     </div>
   );
 }

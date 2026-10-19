@@ -34,7 +34,7 @@ import {
 } from '../engine/rules';
 import type { AppState, PlannedPull, PullKind } from '../engine/types';
 import { newId } from '../engine/util';
-import { withSettings } from '../state/store';
+import { withSettings, type ChangeState } from '../state/store';
 import { DupeBadge } from './DupeBadge';
 import { fmtInt } from './format';
 import { Icon } from './Icon';
@@ -49,7 +49,7 @@ interface Props {
   catalog: Catalog | null;
   /** Qué copia es cada fila del plan, para mostrar su dupe. */
   copies: (RowCopy | null)[];
-  onChange: (update: (s: AppState) => AppState) => void;
+  onChange: ChangeState;
 }
 
 
@@ -74,12 +74,16 @@ export function FuturePulls({ state, result, catalog, copies, onChange }: Props)
   const refunded = grossTotal - total;
   const left = result.wholeSingles - total;
 
-  const setPlan = (update: (p: PlannedPull[]) => PlannedPull[]) =>
-    onChange((s) => ({ ...s, plannedPulls: update(s.plannedPulls) }));
+  const setPlan = (update: (p: PlannedPull[]) => PlannedPull[], undo?: string) =>
+    onChange((s) => ({ ...s, plannedPulls: update(s.plannedPulls) }), undo);
   const updatePull = (id: string, patch: Partial<PlannedPull>) =>
     setPlan((p) => p.map((x) => (x.id === id ? { ...x, ...patch } : x)));
   // El nombre es solo el del catálogo: el dupe de cada fila se calcula aparte (ver planCopies).
-  const remove = (id: string) => setPlan((p) => p.filter((x) => x.id !== id));
+  const remove = (pull: PlannedPull) =>
+    setPlan(
+      (p) => p.filter((x) => x.id !== pull.id),
+      pull.name ? `«${pull.name}» quitado de la planificación.` : 'Fila quitada de la planificación.',
+    );
   // Miniatura de cada fila: el retrato del personaje o el icono del cono (null si no está en el catálogo).
   const portraitOf = (pull: PlannedPull) => {
     const entry = catalog ? resolve(pull.name, catalog[pull.kind]) : null;
@@ -179,7 +183,7 @@ export function FuturePulls({ state, result, catalog, copies, onChange }: Props)
                   portrait={portraitOf(pull)}
                   onUpdate={(patch) => updatePull(pull.id, patch)}
                   autoFocus={pull.id === focusId}
-                  onRemove={() => remove(pull.id)}
+                  onRemove={() => remove(pull)}
                 />
               ))}
             </SortableContext>
@@ -286,6 +290,9 @@ function SortablePullRow({ pull, row, suggestions, dupe, portrait, onUpdate, aut
             key={portrait}
             src={portrait}
             alt=""
+            // El tamaño lo pone el CSS (el hueco de la miniatura); estos evitan saltos al cargar.
+            width={54}
+            height={54}
             loading="lazy"
             decoding="async"
             draggable={false}
@@ -324,6 +331,7 @@ function SortablePullRow({ pull, row, suggestions, dupe, portrait, onUpdate, aut
           type="checkbox"
           checked={row.guaranteed || pull.winsFiftyFifty}
           disabled={row.guaranteed}
+          aria-label={row.guaranteed ? `${label}: garantizado, se gana seguro` : `${label}: gana el 50/50`}
           onChange={(e) => onUpdate({ winsFiftyFifty: e.target.checked })}
         />
         50/50
@@ -335,9 +343,11 @@ function SortablePullRow({ pull, row, suggestions, dupe, portrait, onUpdate, aut
       >
         <Icon kind="pass" size={26} decorative />
         <strong>{fmtInt(row.cost)}</strong>
+        {/* El borde rojo del nombre no llega a los lectores de pantalla: lo dicen aquí. */}
+        {!row.affordable && <span className="sr-only">, no llega con lo que tendrás</span>}
       </div>
 
-      <button type="button" className="btn btn-ghost btn-icon pull-remove" aria-label={`Quitar ${label}`} onClick={onRemove}>
+      <button type="button" className="btn btn-ghost btn-remove" aria-label={`Quitar ${label}`} onClick={onRemove}>
         ✕
       </button>
     </div>

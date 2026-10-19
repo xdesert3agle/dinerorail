@@ -249,6 +249,12 @@ function load(): AppState {
   return defaultState();
 }
 
+/**
+ * Cambia el estado, como el setState de React. Los borrados pasan además el texto del aviso (`undo`): el
+ * aviso de arriba lo muestra con un botón para volver al estado de antes.
+ */
+export type ChangeState = (update: (s: AppState) => AppState, undo?: string) => void;
+
 /** Actualización que cambia solo algunos ajustes: `onChange(withSettings({ includeShards }))`. */
 export const withSettings =
   (patch: Partial<Settings>) =>
@@ -277,5 +283,11 @@ export function exportState(state: AppState): void {
 }
 
 export async function importState(file: File): Promise<AppState> {
-  return normalizeState(JSON.parse(await file.text()));
+  let raw: unknown;
+  try {
+    raw = JSON.parse(await file.text());
+  } catch {
+    throw new Error('El archivo no es un JSON válido. Elige una copia exportada con «Exportar JSON».');
+  }
+  return normalizeState(raw);
 }

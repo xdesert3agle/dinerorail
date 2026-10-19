@@ -40,7 +40,9 @@ export function todayISO(now = new Date()): ISODate {
 
 export const WEEKDAYS = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
 
+/** dd/mm/aaaa (es-ES). En UTC, para que la fecha ISO no cambie de día con la zona horaria. */
+const DATE_FORMAT = new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
+
 export function formatDate(iso: ISODate): string {
-  const [y, m, d] = iso.split('-');
-  return `${d}/${m}/${y}`;
+  return DATE_FORMAT.format(new Date(`${iso}T00:00:00Z`));
 }

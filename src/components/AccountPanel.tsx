@@ -3,6 +3,7 @@ import { clampEidolon, fiveStarOnly, parseProfile } from '../engine/account';
 import type { Catalog } from '../engine/catalog';
 import { MAX_EIDOLON } from '../engine/rules';
 import type { AppState, OwnedCharacter } from '../engine/types';
+import type { ChangeState } from '../state/store';
 import { fmtMoment } from './format';
 import { NumberField } from './NumberField';
 
@@ -10,8 +11,11 @@ interface Props {
   state: AppState;
   /** Personajes 5★ sincronizados: para quedarse solo con los 5★ y usar sus nombres. */
   catalog: Catalog | null;
-  onChange: (update: (s: AppState) => AppState) => void;
+  onChange: ChangeState;
 }
+
+/** "1 personaje", "3 personajes". */
+const countLabel = (n: number) => `${n} ${n === 1 ? 'personaje' : 'personajes'}`;
 
 /**
  * Pestaña Cuenta: los personajes 5★ que ya se tienen, con su Eidolón. Se importan del profile.json del
@@ -25,11 +29,14 @@ export function AccountPanel({ state, catalog, onChange }: Props) {
   const { importedAt } = state.account;
 
   // Los dupes del plan salen de la cuenta al pintarlos: no hay que tocar el plan al cambiarla.
-  const setCharacters = (update: (c: OwnedCharacter[]) => OwnedCharacter[], imported?: number) =>
-    onChange((s) => ({
-      ...s,
-      account: { characters: update(s.account.characters), importedAt: imported ?? s.account.importedAt },
-    }));
+  const setCharacters = (update: (c: OwnedCharacter[]) => OwnedCharacter[], imported?: number, undo?: string) =>
+    onChange(
+      (s) => ({
+        ...s,
+        account: { characters: update(s.account.characters), importedAt: imported ?? s.account.importedAt },
+      }),
+      undo,
+    );
 
   const setEidolon = (id: string, eidolon: number) =>
     setCharacters((list) => list.map((c) => (c.id === id ? { ...c, eidolon: clampEidolon(eidolon) } : c)));
@@ -39,8 +46,10 @@ export function AccountPanel({ state, catalog, onChange }: Props) {
     if (!file) return;
     try {
       const imported = fiveStarOnly(parseProfile(await file.text()), entries);
-      setCharacters(() => imported, Date.now());
-      setMessage({ text: `${imported.length} personajes importados.`, error: false });
+      const text = `${countLabel(imported.length)} ${imported.length === 1 ? 'importado' : 'importados'}.`;
+      // Sustituye la lista (y los Eidolones corregidos a mano): el aviso de arriba permite deshacerlo.
+      setCharacters(() => imported, Date.now(), `Perfil importado: ${text}`);
+      setMessage({ text, error: false });
     } catch (e) {
       setMessage({ text: e instanceof Error ? e.message : 'No se ha podido leer el archivo.', error: true });
     }
@@ -75,11 +84,10 @@ export function AccountPanel({ state, catalog, onChange }: Props) {
               }}
             />
           </div>
-          {message && (
-            <p className={message.error ? 'account-error' : 'muted small'} role={message.error ? 'alert' : 'status'}>
-              {message.text}
-            </p>
-          )}
+          {/* Siempre montado, para que el lector de pantalla anuncie el resultado. */}
+          <div role="status">
+            {message && <p className={`account-message${message.error ? ' is-error' : ''}`}>{message.text}</p>}
+          </div>
         </section>
       </aside>
 
@@ -87,7 +95,7 @@ export function AccountPanel({ state, catalog, onChange }: Props) {
         <section className="card">
           <header className="card-header">
             <h2>Personajes</h2>
-            <span className="muted">{characters.length > 0 && `${characters.length} personajes 5★`}</span>
+            <span className="muted">{characters.length > 0 && `${countLabel(characters.length)} 5★`}</span>
           </header>
           {!entries && characters.length > 0 && (
             <p className="warning">

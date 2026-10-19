@@ -34,6 +34,60 @@ const untilt = (e: PointerEvent<HTMLDivElement>) => {
   e.currentTarget.style.removeProperty('--tilt-y');
 };
 
+/*
+ * Flotar (dupe-float en styles.css): la altura del hueco (--lift, de 0 a 1) sube 3 s y baja 3 s, en bucle;
+ * de ella salen la escala de la imagen y sus sombras. Al pasar el ratón, sube desde donde esté hasta arriba
+ * del todo y se queda quieta; al salir, el bucle sigue desde arriba, así que baja sola con su propio ritmo y
+ * vuelve a flotar. Sin animaciones (reduced motion) no hay bucle y no se hace nada.
+ */
+const FLOAT_HALF_MS = 3000;
+/** Lo que tarda en subir desde abajo del todo (desde más arriba, la parte que le queda). */
+const LIFT_MS = 500;
+
+/** Subida en curso (o terminada y quieta arriba) de cada hueco. */
+const lifts = new WeakMap<HTMLElement, Animation>();
+
+const floatAnimation = (slot: HTMLElement) =>
+  slot.getAnimations().find((a): a is CSSAnimation => a instanceof CSSAnimation && a.animationName === 'dupe-float');
+
+function liftUp(slot: HTMLElement) {
+  const float = floatAnimation(slot);
+  if (!float) return;
+  float.pause();
+  const lift = Number(getComputedStyle(slot).getPropertyValue('--lift')) || 0;
+  lifts.get(slot)?.cancel();
+  lifts.set(
+    slot,
+    slot.animate([{ '--lift': lift }, { '--lift': 1 }], {
+      duration: Math.max(120, (1 - lift) * LIFT_MS),
+      easing: 'ease-out',
+      fill: 'forwards',
+    }),
+  );
+}
+
+function settleDown(slot: HTMLElement) {
+  const lift = lifts.get(slot);
+  if (!lift) return;
+  // Cuando ha llegado arriba: el bucle se coloca en su punto más alto (el paso de subir a bajar) y sigue.
+  const handOver = () => {
+    const float = floatAnimation(slot);
+    if (float) {
+      // Tiempo dentro del bucle: el retardo negativo de cada hueco (el desfase) ya cuenta como tiempo pasado.
+      const timing = float.effect?.getComputedTiming();
+      const active = Number(timing?.localTime ?? 0) - (timing?.delay ?? 0);
+      const cycle = 2 * FLOAT_HALF_MS;
+      const toTop = (((FLOAT_HALF_MS - (active % cycle)) % cycle) + cycle) % cycle;
+      float.currentTime = Number(float.currentTime ?? 0) + toTop;
+      float.play();
+    }
+    lift.cancel();
+    lifts.delete(slot);
+  };
+  // Si se vuelve a entrar antes, la subida nueva cancela esta y el relevo no llega a hacerse.
+  lift.finished.then(handOver, () => {});
+}
+
 /** Una imagen de un margen: de quién es y qué copia (Eidolón 1…6 o superposición 1…5). */
 interface Item {
   src: string;
@@ -84,7 +138,7 @@ function Popover({ side, item, anchor }: { side: 'left' | 'right'; item: Item; a
   }
 
   return (
-    <div ref={ref} className={`dupe-pop dupe-pop-${side}`}>
+    <div ref={ref} className={`dupe-pop dupe-pop-${side}`} aria-hidden="true">
       <div className="dupe-pop-head">
         <span className="dupe-badge">
           {item.ref.kind === 'character' ? 'E' : 'S'}
@@ -134,25 +188,44 @@ function Side({ side, items }: { side: 'left' | 'right'; items: Item[] }) {
       <div className={`dupes dupes-${side}`} aria-hidden="true">
         {items.map((item, i) => (
           // --dupe-index desfasa la animación de flotar de cada hueco (el lado derecho, medio ciclo más).
-          <div key={i} className="dupe-slot" style={{ '--dupe-index': i + (side === 'right' ? 0.5 : 0) } as CSSProperties}>
-            <div
-              key={item.src}
-              className="dupe-card"
-              style={{ '--dupe-src': `url("${item.src}")` } as CSSProperties}
-              onPointerEnter={(e) => setHover({ index: i, anchor: e.currentTarget.parentElement ?? e.currentTarget })}
-              onPointerMove={tilt}
-              onPointerLeave={(e) => {
-                untilt(e);
-                setHover(null);
-              }}
-            >
-              <img className="dupe-img" src={item.src} alt="" decoding="async" draggable={false} />
-              <span className="dupe-glare" />
+          // --dupe-src: la imagen como máscara del reflejo (en la tarjeta) y de las sombras (en el hueco).
+          // Las sombras van en el hueco, fuera de .dupe-lift: están en la página, no crecen con la imagen.
+          <div
+            key={i}
+            className="dupe-slot"
+            style={{ '--dupe-index': i + (side === 'right' ? 0.5 : 0), '--dupe-src': `url("${item.src}")` } as CSSProperties}
+          >
+            <span className="dupe-shadow dupe-shadow-contact" />
+            <span className="dupe-shadow dupe-shadow-cast" />
+            <div className="dupe-lift">
+              <div
+                key={item.src}
+                className="dupe-card"
+                onPointerEnter={(e) => {
+                  const slot = e.currentTarget.closest<HTMLElement>('.dupe-slot')!;
+                  liftUp(slot);
+                  setHover({ index: i, anchor: slot });
+                }}
+                onPointerMove={tilt}
+                onPointerLeave={(e) => {
+                  untilt(e);
+                  settleDown(e.currentTarget.closest<HTMLElement>('.dupe-slot')!);
+                  setHover(null);
+                }}
+              >
+                <img className="dupe-img" src={item.src} alt="" decoding="async" draggable={false} />
+                <span className="dupe-glare" />
+              </div>
             </div>
           </div>
         ))}
       </div>
-      {hovered && <Popover side={side} item={hovered} anchor={hover.anchor} />}
+      {/*
+        Con el índice como clave: al pasar rápido de una imagen a la de al lado, salir de una y entrar en
+        la otra llegan juntas y el popover no llega a quitarse; así se monta uno nuevo y vuelve a aparecer
+        con su fundido.
+      */}
+      {hovered && <Popover key={hover.index} side={side} item={hovered} anchor={hover.anchor} />}
     </>
   );
 }

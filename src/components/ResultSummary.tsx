@@ -31,7 +31,8 @@ export function ResultSummary({ result, skin }: { result: Result; skin: Skin }) 
   const { final } = result;
   const Decoration = DECORATION[skin];
   return (
-    <section className="card hero" aria-live="polite">
+    // Sin aria-live: la tarjeta cambia con cada tecla y el lector de pantalla la repetiría entera.
+    <section className="card hero">
       <header className="card-header">
         <h2>Resumen</h2>
       </header>

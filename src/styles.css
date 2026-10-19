@@ -29,6 +29,16 @@
   --warning-text: #7a5200;
   --radius: 12px;
   --input-nudge: 1px;
+  /* Texto sobre el acento (día elegido del calendario) y su fondo. */
+  --on-accent: #ffffff;
+  --selected-bg: var(--accent);
+  /* Bola de los interruptores. */
+  --knob: #ffffff;
+  /* Alto de un botón (.btn: letra de 0,875rem) y de un campo compacto, para igualar otras piezas con ellos. */
+  --control-h: calc(0.875rem * 1.45 + 14px);
+  --field-compact-h: calc(1rem * 1.45 + 14px);
+  /* Sombra de lo que flota sobre la página: desplegables, calendario y popover de la galería. */
+  --shadow-pop: 0 10px 30px color-mix(in srgb, var(--text) 18%, transparent);
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
   line-height: 1.45;
 }
@@ -54,6 +64,7 @@
     --deco-ink: #f7d9e8;
     --deco-ink-opacity: 0.85;
     --glow: rgba(229, 83, 155, 0.13);
+    --danger: #f0605a;
     --success-text: #0ca30c;
     --warning-bg: #3a2c0b;
     --warning-text: #fab219;
@@ -80,6 +91,7 @@
   --deco-ink: #f7d9e8;
   --deco-ink-opacity: 0.85;
   --glow: rgba(229, 83, 155, 0.13);
+  --danger: #f0605a;
   --success-text: #0ca30c;
   --warning-bg: #3a2c0b;
   --warning-text: #fab219;
@@ -90,7 +102,7 @@
  * Mismo reparto que Kafka: el rojo solo en lo interactivo, los datos y la decoración.
  */
 :root[data-skin='aha'] {
-  /* Figtree: mayúsculas ya centradas, así que los campos no necesitan el ajuste de 1px. Cifras de ancho fijo, como Segoe. */
+  /* Figtree: mayúsculas ya centradas, así que los campos no necesitan el ajuste de 1px. */
   font-family: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --input-nudge: 0px;
   --page: #f0eae9;
@@ -98,7 +110,8 @@
   --surface-2: #f6e8e5;
   --text: #1e0c0d;
   --text-secondary: #5f4442;
-  --text-muted: #927a77;
+  /* ≥4,5:1 sobre --surface, --page y --surface-2. */
+  --text-muted: #7a6360;
   --grid: #eedcd8;
   --axis: #d9c0bb;
   --border: rgba(70, 10, 10, 0.1);
@@ -123,7 +136,7 @@
     --surface-2: #311b1e;
     --text: #ffffff;
     --text-secondary: #d2b9b6;
-    --text-muted: #957d7a;
+    --text-muted: #9c8481;
     --grid: #2f1a1c;
     --axis: #4a2a2d;
     --border: rgba(255, 200, 190, 0.09);
@@ -139,6 +152,8 @@
     --glow: rgba(226, 59, 63, 0.15);
     --page-pattern-opacity: 0.21;
     --card-title: var(--text);
+    --danger: #f0605a;
+    --selected-bg: #c4262d;
   }
 }
 
@@ -148,7 +163,7 @@
   --surface-2: #311b1e;
   --text: #ffffff;
   --text-secondary: #d2b9b6;
-  --text-muted: #957d7a;
+  --text-muted: #9c8481;
   --grid: #2f1a1c;
   --axis: #4a2a2d;
   --border: rgba(255, 200, 190, 0.09);
@@ -164,6 +179,8 @@
   --glow: rgba(226, 59, 63, 0.15);
   --page-pattern-opacity: 0.21;
   --card-title: var(--text);
+  --danger: #f0605a;
+  --selected-bg: #c4262d;
 }
 
 /*
@@ -290,6 +307,7 @@
   --bevel-dark: #9b9b9b;
   --chip: #e3dcd6;
   --knob: #ffffff;
+  --on-accent: #000000;
   --ink: #000000;
   --dither: 3%;
   --shadow-win: 0 50px 80px -50px rgba(0, 0, 0, 0.34);
@@ -370,6 +388,14 @@
 *::after {
   box-sizing: border-box;
 }
+button,
+a,
+input,
+select,
+label {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
 
 /*
  * Cifras de toda la app: proporcionales (normal) o de ancho fijo (tabular-nums). Solo se nota en Figtree
@@ -412,12 +438,13 @@ h2,
 h3 {
   margin: 0;
   line-height: 1.2;
+  text-wrap: balance;
 }
 h1 {
   font-size: 1.5rem;
 }
 h2 {
-  font-size: 1.05rem;
+  font-size: 1.0625rem;
 }
 h3 {
   font-size: 0.75rem;
@@ -444,6 +471,25 @@ p {
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+/* Oculto pero ocupando su sitio, para que el resto no se mueva al aparecer. */
+.invisible {
+  visibility: hidden;
+}
+/* Salto al contenido: fuera de la vista hasta que se llega con el tabulador. */
+.skip-link {
+  position: absolute;
+  z-index: 50;
+  top: 8px;
+  left: 8px;
+  transform: translateY(-200%);
+}
+.skip-link:focus-visible {
+  transform: none;
+}
+/* Destino del salto: no es un control, así que no lleva anillo de foco. */
+.main:focus {
+  outline: none;
+}
 
 /* Icons */
 .icon {
@@ -456,7 +502,11 @@ p {
 .with-icon {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+}
+/* Iconos dentro de un texto entre paréntesis ("(💠→💎)"): pegados al texto. */
+.with-icon-tight {
+  gap: 2px;
 }
 .reward {
   display: inline-flex;
@@ -484,8 +534,11 @@ p {
 .field-compact .input-wrap.has-icon input {
   padding-left: 32px;
 }
-/* Campo de fecha (air-datepicker): solo lectura, se abre el calendario al pulsarlo; icono a la derecha. */
-.date-field input {
+/*
+ * Campo de fecha (air-datepicker): solo lectura, se abre el calendario al pulsarlo; icono a la derecha.
+ * Con [type] para ganar a input[type='text'], que si no pisa el relleno del icono.
+ */
+.date-field input[type='text'] {
   padding-right: 32px;
   cursor: pointer;
 }
@@ -497,11 +550,12 @@ p {
   color: var(--text-muted);
   pointer-events: none;
 }
+/* Campos compactos (filas de eventos, inicio de actualización): icono a 8px del borde y 4px de aire. */
+.field-compact .date-field input[type='text'],
 .event-row .date-field input[type='text'] {
-  /* El icono (16px a 8px del borde) y 4px de aire hasta la fecha. Con [type] para ganar a .event-row input[type='text']. */
-  /* Con cifras de ancho fijo (--num-variant) todas las fechas miden lo mismo; con proporcionales, el hueco cambia con ellas. */
   padding-right: 28px;
 }
+.field-compact .date-field-icon,
 .event-row .date-field-icon {
   right: 8px;
 }
@@ -512,7 +566,7 @@ p {
   --adp-font-size: 0.875rem;
   --adp-width: 264px;
   --adp-padding: 6px;
-  --adp-border-radius: 10px;
+  --adp-border-radius: var(--radius);
   --adp-cell-border-radius: 6px;
   --adp-color: var(--text);
   --adp-color-secondary: var(--text-muted);
@@ -522,8 +576,14 @@ p {
   --adp-background-color-active: var(--accent-soft);
   --adp-border-color: var(--border);
   --adp-border-color-inner: var(--grid);
-  --adp-cell-background-color-selected: var(--accent);
-  --adp-cell-background-color-selected-hover: var(--accent);
+  --adp-cell-background-color-selected: var(--selected-bg);
+  --adp-cell-background-color-selected-hover: var(--selected-bg);
+  /*
+   * El día elegido visto desde otro mes (el 30 de octubre en noviembre): la librería le pone un fondo azul
+   * claro fijo detrás del círculo. Sin fondo: basta el círculo, como en su propio mes.
+   */
+  --adp-background-color-selected-other-month: transparent;
+  --adp-background-color-selected-other-month-focused: transparent;
   --adp-color-current-date: var(--accent-text);
   --adp-day-name-color: var(--accent-text);
   --adp-day-name-color-hover: var(--accent);
@@ -533,7 +593,20 @@ p {
   --adp-nav-arrow-color: var(--text-muted);
   --adp-btn-color: var(--accent-text);
   --adp-border-color-inline: var(--border);
-  box-shadow: 0 10px 30px color-mix(in srgb, var(--text) 18%, transparent);
+  box-shadow: var(--shadow-pop);
+}
+/* El día, mes o año elegido: la librería lo pinta en blanco fijo, ilegible sobre el turquesa de Sparxie. */
+.air-datepicker-cell.-selected-,
+.air-datepicker-cell.-selected-.-current-,
+.-selected-.air-datepicker-cell.-day-.-other-month- {
+  color: var(--on-accent);
+}
+/* Sin movimiento: el calendario aparece sin deslizarse. */
+@media (prefers-reduced-motion: reduce) {
+  .air-datepicker {
+    --adp-transition-duration: 0s;
+    --adp-transition-offset: 0px;
+  }
 }
 /* Día seleccionado: círculo del alto de la celda, centrado (la celda es más ancha que alta). */
 .air-datepicker-cell.-day-.-selected- {
@@ -575,7 +648,7 @@ p {
   gap: 12px;
   justify-content: space-between;
   align-items: flex-end;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   padding-bottom: 16px;
 }
 /* Un hilo fino bajo la cabecera que se desvanece hacia la derecha. */
@@ -604,17 +677,18 @@ p {
   border: 1px solid var(--border);
   border-radius: 999px;
 }
+/* Misma letra que los botones de al lado y el mismo alto que ellos (3 + 3 de relleno y 4 + 2 del contenedor). */
 .skin-option {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   font: inherit;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   color: var(--text-secondary);
   background: transparent;
   border: none;
   border-radius: 999px;
-  padding: 4px 10px;
+  padding: 3px 10px;
   cursor: pointer;
 }
 .skin-option:hover {
@@ -654,11 +728,16 @@ p {
   background: #f6d5d5;
   box-shadow: inset 0 0 0 1px #000;
 }
-/* Pestañas bajo la cabecera: la seleccionada se subraya con el acento del tema. */
+/*
+ * Pestañas bajo la cabecera: la seleccionada se subraya con el acento del tema. El desplazamiento lateral
+ * (móvil) recorta también por arriba y por abajo: el relleno de 4px deja sitio al anillo de foco y el margen
+ * negativo lo compensa.
+ */
 .tabs {
   display: flex;
   gap: 4px;
-  margin: -10px 0 16px;
+  padding: 4px;
+  margin: -4px -4px 12px;
   overflow-x: auto;
 }
 .tab {
@@ -803,8 +882,15 @@ p {
   .dupe-slot {
     width: var(--dupe-size);
     aspect-ratio: var(--dupe-ratio);
-    /* La sombra va en el hueco (no en la imagen) para que la animación de flotar la mueva sin chocar con la de entrada. */
-    filter: drop-shadow(var(--dupe-shadow-low));
+    /* isolation: las sombras quedan detrás de la imagen pero delante del fondo de la página. */
+    position: relative;
+    isolation: isolate;
+  }
+  /* Lo que sube: la imagen, más grande cuanto más cerca de la pantalla. Las sombras no van dentro. */
+  .dupe-lift {
+    position: relative;
+    height: 100%;
+    transform: scale(calc(1 + 0.04 * var(--lift)));
   }
   .dupe-card {
     position: relative;
@@ -868,48 +954,113 @@ p {
     --eidolon-rows: 3;
   }
 }
-/* Sombra pegada al fondo (abajo) y despegada (arriba): al subir se aleja, se difumina y se aclara. */
+/*
+ * Altura de cada imagen sobre la página. Flotar anima --lift (0 abajo, 1 arriba) y el ratón encima,
+ * --hover-lift; de ellas salen la escala de la imagen y sus sombras. Registradas para poder animarlas.
+ */
+@property --lift {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --hover-lift {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
 :root {
   --dupe-outline: #fff;
   --dupe-glare: rgb(255 255 255 / 0.3);
   --dupe-glare-soft: rgb(255 255 255 / 0.09);
   --dupe-glare-band: rgb(255 255 255 / 0.22);
-  --dupe-shadow-low: 0 4px 8px color-mix(in srgb, var(--text) 30%, transparent);
-  --dupe-shadow-high: 0 18px 24px color-mix(in srgb, var(--text) 14%, transparent);
+  /* Negras en los dos modos (una sombra no es un halo); en oscuro, más densas para que se noten. */
+  --dupe-shadow-contact: light-dark(rgb(0 0 0 / 0.4), rgb(0 0 0 / 0.75));
+  --dupe-shadow-cast: light-dark(rgb(0 0 0 / 0.22), rgb(0 0 0 / 0.6));
+}
+/*
+ * Sombras de algo que se despega de la página, con luz desde arriba. La altura (--h, en px) sale de la
+ * escala con la perspectiva de 600px de la inclinación: flotar (×1,04) son unos 23px y el ratón encima
+ * (×1,10 más) unos 52px más; arriba del todo, 75px.
+ * - Las sombras están en la página: no crecen con la imagen (van fuera de .dupe-lift).
+ * - Contacto: oscura y nítida, pegada al borde de abajo. Solo existe tocando la página: se apaga en los
+ *   primeros 12px de altura.
+ * - Proyectada: suave. Se aleja con la altura (3px + la mitad de la altura), se abre un poco (la penumbra)
+ *   y se aclara (a 0,33 a 75px).
+ * Son la silueta de la imagen (la propia imagen como máscara) con el difuminado fijo; al subir solo cambian
+ * su posición, su tamaño y su opacidad, sin volver a pintarse.
+ */
+.dupe-slot {
+  --h: calc(var(--lift) * 23 + var(--hover-lift) * 52);
+}
+.dupe-shadow {
+  position: absolute;
+  inset: 0;
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+/*
+ * La silueta va en un hijo y el difuminado en la sombra: en un mismo elemento, el filtro se aplica antes que
+ * la máscara, que recortaría en seco el borde ya difuminado.
+ */
+.dupe-shadow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--shadow-color);
+  -webkit-mask: var(--dupe-src) center / contain no-repeat;
+  mask: var(--dupe-src) center / contain no-repeat;
+}
+.dupe-shadow-contact {
+  --shadow-color: var(--dupe-shadow-contact);
+  filter: blur(3px);
+  transform: translateY(2px);
+  opacity: calc(1 - var(--h) / 12);
+}
+.dupe-shadow-cast {
+  --shadow-color: var(--dupe-shadow-cast);
+  filter: blur(16px);
+  transform: translateY(calc((3 + var(--h) * 0.5) * 1px)) scale(calc(1 + var(--h) * 0.0015));
+  opacity: calc(1 - var(--h) / 112);
 }
 @media (prefers-reduced-motion: no-preference) {
   .dupe-card {
     animation: dupe-in 0.4s ease-out;
   }
   /*
-   * Flotar sobre el fondo, sin desplazarse: 3 s subiendo hacia la pantalla (algo más grande y con la
-   * sombra más lejos) y 3 s bajando. Cada hueco va desfasado para que no suban todos a la vez.
-   */
-  /*
    * Al pasar el ratón, la tarjeta se acerca un poco y se inclina hacia él (ver DupeGallery.tsx),
-   * siguiéndolo casi sin retraso; al salir, vuelve despacio.
+   * siguiéndolo casi sin retraso; al salir, vuelve despacio. Las sombras siguen la misma altura
+   * (--hover-lift), al mismo ritmo.
    */
   .dupe-card {
     transform: perspective(600px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
     transition: transform 0.6s ease-out;
   }
   .dupe-card:hover {
-    transform: perspective(600px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) scale(1.06);
+    transform: perspective(600px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) scale(1.1);
     transition-duration: 0.12s;
   }
+  /*
+   * Flotar sobre la página, sin desplazarse: 3 s subiendo hacia la pantalla y 3 s bajando. Cada hueco va
+   * desfasado para que no suban todos a la vez.
+   */
   .dupe-slot {
     animation: dupe-float 3s ease-in-out infinite alternate;
     animation-delay: calc(var(--dupe-index, 0) * -1s);
+    transition: --hover-lift 0.6s ease-out;
+  }
+  /* Por encima de los vecinos: a esa escala invade unos píxeles el hueco entre columnas. */
+  .dupe-slot:hover {
+    --hover-lift: 1;
+    z-index: 1;
+    transition-duration: 0.12s;
   }
 }
 @keyframes dupe-float {
   from {
-    transform: scale(1);
-    filter: drop-shadow(var(--dupe-shadow-low));
+    --lift: 0;
   }
   to {
-    transform: scale(1.04);
-    filter: drop-shadow(var(--dupe-shadow-high));
+    --lift: 1;
   }
 }
 @keyframes dupe-in {
@@ -936,7 +1087,7 @@ p {
   /* Borde con el acento del tema: con el de siempre se confundía con las tarjetas de detrás. */
   border: 2px solid var(--accent);
   border-radius: var(--radius);
-  box-shadow: 0 10px 30px color-mix(in srgb, var(--text) 18%, transparent);
+  box-shadow: var(--shadow-pop);
   font-size: 0.9375rem;
   line-height: 1.45;
   pointer-events: none;
@@ -1025,6 +1176,8 @@ p {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  /* Como si llevara un botón: el contenido empieza a la misma altura en todas las tarjetas. */
+  min-height: var(--control-h);
 }
 /* Títulos de las tarjetas en mayúsculas, con algo de espaciado para que no queden apretados. */
 .card-header h2 {
@@ -1162,7 +1315,7 @@ p {
   letter-spacing: 0.02em;
 }
 /* Aha: recuadros de color plano con el mismo borde que la tarjeta, y cifra con un leve resplandor. */
-:root[data-skin='aha'] .hero-stats div {
+:root[data-skin='aha'] :is(.hero-stats, .odds-stats) div {
   border-radius: 10px;
   padding: 10px 12px;
   /* Transparencia muy ligera: se intuye lo de detrás sin restar legibilidad. */
@@ -1245,8 +1398,7 @@ p {
   color: var(--text-muted);
   cursor: help;
 }
-.info:hover,
-.info:focus-visible {
+.info:hover {
   color: var(--text);
 }
 .field-hint {
@@ -1298,7 +1450,7 @@ input:focus-visible,
 select:focus-visible,
 button:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 .check {
   display: flex;
@@ -1345,14 +1497,13 @@ button:focus-visible {
   padding: 6px 12px;
   cursor: pointer;
 }
-.btn:hover {
+.btn:hover:not(:disabled) {
   border-color: var(--axis);
 }
-/* Desactivado (p. ej. sincronizar durante la espera): atenuado y sin reaccionar al ratón. */
+/* Desactivado (p. ej. sincronizar durante la espera): atenuado y sin reaccionar al ratón (sí al cursor). */
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  pointer-events: none;
 }
 .chip:hover {
   border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
@@ -1364,7 +1515,6 @@ select:focus {
 }
 .chip {
   border-radius: 999px;
-  padding: 6px 12px;
 }
 /*
  * Iconos de interfaz monocromos (personaje, cono de luz): el PNG blanco se usa como máscara sobre el color
@@ -1402,8 +1552,10 @@ select:focus {
   border-color: transparent;
   color: var(--text-secondary);
 }
-.btn-ghost:hover {
+/* Sin el borde de .btn:hover: los fantasma solo se tiñen (como en Sparxie y Grafito). */
+.btn-ghost:hover:not(:disabled) {
   background: var(--surface-2);
+  border-color: transparent;
 }
 .btn-danger {
   color: var(--danger);
@@ -1435,7 +1587,7 @@ select:focus {
   grid-template-columns: auto minmax(0, 1fr) auto auto;
   gap: 12px;
   align-items: center;
-  padding: 10px 0;
+  padding: 8px 0;
 }
 .source.is-off .source-main,
 .source.is-off .source-contrib {
@@ -1507,15 +1659,19 @@ select:focus {
   position: absolute;
   inset: 0;
   background-color: var(--axis);
-  background-image: radial-gradient(circle closest-side, #fff calc(100% - 2.5px), transparent calc(100% - 2px));
+  background-image: radial-gradient(circle closest-side, var(--knob) calc(100% - 2.5px), transparent calc(100% - 2px));
   background-size: 20px 100%;
   background-position: 0 50%;
   background-repeat: no-repeat;
   border-radius: 999px;
-  transition:
-    background-color 0.15s,
-    background-position 0.15s;
   pointer-events: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .switch span {
+    transition:
+      background-color 0.15s,
+      background-position 0.15s;
+  }
 }
 .switch input:checked + span {
   background-color: var(--accent);
@@ -1641,31 +1797,28 @@ tfoot td {
 .pull-field {
   position: relative;
 }
+/*
+ * Sube y se encoge solo con transform (escala desde su esquina de arriba a la izquierda): de centrada en el
+ * campo (3,375rem de alto) a 7px del borde de arriba y 0,6875 de su tamaño (11px).
+ */
 .pull-field .field-label {
   position: absolute;
   z-index: 1;
   top: 50%;
   left: 9px;
   transform: translateY(-50%);
+  transform-origin: left top;
   font-size: 1rem;
   line-height: 1.2;
   color: var(--text-muted);
   pointer-events: none;
 }
 .pull-field:is(:focus-within, .has-value) .field-label {
-  top: 7px;
-  transform: none;
-  font-size: 0.6875rem;
-  /* Arriba, más apagada aún: es una pista, el nombre es lo que manda. */
-  opacity: 0.8;
+  transform: translateY(calc(7px - 1.6875rem)) scale(0.6875);
 }
 @media (prefers-reduced-motion: no-preference) {
   .pull-field .field-label {
-    transition:
-      top 150ms ease,
-      transform 150ms ease,
-      font-size 150ms ease,
-      opacity 150ms ease;
+    transition: transform 150ms ease;
   }
 }
 .pull-row .pull-field input[type='text'] {
@@ -1752,8 +1905,8 @@ tfoot td {
   list-style: none;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: 0 10px 30px color-mix(in srgb, var(--text) 18%, transparent);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-pop);
 }
 .combo-option {
   padding: 6px 8px;
@@ -1798,7 +1951,9 @@ tfoot td {
   z-index: 2;
   background: var(--surface-2);
   border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
+  box-shadow:
+    0 8px 24px color-mix(in srgb, var(--text) 35%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
 }
 .pull-row.is-dragging .drag-handle {
   cursor: grabbing;
@@ -1809,10 +1964,6 @@ tfoot td {
   font-size: 0.75rem;
   line-height: 1.2;
 }
-.btn-icon:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
 .pull-win {
   white-space: nowrap;
 }
@@ -1821,7 +1972,7 @@ tfoot td {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 5px;
+  gap: 6px;
   font-size: 1.375rem;
   line-height: 1;
   font-variant-numeric: var(--num-variant);
@@ -1876,6 +2027,11 @@ tfoot td {
     transform: rotate(360deg);
   }
 }
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2.4s;
+  }
+}
 .content-sync-error {
   margin: 0;
   font-size: 0.875rem;
@@ -1885,8 +2041,11 @@ tfoot td {
 .account-import p.muted:not(.small) {
   font-size: 0.875rem;
 }
-.account-error {
+.account-message {
   font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+.account-message.is-error {
   color: var(--danger);
 }
 /* Varias columnas de personajes según el ancho; cada fila, nombre a la izquierda y Eidolón a la derecha. */
@@ -1926,23 +2085,25 @@ tfoot td {
   border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
 }
 /*
- * Botón de quitar: igual que el asa del otro extremo de la fila (24px de ancho, todo el alto de la fila,
- * gris que se aclara al pasar el ratón), con la X centrada. Tiene ancho fijo (--pull-remove) para que
- * el balance se alinee con los costes de las filas.
+ * Botón de quitar (✕) en todo el sitio: como el asa del planificador (24px de ancho, todo el alto de su
+ * fila, gris que se aclara al pasar el ratón), con la X centrada.
  */
-.pull-list {
-  --pull-remove: 24px;
-}
-.pull-remove {
+.btn-remove {
   display: grid;
   place-items: center;
   align-self: stretch;
-  width: var(--pull-remove);
+  width: 24px;
   padding: 0;
+  font-size: 0.75rem;
+  line-height: 1.2;
   color: var(--text-muted);
 }
-.pull-remove:hover {
+.btn-remove:hover {
   color: var(--text);
+}
+/* El balance se alinea con los costes dejando a la derecha el hueco de la X. */
+.pull-list {
+  --pull-remove: 24px;
 }
 /*
  * El balance va fuera de las columnas de las filas: así su ancho nunca ensancha la columna
@@ -1955,7 +2116,7 @@ tfoot td {
   justify-content: space-between;
   gap: 12px;
   border-top: 1px solid var(--axis);
-  padding-top: 10px;
+  padding-top: 8px;
   padding-right: calc(var(--pull-remove) + var(--pull-gap));
 }
 @media (max-width: 560px) {
@@ -1966,7 +2127,8 @@ tfoot td {
   .pull-row input[type='text'] {
     padding: calc(6px - var(--input-nudge)) 5px calc(6px + var(--input-nudge));
   }
-  .pull-row .combo-value {
+  .pull-row .combo-value,
+  .pull-row .pull-field .field-label {
     left: 6px;
   }
   .pull-cost {
@@ -1999,8 +2161,8 @@ tfoot td {
 .patch-head .date-field {
   width: 9.5rem;
 }
-.input-version {
-  width: 5em !important;
+.patch-head .input-version {
+  width: 5rem;
 }
 .patch-total {
   margin-left: auto;
@@ -2009,6 +2171,10 @@ tfoot td {
   gap: 8px;
   font-size: 0.875rem;
   color: var(--text-secondary);
+}
+/* La X, del alto de los campos de al lado: así el total queda centrado con ellos. */
+.patch-total .btn-remove {
+  height: var(--field-compact-h);
 }
 .event-list {
   display: grid;
@@ -2022,8 +2188,8 @@ tfoot td {
    * son las más anchas, y para la fecha más ancha con la fuente de cada tema; el resto es para el nombre.
    */
   --event-date-col: 8.5rem;
-  grid-template-columns: minmax(0, 1fr) var(--event-date-col) 5.375rem 5.375rem 2.25rem;
-  gap: 6px;
+  grid-template-columns: minmax(0, 1fr) var(--event-date-col) 5.375rem 5.375rem 1.5rem;
+  gap: 8px;
   align-items: center;
 }
 .event-row input[type='text'],
@@ -2050,19 +2216,17 @@ tfoot td {
 .event-row .field:not(.no-spin) input[type='number']::-webkit-inner-spin-button {
   margin-left: 6px;
 }
-.event-row .btn {
-  padding: 6px 0;
-}
+/* Títulos de columna: como las etiquetas de los campos (.field-label). */
 .event-header {
-  font-size: 0.75rem;
-  color: var(--text-muted);
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
 }
 /* Probabilidades: una barra por objetivo (objetivo · barra · porcentaje) y debajo cuatro cifras resumen. */
 .odds-list {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(60px, 40%) 3.5em;
+  grid-template-columns: minmax(0, 1fr) minmax(60px, 40%) 3.5rem;
   column-gap: 12px;
-  row-gap: 14px;
+  row-gap: 12px;
   align-items: center;
 }
 .odds-row {
@@ -2159,8 +2323,8 @@ tfoot td {
 }
 /* Cabecera: cada título al inicio de su columna (sobre el icono o el borde del campo). */
 .pack-header {
-  font-size: 0.75rem;
-  color: var(--text-muted);
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
 }
 .pack-shards {
   display: flex;
@@ -2261,7 +2425,7 @@ tfoot td {
     display: none;
   }
   .event-row {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 2.25em;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 1.5rem;
     padding-bottom: 8px;
     border-bottom: 1px dashed var(--grid);
   }
@@ -2285,13 +2449,6 @@ tfoot td {
     grid-row: 3;
   }
 }
-.tag {
-  font-size: 0.75rem;
-  background: var(--surface-2);
-  border-radius: 999px;
-  padding: 2px 8px;
-  color: var(--text-secondary);
-}
 .bar-col {
   width: 30%;
 }
@@ -2304,11 +2461,25 @@ tfoot td {
 
 /* Notices */
 .notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   background: var(--accent-soft);
   border-radius: 8px;
-  padding: 8px 12px;
+  padding: 4px 4px 4px 12px;
   margin-bottom: 16px;
-  cursor: pointer;
+  font-size: 0.875rem;
+}
+.notice.is-error {
+  background: var(--warning-bg);
+  color: var(--warning-text);
+}
+.notice-text {
+  flex: 1;
+  min-width: 0;
+}
+.notice .btn-remove {
+  height: var(--control-h);
 }
 .warning {
   background: var(--warning-bg);
@@ -2480,13 +2651,13 @@ tfoot td {
   font-size: 2.25rem;
   font-weight: 400;
   line-height: 0.9;
-  letter-spacing: -1px;
+  letter-spacing: -0.028em;
 }
 :where(:root[data-skin='sparxie']) h3 {
   font-family: var(--font-mono);
   font-size: 1.0625rem;
   font-weight: 400;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.03em;
   color: var(--text-secondary);
 }
 :where(:root[data-skin='sparxie']) .app-header::after {
@@ -2506,13 +2677,17 @@ tfoot td {
 }
 
 /* Selector de tema: una tira de celdas como la barra superior del escritorio; la activa, en negativo. */
+/*
+ * Sin overflow: hidden (recortaba el anillo de foco): las celdas de los extremos llevan su propio redondeo.
+ * Del alto de los botones de al lado.
+ */
 :where(:root[data-skin='sparxie']) .skin-switch {
   padding: 0;
   gap: 0;
+  min-height: var(--control-h);
   background: var(--surface-2);
   border-color: var(--border);
   border-radius: 4px;
-  overflow: hidden;
 }
 :where(:root[data-skin='sparxie']) .skin-option {
   padding: 5px 8px 3px;
@@ -2521,13 +2696,17 @@ tfoot td {
   font-family: var(--font-mono);
   font-size: 1.0625rem;
   line-height: 1;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
   color: var(--text);
   text-shadow: 0 1px 0 var(--bevel-hi);
 }
 :where(:root[data-skin='sparxie']) .skin-option:first-child {
   border-left: 0;
+  border-radius: 3px 0 0 3px;
+}
+:where(:root[data-skin='sparxie']) .skin-option:last-child {
+  border-radius: 0 3px 3px 0;
 }
 :where(:root[data-skin='sparxie']) .skin-option:hover {
   background: color-mix(in srgb, var(--surface-2) 88%, var(--text));
@@ -2540,9 +2719,10 @@ tfoot td {
 }
 
 /* Pestañas: fichas grises; la seleccionada, negra. Todas en negrita para que no cambie el ancho. */
+/* 16px bajo la cabecera (10 de su margen, 4 de relleno de las pestañas y estos 2). */
 :where(:root[data-skin='sparxie']) .tabs {
   gap: 8px;
-  margin-top: -4px;
+  margin-top: 2px;
 }
 :where(:root[data-skin='sparxie']) .tab {
   font-family: var(--font-type);
@@ -2553,6 +2733,9 @@ tfoot td {
   border: 0;
   border-radius: 2px;
   padding: 4px 10px;
+}
+:where(:root[data-skin='sparxie']) .tab:not([aria-selected='true']):hover {
+  background: color-mix(in srgb, var(--chip) 85%, var(--text));
 }
 :where(:root[data-skin='sparxie']) .tab[aria-selected='true'] {
   color: var(--surface-2);
@@ -2595,7 +2778,7 @@ tfoot td {
   font-size: 1.375rem;
   font-weight: 400;
   line-height: 1;
-  letter-spacing: -0.6px;
+  letter-spacing: -0.027em;
   transform: scaleX(0.86);
   transform-origin: right center;
   -webkit-text-stroke: 0.5px var(--text);
@@ -2614,7 +2797,7 @@ tfoot td {
   font-size: clamp(3.5rem, 9vw, 5rem);
   font-weight: 400;
   line-height: 0.9;
-  letter-spacing: -2px;
+  letter-spacing: -0.025em;
 }
 /* Recuadros de cifras: paneles con marco y un labio de 1px debajo. */
 :where(:root[data-skin='sparxie']) :is(.hero-stats, .odds-stats) div {
@@ -2635,7 +2818,7 @@ tfoot td {
   font-size: 1.75rem;
   font-weight: 400;
   line-height: 1;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.018em;
 }
 :where(:root[data-skin='sparxie']) .odds-stats dd .muted {
   font-family: var(--font-type);
@@ -2660,6 +2843,13 @@ tfoot td {
   --adp-border-radius: 3px;
   --adp-cell-border-radius: 2px;
 }
+/* Desplegables, editor de fuentes, fila arrastrada y miniatura de cono: esquinas casi rectas. */
+:where(:root[data-skin='sparxie']) :is(.combo-list, .source-edit, .pull-row.is-dragging, .pull-portrait-lightCone) {
+  border-radius: 3px;
+}
+:where(:root[data-skin='sparxie']) :is(.combo-option, .dupe-badge) {
+  border-radius: 2px;
+}
 :where(:root[data-skin='sparxie']) :is(input, select):focus {
   border-color: var(--border);
 }
@@ -2676,7 +2866,7 @@ tfoot td {
 :where(:root[data-skin='sparxie']) :is(.btn, .chip) {
   font-family: var(--font-type);
   font-weight: 700;
-  letter-spacing: -0.2px;
+  letter-spacing: -0.014em;
   color: var(--text);
   border-color: var(--border);
   border-radius: 3px;
@@ -2687,7 +2877,7 @@ tfoot td {
     inset -1px -1px 0 var(--bevel-dark),
     inset 1px 1px 0 var(--bevel-hi);
 }
-:where(:root[data-skin='sparxie']) .btn:hover {
+:where(:root[data-skin='sparxie']) .btn:hover:not(:disabled) {
   background: color-mix(in srgb, var(--surface-2) 88%, var(--text));
   border-color: var(--border);
 }
@@ -2718,7 +2908,7 @@ tfoot td {
   border-color: transparent;
   box-shadow: none;
 }
-:where(:root[data-skin='sparxie']) .btn-ghost:hover {
+:where(:root[data-skin='sparxie']) .btn-ghost:hover:not(:disabled) {
   background: var(--chip);
   border-color: transparent;
 }
@@ -2744,6 +2934,10 @@ tfoot td {
     4px 50%,
     3px 50%;
   box-shadow: 0 0 0 1px var(--border);
+}
+:where(:root[data-skin='sparxie']) .switch input:focus-visible + span {
+  outline: 2px dotted var(--text);
+  outline-offset: 2px;
 }
 :where(:root[data-skin='sparxie']) .switch input:checked + span {
   background-color: var(--accent);
@@ -2774,7 +2968,7 @@ tfoot td {
   font-family: var(--font-mono);
   font-size: 1rem;
   font-weight: 400;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
   color: var(--text-secondary);
   border-bottom-color: var(--border);
@@ -2782,11 +2976,6 @@ tfoot td {
 :where(:root[data-skin='sparxie']) td {
   border-bottom-style: dotted;
   border-bottom-color: color-mix(in srgb, var(--text) 35%, transparent);
-}
-:where(:root[data-skin='sparxie']) .tag {
-  border-radius: 2px;
-  background: var(--chip);
-  color: var(--text);
 }
 :where(:root[data-skin='sparxie']) :is(.notice, .warning) {
   border: 1px solid var(--border);

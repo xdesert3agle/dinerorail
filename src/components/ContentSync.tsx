@@ -33,18 +33,23 @@ export function ContentSync({ catalog, syncing, error, lastAttempt, sync }: Cata
       <header className="card-header">
         <h2>Contenido</h2>
       </header>
-      <p className="muted">
+      {/* role="status": al terminar de sincronizar se anuncia la fecha nueva. */}
+      <p className="muted" role="status">
         {catalog
           ? `Sincronizado el ${fmtMoment(catalog.syncedAt)}.`
           : 'Descarga los personajes y conos de luz 5★ para sugerirlos en la planificación.'}
       </p>
       <div className="content-sync-row">
-        <button type="button" className="btn" disabled={disabled} onClick={() => void sync()}>
+        <button type="button" className="btn" disabled={disabled} aria-busy={syncing} onClick={() => void sync()}>
           Sincronizar contenido
         </button>
-        {/* Spinner y cuenta atrás mientras el botón está desactivado; el hueco se reserva siempre. */}
-        <span className="content-sync-wait" style={{ visibility: disabled ? 'visible' : 'hidden' }}>
-          <span className="spinner" aria-hidden="true" />
+        {/*
+          Mientras el botón está desactivado: el spinner solo mientras descarga, y la cuenta atrás durante toda
+          la espera. El hueco se reserva siempre, para que nada se mueva.
+        */}
+        <span className={`content-sync-wait${disabled ? '' : ' invisible'}`}>
+          <span className={`spinner${syncing ? '' : ' invisible'}`} aria-hidden="true" />
+          {syncing && <span className="sr-only">Sincronizando…</span>}
           <span title="Tiempo hasta poder sincronizar de nuevo">{fmtWait(cooling ? remaining : SYNC_COOLDOWN_MS)}</span>
         </span>
       </div>

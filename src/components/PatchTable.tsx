@@ -4,6 +4,7 @@ import { defaultEventDate, PATCH_LENGTH_DAYS } from '../engine/defaults';
 import { nextVersion } from '../engine/sources';
 import type { AppState, Patch, PatchEvent } from '../engine/types';
 import { newId } from '../engine/util';
+import type { ChangeState } from '../state/store';
 import { fmtSingles } from './format';
 import { DateField } from './DateField';
 import { NumberField } from './NumberField';
@@ -12,7 +13,7 @@ import { PLAIN_TEXT_INPUT } from './inputs';
 interface Props {
   state: AppState;
   today: string;
-  onChange: (update: (s: AppState) => AppState) => void;
+  onChange: ChangeState;
 }
 
 const eventsSingles = (events: PatchEvent[]) =>
@@ -75,10 +76,15 @@ export function PatchTable({ state, today, onChange }: Props) {
               </span>
               <button
                 type="button"
-                className="btn btn-ghost"
-                aria-label={`Eliminar parche ${p.version}`}
-                title="Eliminar parche"
-                onClick={() => onChange((s) => ({ ...s, patches: s.patches.filter((x) => x.id !== p.id) }))}
+                className="btn btn-ghost btn-remove"
+                aria-label={`Eliminar la actualización ${p.version}`}
+                title="Eliminar actualización"
+                onClick={() =>
+                  onChange(
+                    (s) => ({ ...s, patches: s.patches.filter((x) => x.id !== p.id) }),
+                    `Actualización ${p.version} eliminada.`,
+                  )
+                }
               >
                 ✕
               </button>
@@ -99,6 +105,8 @@ export function PatchTable({ state, today, onChange }: Props) {
               const past = ev.date <= today;
               const late = ev.date > state.targetDate;
               const status = past ? 'Fecha pasada: no se cuenta' : late ? 'Después de la fecha objetivo: no se cuenta' : undefined;
+              // Etiquetas con el evento y la versión: la cabecera de columnas no llega a los lectores de pantalla.
+              const evName = ev.name || 'evento sin nombre';
               return (
                 <div key={ev.id} className={`event-row ${status ? 'is-ignored' : ''}`} title={status}>
                   <input
@@ -106,13 +114,13 @@ export function PatchTable({ state, today, onChange }: Props) {
                     {...PLAIN_TEXT_INPUT}
                     value={ev.name}
                     title={ev.name}
-                    placeholder="Nombre del evento"
-                    aria-label="Nombre del evento"
+                    placeholder="Nombre del evento…"
+                    aria-label={`Nombre del evento (actualización ${p.version})`}
                     onChange={(e) => updateEvent(p.id, ev.id, { name: e.target.value })}
                   />
                   <DateField
                     value={ev.date}
-                    aria-label="Fecha de cobro"
+                    aria-label={`Fecha de cobro de ${evName}`}
                     onChange={(v) => updateEvent(p.id, ev.id, { date: v })}
                   />
                   <NumberField
@@ -120,7 +128,7 @@ export function PatchTable({ state, today, onChange }: Props) {
                     hideLabel
                     className="no-spin"
                     icon="jade"
-                    label="Jades"
+                    label={`Jades de ${evName}`}
                     value={ev.jades}
                     min={0}
                     max={9999}
@@ -130,7 +138,7 @@ export function PatchTable({ state, today, onChange }: Props) {
                     compact
                     hideLabel
                     icon="pass"
-                    label="Pases Especiales"
+                    label={`Pases Especiales de ${evName}`}
                     value={ev.specialPasses}
                     min={0}
                     max={99}
@@ -138,10 +146,20 @@ export function PatchTable({ state, today, onChange }: Props) {
                   />
                   <button
                     type="button"
-                    className="btn btn-ghost"
-                    aria-label={`Eliminar evento ${ev.name}`}
+                    className="btn btn-ghost btn-remove"
+                    aria-label={`Eliminar ${evName}`}
                     title="Eliminar evento"
-                    onClick={() => updatePatch(p.id, (x) => ({ ...x, events: x.events.filter((e) => e.id !== ev.id) }))}
+                    onClick={() =>
+                      onChange(
+                        (s) => ({
+                          ...s,
+                          patches: s.patches.map((x) =>
+                            x.id === p.id ? { ...x, events: x.events.filter((e) => e.id !== ev.id) } : x,
+                          ),
+                        }),
+                        ev.name ? `Evento «${ev.name}» eliminado.` : 'Evento eliminado.',
+                      )
+                    }
                   >
                     ✕
                   </button>
@@ -149,7 +167,12 @@ export function PatchTable({ state, today, onChange }: Props) {
                 </div>
               );
             })}
-            <button type="button" className="btn btn-ghost btn-add" onClick={() => addEvent(p.id)}>
+            <button
+              type="button"
+              className="btn btn-ghost btn-add"
+              aria-label={`Añadir evento a la actualización ${p.version}`}
+              onClick={() => addEvent(p.id)}
+            >
               + Evento
             </button>
           </div>
@@ -157,7 +180,7 @@ export function PatchTable({ state, today, onChange }: Props) {
       ))}
 
       {patches.length === 0 && (
-        <p className="warning">Sin parches no se cuentan ni los eventos ni las fuentes "por parche".</p>
+        <p className="warning">Sin parches no se cuentan ni los eventos ni las fuentes «por parche».</p>
       )}
     </section>
   );

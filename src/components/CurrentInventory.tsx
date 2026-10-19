@@ -75,7 +75,7 @@ export function CurrentInventory({ state, result, today, onChange }: Props) {
         title="Cada Esquirla Onírica cuenta como 1 Jade"
       >
         Contar Esquirlas como Jades
-        <span className="with-icon" style={{ gap: 2 }} aria-hidden="true">
+        <span className="with-icon with-icon-tight" aria-hidden="true">
           (<Icon kind="shard" size={16} decorative />→<Icon kind="jade" size={16} decorative />)
         </span>
       </Toggle>
