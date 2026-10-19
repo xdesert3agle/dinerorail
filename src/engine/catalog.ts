@@ -3,10 +3,10 @@ import { isObj } from './util';
 
 /*
  * Catálogo de personajes y conos de luz 5★ para sugerir nombres en la planificación.
- * Sale de los datos de nanoka.cc de una versión beta (".51"), que ya incluye lo que sale en las
+ * Sale de los datos de nanoka.cc de una versión beta (".53"), que ya incluye lo que sale en las
  * próximas actualizaciones. Solo trae los nombres en inglés.
  */
-const DATA_URL = 'https://static.nanoka.cc/hsr/4.6.51';
+export const DATA_URL = 'https://static.nanoka.cc/hsr/4.6.53';
 export const CATALOG_URLS: Record<PullKind, string> = {
   character: `${DATA_URL}/character.json`,
   lightCone: `${DATA_URL}/lightcone.json`,

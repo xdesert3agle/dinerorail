@@ -909,6 +909,65 @@ p {
     transform: scale(0.9);
   }
 }
+/*
+ * Popover de una imagen de la galería: qué hace ese Eidolón o el cono. Sale al lado de la imagen,
+ * subiendo un poco; la posición la pone DupeGallery.tsx. No captura el ratón: se quita al salir de la imagen.
+ */
+.dupe-pop {
+  position: fixed;
+  z-index: 40;
+  display: grid;
+  gap: 6px;
+  width: max-content;
+  max-width: 22rem;
+  padding: 12px 14px;
+  background: var(--surface);
+  color: var(--text);
+  /* Borde con el acento del tema: con el de siempre se confundía con las tarjetas de detrás. */
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--text) 18%, transparent);
+  font-size: 0.875rem;
+  line-height: 1.45;
+  pointer-events: none;
+  user-select: none;
+}
+.dupe-pop-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.dupe-pop-owner {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+.dupe-pop-title {
+  font-weight: 700;
+}
+.dupe-pop-desc {
+  margin: 0;
+}
+.dupe-pop-value {
+  color: var(--accent-text);
+  font-weight: 700;
+}
+.dupe-pop-status {
+  color: var(--text-muted);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .dupe-pop {
+    animation: dupe-pop-in 0.18s ease-out;
+  }
+}
+@keyframes dupe-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
 
 /* Cards */
 .card {

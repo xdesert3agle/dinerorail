@@ -11,6 +11,9 @@ export const JADES_PER_PULL = 160;
 /** Eidolón máximo de un personaje: E6 (la 7.ª copia). */
 export const MAX_EIDOLON = 6;
 
+/** Superposición máxima de un cono de luz: S5 (la 5.ª copia). */
+export const MAX_SUPERIMPOSITION = 5;
+
 /** Tiradas que se cuentan por cada 5★ en el peor caso de la planificación, si no se configura otra cosa. */
 export const DEFAULT_HARD_PITY: Record<PullKind, number> = { character: 80, lightCone: 70 };
 
