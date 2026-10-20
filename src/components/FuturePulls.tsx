@@ -78,11 +78,14 @@ export function FuturePulls({ state, result, catalog, copies, onChange }: Props)
     onChange((s) => ({ ...s, plannedPulls: update(s.plannedPulls) }), undo);
   const updatePull = (id: string, patch: Partial<PlannedPull>) =>
     setPlan((p) => p.map((x) => (x.id === id ? { ...x, ...patch } : x)));
-  // El nombre es solo el del catálogo: el dupe de cada fila se calcula aparte (ver planCopies).
-  const remove = (pull: PlannedPull) =>
+  // El nombre es solo el del catálogo: el dupe de cada fila se calcula aparte (ver planCopies). El aviso lo
+  // pone al final del nombre, «Kafka E2», y el toast lo deja fuera del recorte de los nombres largos.
+  const remove = (pull: PlannedPull, dupe: number | null) =>
     setPlan(
       (p) => p.filter((x) => x.id !== pull.id),
-      pull.name ? `«${pull.name}» quitado de la planificación.` : 'Fila quitada de la planificación.',
+      pull.name
+        ? `«${pull.name}${dupe === null ? '' : ` E${dupe}`}» quitado de la planificación.`
+        : 'Fila quitada de la planificación.',
     );
   // Miniatura de cada fila: el retrato del personaje o el icono del cono (null si no está en el catálogo).
   const portraitOf = (pull: PlannedPull) => {
@@ -183,7 +186,7 @@ export function FuturePulls({ state, result, catalog, copies, onChange }: Props)
                   portrait={portraitOf(pull)}
                   onUpdate={(patch) => updatePull(pull.id, patch)}
                   autoFocus={pull.id === focusId}
-                  onRemove={() => remove(pull)}
+                  onRemove={() => remove(pull, dupeOf(copies[i] ?? null))}
                 />
               ))}
             </SortableContext>

@@ -2459,27 +2459,99 @@ tfoot td {
   min-width: 2px;
 }
 
-/* Notices */
-.notice {
+/*
+ * Toast: aviso que flota en la esquina de abajo a la izquierda y se va solo (Toast.tsx). A la izquierda porque
+ * ahí está la columna donde más se borra (eventos, packs): "Deshacer" queda cerca del ratón y no tapa los
+ * resultados. Entra volando desde fuera de la pantalla y sale por el mismo lado. Ancho limitado: con un texto
+ * largo se recorta el nombre en vez de estirar el aviso. Con el borde del acento, como el popover de la galería,
+ * para que no se confunda con lo de detrás. La región no captura el ratón; el toast sí.
+ */
+.toast-region {
+  position: fixed;
+  z-index: 60;
+  left: 24px;
+  bottom: 24px;
+  width: max-content;
+  max-width: min(32rem, calc(100vw - 48px));
+  pointer-events: none;
+}
+@media (max-width: 560px) {
+  .toast-region {
+    left: 16px;
+    bottom: 16px;
+    max-width: min(32rem, calc(100vw - 32px));
+  }
+}
+.toast {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--accent-soft);
-  border-radius: 8px;
-  padding: 4px 4px 4px 12px;
-  margin-bottom: 16px;
+  padding: 4px 6px 4px 14px;
+  background: var(--surface);
+  color: var(--text);
+  border: 2px solid var(--accent);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-pop);
   font-size: 0.875rem;
+  pointer-events: auto;
 }
-.notice.is-error {
-  background: var(--warning-bg);
-  color: var(--warning-text);
+.toast.is-error {
+  border-color: var(--danger);
 }
-.notice-text {
+/* Siempre en una línea: si no cabe, se recorta el nombre entre «» (ToastName), nunca lo de alrededor. */
+.toast-text {
+  display: flex;
   flex: 1;
   min-width: 0;
+  white-space: nowrap;
 }
-.notice .btn-remove {
+/* pre: en flex, el espacio del borde de cada trozo ("Evento ") se perdería. */
+.toast-fixed {
+  flex-shrink: 0;
+  white-space: pre;
+}
+.toast-name {
+  min-width: 0;
+  overflow: hidden;
+}
+/* "Deshacer": la acción a la que hay que llegar antes de que se vaya, con el color del acento. */
+.toast-action {
+  color: var(--accent-text);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.toast .btn-remove {
+  align-self: center;
   height: var(--control-h);
+  /*
+   * Corrección óptica: centrado al píxel, el ✕ parecía alto al lado de un texto casi todo en minúsculas,
+   * cuyo centro queda más abajo que el de las mayúsculas. El padding baja el glifo sin mover el botón.
+   */
+  padding-top: calc(2 * var(--toast-x-nudge, 1px));
+}
+/* Entra desde la izquierda con un pequeño rebote al frenar; sale acelerando hacia el mismo lado. */
+@media (prefers-reduced-motion: no-preference) {
+  .toast {
+    animation: toast-in 0.45s cubic-bezier(0.22, 1.25, 0.36, 1);
+  }
+  .toast.is-leaving {
+    animation: toast-out 0.3s cubic-bezier(0.55, 0, 0.75, 0) forwards;
+  }
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(calc(-100% - 24px));
+  }
+  40% {
+    opacity: 1;
+  }
+}
+@keyframes toast-out {
+  to {
+    opacity: 0;
+    transform: translateX(calc(-100% - 24px));
+  }
 }
 .warning {
   background: var(--warning-bg);
@@ -2977,7 +3049,17 @@ tfoot td {
   border-bottom-style: dotted;
   border-bottom-color: color-mix(in srgb, var(--text) 35%, transparent);
 }
-:where(:root[data-skin='sparxie']) :is(.notice, .warning) {
+:where(:root[data-skin='sparxie']) .warning {
   border: 1px solid var(--border);
   border-radius: 4px;
+}
+/* El toast, como una ventana pequeña: marco de tinta y esquinas casi rectas. */
+:where(:root[data-skin='sparxie']) .toast {
+  --toast-x-nudge: 2px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  box-shadow: var(--shadow-win);
+}
+:where(:root[data-skin='sparxie']) .toast.is-error {
+  border-color: var(--danger);
 }

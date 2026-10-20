@@ -10,11 +10,12 @@ import { PatchTable } from './components/PatchTable';
 import { PitySettings } from './components/PitySettings';
 import { Breakdown, ResultSummary } from './components/ResultSummary';
 import { ShardPacks } from './components/ShardPacks';
+import { Toast, type ToastMessage } from './components/Toast';
 import { SourcesPanel } from './components/SourcesPanel';
 import { calculate } from './engine/calculate';
 import { todayISO } from './engine/dates';
 import { planCopies, planDupes, planLightCones } from './engine/dupes';
-import type { AppState, Skin, ThemeMode } from './engine/types';
+import type { Skin, ThemeMode } from './engine/types';
 import { useCatalog } from './state/catalog';
 import { exportState, HIDDEN_SKINS, importState, useAppState, withSettings, type ChangeState } from './state/store';
 
@@ -84,13 +85,6 @@ const TABS: { id: Tab; label: string; hash: string }[] = [
 ];
 // La pestaña vive en el hash de la URL: sobrevive a recargas y el botón Atrás vuelve a la anterior.
 // "#fuentes" es el nombre antiguo de la pestaña de configuración.
-/** Aviso de arriba. Con `undo`, ofrece volver a ese estado (el de antes de un borrado o una importación). */
-interface Notice {
-  text: string;
-  undo?: AppState;
-  error?: boolean;
-}
-
 const tabFromHash = (): Tab => {
   const hash = window.location.hash;
   return TABS.find((t) => t.hash && t.hash === hash)?.id ?? 'main';
@@ -100,7 +94,10 @@ export default function App() {
   const [state, setState] = useAppState();
   const catalogSync = useCatalog();
   const [today] = useState(todayISO);
-  const [notice, setNotice] = useState<Notice | null>(null);
+  const [toast, setToast] = useState<ToastMessage | null>(null);
+  // Cada aviso con su id: uno nuevo reinicia la cuenta atrás aunque repita el texto.
+  const toastId = useRef(0);
+  const notify = (message: Omit<ToastMessage, 'id'>) => setToast({ ...message, id: ++toastId.current });
   const [tab, setTab] = useState<Tab>(tabFromHash);
   const fileInput = useRef<HTMLInputElement>(null);
   const mainRef = useRef<HTMLElement>(null);
@@ -108,12 +105,11 @@ export default function App() {
 
   // Los borrados guardan el estado de antes para poder deshacerlos desde el aviso.
   const change: ChangeState = (update, undo) => {
-    if (undo) setNotice({ text: undo, undo: state });
+    if (undo) notify({ text: undo, undo: state });
     setState(update);
   };
   const undoLast = () => {
-    if (notice?.undo) setState(notice.undo);
-    setNotice(null);
+    if (toast?.undo) setState(toast.undo);
   };
 
   // El título de la pestaña del navegador dice en qué sección se está.
@@ -192,10 +188,10 @@ export default function App() {
     if (!file) return;
     try {
       const imported = await importState(file);
-      setNotice({ text: 'Datos importados.', undo: state });
+      notify({ text: 'Datos importados.', undo: state });
       setState(imported);
     } catch (e) {
-      setNotice({ text: e instanceof Error ? e.message : 'No se ha podido leer el archivo.', error: true });
+      notify({ text: e instanceof Error ? e.message : 'No se ha podido leer el archivo.', error: true });
     }
   };
 
@@ -280,22 +276,7 @@ export default function App() {
           </button>
         ))}
       </nav>
-      {/* Siempre montado: así los lectores de pantalla anuncian cada aviso nuevo. */}
-      <div role="status">
-        {notice && (
-          <div className={`notice${notice.error ? ' is-error' : ''}`}>
-            <span className="notice-text">{notice.text}</span>
-            {notice.undo && (
-              <button type="button" className="btn btn-ghost notice-action" onClick={undoLast}>
-                Deshacer
-              </button>
-            )}
-            <button type="button" className="btn btn-ghost btn-remove" aria-label="Cerrar aviso" onClick={() => setNotice(null)}>
-              ✕
-            </button>
-          </div>
-        )}
-      </div>
+      <Toast message={toast} onUndo={undoLast} onClose={() => setToast(null)} />
 
       {tab === 'main' && <DupeGallery dupes={dupes} lightCones={lightCones} />}
       {/* Un solo <main> (destino del salto de teclado); dentro, el panel de la pestaña activa. */}
