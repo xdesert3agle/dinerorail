@@ -55,8 +55,8 @@ export function Odds({ state, result, view }: Props) {
         <h2>
           <Tip content={MODEL_HELP}>Previsión de suerte</Tip>
         </h2>
-        <Tip className="muted with-icon" content={`Singles el ${formatDate(result.targetDate)}`}>
-          <Icon kind="pass" size={18} decorative />
+        <Tip className="card-total" content={`Singles el ${formatDate(result.targetDate)}`}>
+          <Icon kind="pass" size={22} decorative />
           {fmtInt(budget)}
         </Tip>
       </header>

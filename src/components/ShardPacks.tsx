@@ -2,9 +2,10 @@ import { emptyPurchase, JPY_PER_EUR, packPrice, packShards, packsTotal, SHARD_PA
 import { JADES_PER_PULL } from '../engine/rules';
 import type { AppState, ShardPackPurchase } from '../engine/types';
 import { withSettings } from '../state/store';
-import { fmtInt, fmtSinglesShort } from './format';
+import { fmtInt, wholeSingles } from './format';
 import { Icon } from './Icon';
 import { NumberField } from './NumberField';
+import { Tip } from './Tip';
 import { Toggle } from './Toggle';
 
 interface Props {
@@ -18,6 +19,9 @@ const rate = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2 });
 export function ShardPacks({ state, onChange }: Props) {
   const inYen = state.settings.packsInYen;
   const total = packsTotal(state.shardPacks, inYen);
+  // Las Esquirlas se cambian 1:1 por Jades: en la cabecera, solo las singles enteras; lo que sobra, en la explicación.
+  const packSingles = wholeSingles(total.shards / JADES_PER_PULL);
+  const spareJades = total.shards - packSingles * JADES_PER_PULL;
 
   const update = (id: string, patch: Partial<ShardPackPurchase>) =>
     onChange((s) => ({
@@ -29,11 +33,22 @@ export function ShardPacks({ state, onChange }: Props) {
     <section className="card">
       <header className="card-header">
         <h2>Paquetes de Esquirlas Oníricas</h2>
-        {/* Siempre presente (oculto si no hay nada) para que la cabecera no cambie de alto al aparecer. */}
-        <span className={`muted with-icon${total.shards > 0 ? '' : ' invisible'}`}>
-          <Icon kind="pass" size={18} decorative />
-          {fmtSinglesShort(total.shards / JADES_PER_PULL)} singles · {euros.format(total.euros)}
-        </span>
+        {/*
+          Las singles que dan, como el total de las otras tarjetas; lo que cuestan va en la fila Total.
+          Siempre presente (oculto si no hay nada) para que la cabecera no cambie de alto al aparecer.
+        */}
+        <Tip
+          className={`card-total${total.shards > 0 ? '' : ' invisible'}`}
+          content={
+            spareJades > 0
+              ? `Las Esquirlas dan ${fmtInt(packSingles)} singles y sobran ${fmtInt(spareJades)} Jades`
+              : `Las Esquirlas dan ${fmtInt(packSingles)} singles`
+          }
+        >
+          <Icon kind="pass" size={22} decorative />
+          <span className="sr-only">Singles de los paquetes: </span>
+          {fmtInt(packSingles)}
+        </Tip>
       </header>
 
       {/* Tabla para los lectores de pantalla (cada cifra con su columna); en pantalla, una rejilla. */}
@@ -101,6 +116,22 @@ export function ShardPacks({ state, onChange }: Props) {
             </div>
           );
         })}
+        {/* Fila de total: lo que cuestan bajo Precio y las Esquirlas que dan bajo Total. */}
+        <div className={`pack-row pack-footer ${total.shards > 0 ? '' : 'is-empty'}`} role="row">
+          <span className="pack-name" role="rowheader">
+            Total
+          </span>
+          <strong className="num pack-price" role="cell">
+            {euros.format(total.euros)}
+          </strong>
+          <span role="cell" />
+          <span role="cell" />
+          <span role="cell" />
+          <strong className="num pack-total" role="cell">
+            <Icon kind="shard" size={18} decorative />
+            <span className="pack-total-value">{total.shards > 0 ? fmtInt(total.shards) : '—'}</span>
+          </strong>
+        </div>
       </div>
 
       <Toggle

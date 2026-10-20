@@ -10,6 +10,8 @@ const dec2 = nf(2);
 
 export const fmtInt = (n: number) => int.format(n);
 export const fmtSingles = (n: number, digits: 1 | 2 = 2) => (digits === 1 ? dec1 : dec2).format(n);
+/** Singles enteras, las que se pueden tirar: 81,5 son 81 (el margen salva los errores de coma flotante). */
+export const wholeSingles = (n: number) => Math.floor(n + 1e-9);
 /** Como fmtSingles, pero sin decimales cuando la cifra es entera (81 en vez de 81,00). */
 export const fmtSinglesShort = (n: number) => (Math.abs(n - Math.round(n)) < 1e-9 ? int.format(Math.round(n)) : dec2.format(n));
 

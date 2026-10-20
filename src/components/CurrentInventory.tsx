@@ -5,10 +5,11 @@ import { clampPity } from '../engine/pulls';
 import { STARLIGHT_PER_PASS } from '../engine/rules';
 import type { AppState, Inventory, PullKind } from '../engine/types';
 import { withSettings } from '../state/store';
-import { fmtSinglesShort } from './format';
+import { fmtInt, fmtSinglesShort, wholeSingles } from './format';
 import { Icon } from './Icon';
 import { DateField } from './DateField';
 import { NumberField } from './NumberField';
+import { Tip } from './Tip';
 import { Toggle } from './Toggle';
 
 interface Props {
@@ -42,11 +43,19 @@ export function CurrentInventory({ state, result, today, onChange }: Props) {
     <section className="card">
       <header className="card-header">
         <h2>Recursos actuales</h2>
-        <span className="muted with-icon" title="Singles que tienes ahora">
-          <Icon kind="pass" size={18} decorative />
+        {/* Solo las enteras (no se tira media single); lo suelto, en la explicación. */}
+        <Tip
+          className="card-total"
+          content={
+            wholeSingles(result.currentSingles) === result.currentSingles
+              ? 'Singles que tienes ahora'
+              : `Singles que tienes ahora: ${fmtSinglesShort(result.currentSingles)} contando lo suelto (Jades y Cosmiluz que aún no llegan a una single)`
+          }
+        >
+          <Icon kind="pass" size={22} decorative />
           <span className="sr-only">Singles ahora: </span>
-          {fmtSinglesShort(result.currentSingles)}
-        </span>
+          {fmtInt(wholeSingles(result.currentSingles))}
+        </Tip>
       </header>
 
       <div className="grid-4">

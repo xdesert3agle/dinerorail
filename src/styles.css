@@ -1342,8 +1342,8 @@ p {
   font-weight: 400;
 }
 /* Coste de cada tirada y balance de la planificación, también en letra de naipe (juntos para que los tickets
- * sigan en la misma columna). */
-:root[data-skin='aha'] .pull-cost strong {
+ * sigan en la misma columna). El total de las cabeceras, igual. */
+:root[data-skin='aha'] :is(.pull-cost strong, .card-total) {
   font-family: 'Card Characters', system-ui, sans-serif;
   font-weight: 400;
 }
@@ -2051,6 +2051,20 @@ tfoot td {
   min-width: 3ch;
   text-align: right;
 }
+/*
+ * Total en singles de una tarjeta, en su cabecera (Recursos actuales, Paquetes, Previsión de suerte): como los
+ * costes de la planificación (misma letra de cifras del tema), algo más pequeño para no competir con el título.
+ */
+.card-total {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text);
+  font-variant-numeric: var(--num-variant);
+}
 /* «Faltan» / «Sobran» del balance: palabra de etiqueta, no cifra. */
 .pull-balance-label {
   font-size: 1rem;
@@ -2483,6 +2497,20 @@ tfoot td {
 /* Sin compra, el icono se apaga como el guion. */
 .pack-row.is-empty .pack-total .icon {
   opacity: 0.4;
+}
+/* Fila de total: separada de los paquetes por la línea fuerte (como el balance de la planificación). */
+.pack-row.pack-footer {
+  border-top: 1px solid var(--axis);
+  padding-top: 8px;
+  font-weight: 600;
+}
+.pack-footer .pack-price {
+  color: var(--text);
+}
+/* Sin compras, el total se apaga entero, como las filas vacías. */
+.pack-footer.is-empty :is(.pack-name, .pack-price) {
+  color: var(--text-muted);
+  font-weight: 400;
 }
 .event-row.is-ignored > :not(.event-status):not(.btn) {
   opacity: 0.5;
