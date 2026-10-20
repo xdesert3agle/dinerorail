@@ -293,6 +293,8 @@ function SortablePullRow({ pull, row, suggestions, dupe, portrait, onUpdate, aut
             key={portrait}
             src={portrait}
             alt=""
+            // Como en la galería (que la pide en modo CORS por la máscara): el icono del cono se descarga una vez.
+            crossOrigin="anonymous"
             // El tamaño lo pone el CSS (el hueco de la miniatura); estos evitan saltos al cargar.
             width={54}
             height={54}

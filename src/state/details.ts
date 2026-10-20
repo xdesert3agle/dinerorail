@@ -15,10 +15,13 @@ import { isObj } from '../engine/util';
  * Caché de los detalles (Eidolones y efectos de conos) para el popover de la galería de dupes. Como el
  * catálogo, va aparte del estado de la app. Se guarda lo útil en localStorage, así que cada uno se
  * descarga una vez por versión de los datos (DETAILS_VERSION). Lo que sale de nanoka.cc (en inglés,
- * porque yatta.moe aún no lo tiene) solo se queda en memoria: en la próxima visita se vuelve a probar
- * con yatta.moe, por si ya está en español.
+ * porque yatta.moe aún no lo tiene) solo se queda en memoria. Que yatta.moe no lo tenía sí se guarda
+ * (MISSES_KEY): durante YATTA_RETRY_MS se va directo a nanoka.cc, sin una petición fallida en cada
+ * carga, y pasado ese tiempo se vuelve a probar con yatta.moe, por si ya está en español.
  */
 const DETAILS_KEY = 'hsr-jades:details:v1';
+const MISSES_KEY = 'hsr-jades:details-misses:v1';
+const YATTA_RETRY_MS = 24 * 60 * 60 * 1000;
 
 export interface DetailsRef {
   kind: PullKind;
@@ -41,6 +44,36 @@ const readStored = (): Record<string, unknown> => {
   return stored;
 };
 
+/** Cuándo falló yatta.moe con cada uno (ms desde 1970), de la versión actual de los datos. */
+let misses: Record<string, number> | null = null;
+const readMisses = (): Record<string, number> => {
+  if (misses) return misses;
+  misses = {};
+  try {
+    const raw: unknown = JSON.parse(localStorage.getItem(MISSES_KEY) ?? 'null');
+    if (isObj(raw) && raw.base === DETAILS_VERSION && isObj(raw.items)) {
+      for (const [key, at] of Object.entries(raw.items)) if (typeof at === 'number') misses[key] = at;
+    }
+  } catch {
+    // Sin almacenamiento o con algo que no es JSON: se prueba yatta.moe con todo.
+  }
+  return misses;
+};
+
+/** Apunta (o borra, con null) el fallo de yatta.moe con uno; de paso tira los que ya caducaron. */
+const setMiss = (key: string, at: number | null) => {
+  const now = Date.now();
+  const items = Object.fromEntries(Object.entries(readMisses()).filter(([, t]) => now - t < YATTA_RETRY_MS));
+  if (at === null) delete items[key];
+  else items[key] = at;
+  misses = items;
+  try {
+    localStorage.setItem(MISSES_KEY, JSON.stringify({ base: DETAILS_VERSION, items }));
+  } catch {
+    // Navegación privada o almacenamiento lleno: se volverá a probar yatta.moe en la próxima visita.
+  }
+};
+
 const memory = new Map<string, Details>();
 const pending = new Map<string, Promise<Details>>();
 
@@ -52,14 +85,23 @@ export function cachedDetails(ref: DetailsRef): Details | null {
   return hit;
 }
 
-/** Prueba las fuentes por orden (yatta.moe, luego nanoka.cc) y se queda con la primera que los tiene. */
+/**
+ * Prueba las fuentes por orden (yatta.moe, luego nanoka.cc) y se queda con la primera que los tiene. Se salta
+ * yatta.moe si hace menos de YATTA_RETRY_MS que no lo tenía.
+ */
 async function fetchFirst(ref: DetailsRef): Promise<{ source: DetailsSource; details: Details }> {
+  const missedAt = readMisses()[keyOf(ref)];
+  const skipYatta = missedAt !== undefined && Date.now() - missedAt < YATTA_RETRY_MS;
   let error: unknown = null;
   for (const source of DETAILS_SOURCES) {
+    if (source === 'yatta' && skipYatta) continue;
     try {
       const res = await fetch(detailsUrl(source, ref.kind, ref.id));
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return { source, details: parseDetails(source, ref.kind, await res.json()) };
+      const details = parseDetails(source, ref.kind, await res.json());
+      // Solo cuenta como que yatta.moe no lo tiene si nanoka.cc sí responde: si fallan las dos, será la red.
+      if (source !== 'yatta' && !skipYatta) setMiss(keyOf(ref), Date.now());
+      return { source, details };
     } catch (e) {
       error = e;
     }
@@ -78,6 +120,7 @@ export function loadDetails(ref: DetailsRef): Promise<Details> {
       const { source, details } = await fetchFirst(ref);
       memory.set(key, details);
       if (source !== 'yatta') return details;
+      if (readMisses()[key] !== undefined) setMiss(key, null);
       const items = { ...readStored(), [key]: details };
       stored = items;
       try {

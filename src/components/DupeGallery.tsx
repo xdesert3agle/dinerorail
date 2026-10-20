@@ -213,7 +213,11 @@ function Side({ side, items }: { side: 'left' | 'right'; items: Item[] }) {
                   setHover(null);
                 }}
               >
-                <img className="dupe-img" src={item.src} alt="" decoding="async" draggable={false} />
+                {/*
+                  En modo CORS, como la máscara de su sombra (--dupe-src), que el navegador siempre pide así:
+                  con el mismo modo, la imagen se descarga una vez y no dos.
+                */}
+                <img className="dupe-img" src={item.src} alt="" crossOrigin="anonymous" decoding="async" draggable={false} />
                 <span className="dupe-glare" />
               </div>
             </div>
