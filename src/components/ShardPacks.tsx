@@ -42,7 +42,7 @@ export function ShardPacks({ state, onChange }: Props) {
           {/* Cada título al inicio de su columna (sobre el icono o el borde del campo), como en los eventos. */}
           <span role="columnheader">Pack</span>
           <span role="columnheader">Precio</span>
-          <span role="columnheader">Cristales</span>
+          <span role="columnheader">Por compra</span>
           <span role="columnheader">Cantidad</span>
           <span role="columnheader">
             <span className="sr-only">Primera compra</span>
@@ -83,7 +83,7 @@ export function ShardPacks({ state, onChange }: Props) {
                 />
               </span>
               <span role="cell">
-                <label className="check" title="Primera compra: el doble de cristales">
+                <label className="check" title="Primera compra: el doble de Esquirlas">
                   <input
                     type="checkbox"
                     checked={purchase.firstBonus}
@@ -93,7 +93,7 @@ export function ShardPacks({ state, onChange }: Props) {
                   x2
                 </label>
               </span>
-              {/* Como en Cristales: icono a la izquierda y cifra a la derecha. */}
+              {/* Como en Por compra: icono a la izquierda y cifra a la derecha. */}
               <strong className="num pack-total" role="cell">
                 <Icon kind="shard" size={18} decorative />
                 <span className="pack-total-value">{shards > 0 ? fmtInt(shards) : '—'}</span>
@@ -110,10 +110,6 @@ export function ShardPacks({ state, onChange }: Props) {
       >
         Pagar con precios de Japón (¥)
       </Toggle>
-      <p className="muted small">
-        Se cuentan como comprados hoy y se cambian 1:1 por Jades. Con el x2 solo la primera compra da el doble; las
-        siguientes dan lo normal más su bonus.
-      </p>
     </section>
   );
 }

@@ -1,5 +1,6 @@
 import { useEffect, useId, useState } from 'react';
 import { Icon, type IconKind } from './Icon';
+import { Tip } from './Tip';
 
 interface Props {
   label: string;
@@ -15,7 +16,7 @@ interface Props {
   /** Icono dentro del campo, a la izquierda. */
   icon?: IconKind;
   className?: string;
-  /** Texto de ayuda en un icono (i) junto a la etiqueta, visible al pasar el ratón. */
+  /** Texto de ayuda en un icono (i) junto a la etiqueta: sale al pasar el ratón, al enfocarlo o al tocarlo. */
   info?: string;
 }
 
@@ -49,17 +50,33 @@ export function NumberField({
   const infoId = info ? `${id}-info` : undefined;
   const hintId = hint ? `${id}-hint` : undefined;
   const describedBy = [infoId, hintId].filter(Boolean).join(' ') || undefined;
+  const labelHead = label.slice(0, Math.max(0, label.lastIndexOf(' ')));
+  const labelLast = label.slice(label.lastIndexOf(' ') + 1);
+  const headId = `${id}-label-head`;
+  const lastId = `${id}-label-last`;
+  const labelledBy = info && !hideLabel ? [labelHead && headId, lastId].filter(Boolean).join(' ') : undefined;
 
   return (
     <div className={['field', compact && 'field-compact', className].filter(Boolean).join(' ')}>
-      <label htmlFor={id} className={hideLabel ? 'sr-only' : 'field-label'}>
-        {label}
-        {info && (
-          <span className="info" title={info} aria-hidden="true">
-            i
+      {/*
+        Con (i): la última palabra y el (i) van juntos (si la etiqueta no cabe, se parte antes y el (i) no baja
+        solo). El nombre del campo sale de las palabras (aria-labelledby), no del (i); su clic no enfoca el campo.
+      */}
+      {info && !hideLabel ? (
+        <label htmlFor={id} className="field-label">
+          {labelHead && <span id={headId}>{labelHead} </span>}
+          <span className="nowrap">
+            <span id={lastId}>{labelLast}</span>
+            <Tip className="info" content={info} label={`Más información: ${label}`}>
+              i
+            </Tip>
           </span>
-        )}
-      </label>
+        </label>
+      ) : (
+        <label htmlFor={id} className={hideLabel ? 'sr-only' : 'field-label'}>
+          {label}
+        </label>
+      )}
       {info && (
         <span id={infoId} className="sr-only">
           {info}
@@ -73,6 +90,7 @@ export function NumberField({
           // El teclado numérico de iOS no tiene signo menos: solo cuando no se admiten negativos.
           inputMode={min !== undefined && min >= 0 ? 'numeric' : undefined}
           autoComplete="off"
+          aria-labelledby={labelledBy}
           aria-describedby={describedBy}
           value={text}
           min={min}

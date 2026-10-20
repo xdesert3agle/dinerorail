@@ -475,6 +475,13 @@ p {
 .invisible {
   visibility: hidden;
 }
+/* Textos alternativos apilados en el mismo hueco: ocupa lo que el más ancho y no salta al cambiar. */
+.swap {
+  display: inline-grid;
+}
+.swap > * {
+  grid-area: 1 / 1;
+}
 /* Salto al contenido: fuera de la vista hasta que se llega con el tabulador. */
 .skip-link {
   position: absolute;
@@ -761,6 +768,12 @@ p {
 .tab[aria-selected='true'] {
   color: var(--text);
   border-bottom-color: var(--accent);
+}
+/* En móviles estrechos, solo el texto: con los iconos, la última pestaña quedaba cortada en el borde. */
+@media (max-width: 430px) {
+  .tab svg {
+    display: none;
+  }
 }
 /* Vista de una sola columna (pestaña de fuentes). */
 /* Pestaña de configuración: columna principal y, a su derecha, una estrecha (sincronizar contenido). */
@@ -1379,7 +1392,7 @@ p {
   font-size: 0.8125rem;
   color: var(--text-secondary);
 }
-/* Icono (i) de ayuda junto a una etiqueta: el texto sale al pasar el ratón. */
+/* Icono (i) de ayuda junto a una etiqueta: el texto sale con Tip (ratón, foco o toque). */
 .info {
   display: inline-grid;
   place-items: center;
@@ -1400,6 +1413,43 @@ p {
 }
 .info:hover {
   color: var(--text);
+}
+/* Palabras que no se separan: la última de una etiqueta y su (i), para que el (i) no baje solo de línea. */
+.nowrap {
+  white-space: nowrap;
+}
+/*
+ * Dato con explicación (Tip.tsx): se abre al pasar el ratón, al enfocarlo o al tocarlo. Enfocable, con el
+ * mismo anillo que los controles; el cursor de ayuda dice que tiene algo que contar.
+ */
+.tip-trigger {
+  cursor: help;
+}
+.tip-trigger:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* La burbuja: como el popover de la galería (borde del acento y sombra de lo que flota), en pequeño. */
+.tip {
+  position: fixed;
+  z-index: 50;
+  width: max-content;
+  max-width: min(20rem, calc(100vw - 16px));
+  padding: 8px 10px;
+  background: var(--surface);
+  color: var(--text);
+  border: 2px solid var(--accent);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-pop);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.45;
+  text-align: left;
+  white-space: pre-line;
+  pointer-events: none;
+}
+.tip[hidden] {
+  display: none;
 }
 .field-hint {
   font-size: 0.75rem;
@@ -1837,6 +1887,21 @@ tfoot td {
 .pull-field .combo-value {
   top: calc(50% + 6px - var(--input-nudge));
 }
+/*
+ * Probabilidad del objetivo, arriba a la derecha del recuadro: en la línea del tipo cuando ha subido
+ * (a 7px del borde y a 11px), para que no toque el nombre.
+ */
+.pull-chance {
+  position: absolute;
+  z-index: 1;
+  top: 7px;
+  right: 9px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--text-secondary);
+  font-variant-numeric: var(--num-variant);
+}
 /* Nombre con sugerencias del catálogo: la lista flota bajo el campo, por encima de las filas siguientes. */
 .combo {
   position: relative;
@@ -1978,13 +2043,18 @@ tfoot td {
   font-variant-numeric: var(--num-variant);
 }
 /*
- * Hueco fijo para signo + 3 cifras, igual en filas y balance, para que los tickets queden en la
- * misma columna. El signo (− o +) es más ancho que una cifra, así que se le reserva 0,8em, no 1ch.
+ * Hueco fijo para 3 cifras, igual en filas y balance, para que los tickets queden en la misma columna.
+ * El balance ya no lleva signo («Faltan» / «Sobran» lo dicen), así que no se le reserva hueco.
  */
 .pull-cost strong {
   display: inline-block;
-  min-width: calc(3ch + 0.8em);
+  min-width: 3ch;
   text-align: right;
+}
+/* «Faltan» / «Sobran» del balance: palabra de etiqueta, no cifra. */
+.pull-balance-label {
+  font-size: 1rem;
+  font-weight: 600;
 }
 .status-ok {
   color: var(--success-text);
@@ -2119,18 +2189,38 @@ tfoot td {
   padding-top: 8px;
   padding-right: calc(var(--pull-remove) + var(--pull-gap));
 }
-@media (max-width: 560px) {
-  /* En móvil se aprieta un poco más para que siga cabiendo en una línea. */
+/*
+ * En pantallas estrechas, dos líneas por tirada: en una el nombre se quedaba en dos letras.
+ * Arriba, asa · miniatura · nombre entero; debajo del nombre, 50/50 · coste · quitar. El pie también
+ * se parte: la casilla de la Cosmiluz arriba y el balance debajo, en la columna de los costes.
+ * Corta en 640px: por debajo, en una línea el nombre ya tiene menos sitio que en escritorio.
+ */
+@media (max-width: 640px) {
   .pull-list {
-    --pull-gap: 5px;
+    grid-template-columns: auto auto minmax(0, 1fr) auto auto;
   }
-  .pull-row input[type='text'] {
-    padding: calc(6px - var(--input-nudge)) 5px calc(6px + var(--input-nudge));
+  .pull-row {
+    row-gap: 6px;
   }
-  .pull-row .combo-value,
-  .pull-row .pull-field .field-label {
-    left: 6px;
+  .pull-row .drag-handle {
+    grid-row: span 2;
   }
+  .pull-row .pull-field {
+    grid-column: 3 / -1;
+  }
+  .pull-row .pull-win {
+    grid-column: 3;
+    justify-self: start;
+  }
+  .pull-summary {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .pull-summary .pull-cost {
+    margin-left: auto;
+  }
+}
+@media (max-width: 560px) {
   .pull-cost {
     font-size: 1.125rem;
   }
@@ -2221,54 +2311,7 @@ tfoot td {
   font-size: 0.8125rem;
   color: var(--text-secondary);
 }
-/* Probabilidades: una barra por objetivo (objetivo · barra · porcentaje) y debajo cuatro cifras resumen. */
-.odds-list {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(60px, 40%) 3.5rem;
-  column-gap: 12px;
-  row-gap: 12px;
-  align-items: center;
-}
-.odds-row {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: subgrid;
-  align-items: center;
-}
-/* Icono del tipo delante del nombre; el nombre sigue cortándose con puntos suspensivos si no cabe. */
-/* Icono · nombre (se corta con puntos suspensivos) · dupe, que queda siempre a la vista. */
-.odds-name {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-}
-/* Entre el icono y el nombre, 4px (como antes); entre el nombre y el dupe, los 6px del gap. */
-.odds-name .glyph {
-  margin-right: -2px;
-}
-.odds-name-text {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.odds-bar {
-  height: 8px;
-  border-radius: 999px;
-  background: var(--grid);
-  overflow: hidden;
-}
-.odds-bar > span {
-  display: block;
-  height: 100%;
-  border-radius: 999px;
-  background: var(--accent);
-}
-.odds-pct {
-  text-align: right;
-  font-variant-numeric: var(--num-variant);
-}
+/* Probabilidades: cuatro cifras resumen (el % de cada objetivo va en su fila de la planificación). */
 /* Dos filas: probabilidad y objetivos (mitad y mitad), y debajo las tres cifras de singles. */
 .odds-stats {
   display: grid;
@@ -2306,7 +2349,7 @@ tfoot td {
   font-weight: 400;
 }
 
-/* Paquetes de cristales: pack · precio · cristales por compra · cantidad · x2 · total. */
+/* Paquetes de Esquirlas: pack · precio · Esquirlas por compra · cantidad · x2 · total. */
 .pack-list {
   display: grid;
   /* Cantidad: hueco para 2 cifras más las flechas. */
@@ -2363,11 +2406,61 @@ tfoot td {
 .pack-price {
   color: var(--text-secondary);
 }
-@media (max-width: 560px) {
-  /* En móvil se aprietan las columnas para que el nombre del pack no se parta en tres líneas. */
+/*
+ * En móvil, dos líneas por paquete: en seis columnas el nombre y el precio se pisaban.
+ * Arriba, nombre y precio (el € ya dice qué es); debajo, por compra · cantidad · x2 · total, que son las
+ * cifras que necesitan título: la cabecera solo enseña esos cuatro. Pack y Precio siguen en la tabla para
+ * los lectores de pantalla (ocultos como .sr-only, fuera de la rejilla).
+ * Corta en 720px: por debajo, en seis columnas el nombre ya ocupaba dos o tres líneas.
+ */
+@media (max-width: 720px) {
+  /* Por compra, cantidad y x2 juntos a la izquierda; el total, a la derecha bajo el precio. */
   .pack-list {
-    grid-template-columns: minmax(0, 1fr) auto auto 3.75rem auto auto;
-    column-gap: 8px;
+    grid-template-columns: auto 4rem auto minmax(0, 1fr);
+    column-gap: 10px;
+    row-gap: 0;
+  }
+  .pack-row {
+    row-gap: 4px;
+  }
+  .pack-row:not(.pack-header) {
+    padding: 8px 0;
+    border-top: 1px solid var(--grid);
+  }
+  .pack-header {
+    padding-bottom: 4px;
+  }
+  .pack-header > :nth-child(-n + 2) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  /* Nombre y precio comparten la primera línea entera; el nombre deja sitio al precio. */
+  .pack-row > .pack-name {
+    grid-area: 1 / 1 / 2 / -1;
+    padding-right: 4.5rem;
+  }
+  .pack-row > .pack-price {
+    grid-area: 1 / 1 / 2 / -1;
+    justify-self: end;
+  }
+  .pack-row > .pack-total,
+  .pack-header > :last-child {
+    justify-self: end;
+  }
+  .pack-row:not(.pack-header) > :nth-child(n + 3) {
+    grid-row: 2;
+  }
+  .pack-shards {
+    justify-content: flex-start;
+  }
+}
+@media (max-width: 560px) {
+  .pack-list {
+    grid-template-columns: auto 3.75rem auto minmax(0, 1fr);
   }
   .pack-row {
     font-size: 0.875rem;
@@ -2375,13 +2468,7 @@ tfoot td {
   .pack-row input[type='number'] {
     padding: calc(6px - var(--input-nudge)) 6px calc(6px + var(--input-nudge));
   }
-  .pack-shards {
-    gap: 4px;
-  }
-  /* Gap de 2px: compensa el hueco de la cifra para que el nombre del pack no pase de dos líneas. La cifra
-     va alineada a la derecha dentro de su hueco, así que solo se acerca al icono con 6 cifras. */
   .pack-total {
-    gap: 2px;
     font-size: 0.9375rem;
   }
   /* A 15px: 60,6px en Figtree; Sparxie aprieta sus cifras en móvil y se queda en 56,7px. */
@@ -2709,11 +2796,7 @@ tfoot td {
   -webkit-font-smoothing: none;
 }
 @media (max-width: 560px) {
-  /* En móvil la columna del nombre es estrecha: así no pasa de dos líneas, como en el resto de temas. */
-  :where(:root[data-skin='sparxie']) .pack-name {
-    font-size: 0.8125rem;
-  }
-  /* Las cifras en Courier son anchas: se aprietan un poco para dejarle sitio al nombre. */
+  /* Las cifras en Courier son anchas: se aprietan un poco para que la segunda línea del paquete quepa. */
   :where(:root[data-skin='sparxie']) :is(.pack-price, .pack-shards, .pack-total) {
     letter-spacing: -0.06em;
   }
@@ -2743,8 +2826,8 @@ tfoot td {
 :where(:root[data-skin='sparxie']) :is(.field-label, .check, dt, .event-header, .pack-header, .pack-name) {
   font-family: var(--font-body);
 }
-/* "50/50" es una cifra aunque vaya en una casilla. */
-:where(:root[data-skin='sparxie']) .pull-win {
+/* "50/50" y el % de cada fila son cifras aunque vayan en una casilla o en el recuadro. */
+:where(:root[data-skin='sparxie']) :is(.pull-win, .pull-chance) {
   font-family: var(--font-type);
 }
 
@@ -2926,7 +3009,7 @@ tfoot td {
   border-color: var(--border);
 }
 /* Foco punteado, como en los sistemas de la época: el turquesa apenas se ve sobre blanco. */
-:where(:root[data-skin='sparxie']) :is(input, select, button):focus-visible {
+:where(:root[data-skin='sparxie']) :is(input, select, button, .tip-trigger):focus-visible {
   outline: 2px dotted var(--text);
   outline-offset: 2px;
 }
@@ -3019,16 +3102,6 @@ tfoot td {
 }
 
 /* Barras de datos: turquesa con marco de tinta, sin esquinas redondas. */
-:where(:root[data-skin='sparxie']) .odds-bar {
-  height: 10px;
-  border-radius: 2px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-}
-:where(:root[data-skin='sparxie']) .odds-bar > span {
-  border-radius: 0;
-  box-shadow: 1px 0 0 var(--border);
-}
 :where(:root[data-skin='sparxie']) .bar {
   height: 10px;
   border-radius: 0;
