@@ -45,7 +45,7 @@ export function PatchTable({ state, today, onChange }: Props) {
   };
 
   return (
-    <section className="card">
+    <section className="card card-events">
       <header className="card-header">
         <h2>Actualizaciones y eventos</h2>
         <button type="button" className="btn" onClick={addPatch}>
@@ -72,7 +72,7 @@ export function PatchTable({ state, today, onChange }: Props) {
             </label>
             <div className="patch-total">
               <span>
-                <strong>{fmtSingles(eventsSingles(p.events))}</strong> singles en eventos
+                <strong>{fmtSingles(eventsSingles(p.events))}</strong> tiradas en eventos
               </span>
               <button
                 type="button"

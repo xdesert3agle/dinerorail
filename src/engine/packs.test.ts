@@ -5,7 +5,7 @@ import { packPrice, packShards, packsTotal, SHARD_PACKS } from './packs';
 
 const pack = (price: number) => SHARD_PACKS.find((p) => p.price === price)!;
 
-describe('paquetes de cristales', () => {
+describe('paquetes de Esquirlas', () => {
   it('con el x2, la primera compra da los valores de la tienda', () => {
     const firsts = SHARD_PACKS.map((p) => packShards(p, { count: 1, firstBonus: true }));
     expect(firsts).toEqual([12960, 6560, 3960, 1960, 600, 120]);

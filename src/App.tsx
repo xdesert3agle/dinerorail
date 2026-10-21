@@ -11,6 +11,7 @@ import { PitySettings } from './components/PitySettings';
 import { Breakdown, ResultSummary } from './components/ResultSummary';
 import { ShardPacks } from './components/ShardPacks';
 import { Toast, type ToastMessage } from './components/Toast';
+import { usePlanOdds } from './components/usePlanOdds';
 import { SourcesPanel } from './components/SourcesPanel';
 import { calculate } from './engine/calculate';
 import { todayISO } from './engine/dates';
@@ -153,6 +154,8 @@ export default function App() {
     () => planLightCones(state.plannedPulls, catalogSync.catalog),
     [state.plannedPulls, catalogSync.catalog],
   );
+  // La simulación del plan, una vez: el % de cada fila de la planificación y las estadísticas de la previsión.
+  const planOdds = usePlanOdds(state, result);
   const totals = useMemo(() => new Map(result.bySource.map((t) => [t.sourceId, t])), [result]);
   const skin = state.settings.skin;
   const theme = state.settings.theme;
@@ -290,8 +293,15 @@ export default function App() {
             </div>
             <aside className="col-results">
               <ResultSummary result={result} skin={skin} />
-              <FuturePulls state={state} result={result} catalog={catalogSync.catalog} copies={copies} onChange={change} />
-              <Odds state={state} result={result} copies={copies} />
+              <FuturePulls
+                state={state}
+                result={result}
+                catalog={catalogSync.catalog}
+                copies={copies}
+                chances={planOdds?.pct ?? []}
+                onChange={change}
+              />
+              <Odds state={state} view={planOdds} />
               <Breakdown result={result} />
             </aside>
           </div>

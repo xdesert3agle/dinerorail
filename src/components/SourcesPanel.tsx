@@ -155,7 +155,7 @@ export function SourcesPanel({ state, today, totals, onChange }: Props) {
                     <div className="source-contrib">
                       {src.enabled && total ? (
                         <>
-                          <strong>{fmtSingles(total.singles)}</strong> singles
+                          <strong>{fmtSingles(total.singles)}</strong> tiradas
                         </>
                       ) : (
                         <span className="muted">—</span>

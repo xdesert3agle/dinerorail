@@ -28,8 +28,12 @@ export interface Result {
   incomeSingles: number;
   /** Inventario + ingresos. Las Esquirlas ya van sumadas en `jades` si están incluidas. */
   final: Reward;
-  /** Esquirlas Oníricas sumadas a `final.jades` (0 si no se cuentan). */
+  /** Esquirlas Oníricas sumadas a `final.jades`: las del inventario y las de los paquetes (0 si no se cuentan). */
   shards: number;
+  /** Esquirlas que se tendrán: las del inventario más las de los paquetes, se cuenten o no como Jades. */
+  shardsHeld: number;
+  /** Esquirlas de los paquetes planificados (0 con «Contar los paquetes» apagado). */
+  packShards: number;
   /** Pases Especiales que salen de la Cosmiluz que ya se tiene (sumados a `final.specialPasses`). */
   starlightPasses: number;
   /** Cosmiluz que sobra tras cambiarla (menos de 20): se junta con la que se saque al tirar. */
@@ -51,6 +55,11 @@ function add(into: Reward, r: Reward): void {
 /** Singles que vale una recompensa. */
 export function toSingles(r: Reward): number {
   return r.jades / JADES_PER_PULL + r.specialPasses;
+}
+
+/** Esquirlas de los paquetes planificados que cuentan: ninguna con «Contar los paquetes» apagado. */
+export function plannedPackShards(state: AppState): number {
+  return state.settings.includePacks ? packsTotal(state.shardPacks).shards : 0;
 }
 
 /** Genera todos los cobros con fecha entre hoy y la fecha objetivo. */
@@ -83,9 +92,10 @@ export function buildEvents(state: AppState, today: ISODate): IncomeEvent[] {
     }
   }
 
-  // Paquetes de Esquirlas: se cuentan como comprados hoy y se cambian 1:1 por Jades.
-  const packs = packsTotal(state.shardPacks).shards;
-  if (packs > 0 && to >= todayNum) {
+  // Paquetes de Esquirlas: se cuentan como comprados hoy. Son Esquirlas: como las del inventario, solo
+  // suman (1:1 como Jades) si se cuentan las Esquirlas, y solo con «Contar los paquetes» encendido.
+  const packs = plannedPackShards(state);
+  if (packs > 0 && state.settings.includeShards && to >= todayNum) {
     events.push({ date: today, sourceId: SHARD_PACKS_ID, reward: { jades: packs, specialPasses: 0 } });
   }
 
@@ -100,6 +110,7 @@ export function calculate(state: AppState, today: ISODate): Result {
   const events = valid ? buildEvents(state, today) : [];
 
   const inv = state.inventory;
+  const packShards = valid ? plannedPackShards(state) : 0;
   const shards = state.settings.includeShards ? inv.shards : 0;
   // La Cosmiluz que ya se tiene se cambia por Pases en la tienda (20 = 1); lo que sobra se guarda
   // para juntarlo con la que se saque al tirar.
@@ -136,7 +147,9 @@ export function calculate(state: AppState, today: ISODate): Result {
     currentSingles: toSingles(start) + starlightLeftover / STARLIGHT_PER_PASS,
     incomeSingles: toSingles(income),
     final,
-    shards,
+    shards: shards + (state.settings.includeShards ? packShards : 0),
+    shardsHeld: inv.shards + packShards,
+    packShards,
     starlightPasses,
     starlightLeftover,
     singles: toSingles(final),

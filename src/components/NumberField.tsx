@@ -1,5 +1,6 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
 import { Icon, type IconKind } from './Icon';
+import { Tip } from './Tip';
 
 interface Props {
   label: string;
@@ -15,14 +16,14 @@ interface Props {
   /** Icono dentro del campo, a la izquierda. */
   icon?: IconKind;
   className?: string;
-  /** Texto de ayuda en un icono (i) junto a la etiqueta, visible al pasar el ratón. */
-  info?: string;
+  /** Texto de ayuda de la etiqueta (punteada): sale al pasar el ratón, al enfocarla o al tocarla. */
+  info?: ReactNode;
 }
 
 /**
  * Campo numérico que deja el input vacío mientras se escribe sin forzar un 0. Al salir del campo vuelve a
  * mostrar el valor de verdad: si el padre lo ha recortado (un Eidolón 9 que queda en 6), se ve el 6.
- * La ayuda del (i) y la pista van como descripción del campo (aria-describedby), no dentro de su nombre.
+ * La ayuda de la etiqueta y la pista van también como descripción del campo (aria-describedby), no en su nombre.
  */
 export function NumberField({
   label,
@@ -52,12 +53,17 @@ export function NumberField({
 
   return (
     <div className={['field', compact && 'field-compact', className].filter(Boolean).join(' ')}>
+      {/*
+        Con ayuda, la propia etiqueta la explica (punteada, como en la previsión): sin icono (i), cabe en una línea.
+        Con el ratón, su clic sigue enfocando el campo; al tocarla, abre la explicación sin sacar el teclado.
+      */}
       <label htmlFor={id} className={hideLabel ? 'sr-only' : 'field-label'}>
-        {label}
-        {info && (
-          <span className="info" title={info} aria-hidden="true">
-            i
-          </span>
+        {info && !hideLabel ? (
+          <Tip className="tip-term" content={info}>
+            {label}
+          </Tip>
+        ) : (
+          label
         )}
       </label>
       {info && (

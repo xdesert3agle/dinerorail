@@ -72,6 +72,29 @@ describe('calculate', () => {
     expect(calculate(s, today).final.jades).toBe(1000);
   });
 
+  it('los paquetes son Esquirlas: suman como Jades solo si se cuentan las Esquirlas y con «Contar los paquetes»', () => {
+    const s = stateWith([], addDays(today, 1), today);
+    s.inventory = { jades: 1000, shards: 60, specialPasses: 0, starlight: 0 };
+    s.shardPacks = { 'pack-099': { count: 3, firstBonus: false } }; // 3 × 60 = 180
+    const r = calculate(s, today);
+    expect(r.final.jades).toBe(1000 + 60 + 180);
+    expect(r.shards).toBe(240);
+    expect(r.shardsHeld).toBe(240);
+    expect(r.packShards).toBe(180);
+
+    s.settings = { ...s.settings, includePacks: false };
+    const off = calculate(s, today);
+    expect(off.final.jades).toBe(1060);
+    expect(off.shardsHeld).toBe(60);
+    expect(off.bySource.some((t) => t.sourceId === 'shard-packs')).toBe(false);
+
+    s.settings = { ...s.settings, includePacks: true, includeShards: false };
+    const uncounted = calculate(s, today);
+    expect(uncounted.final.jades).toBe(1000);
+    expect(uncounted.shards).toBe(0);
+    expect(uncounted.shardsHeld).toBe(240);
+  });
+
   it('la Cosmiluz del inventario se cambia por Pases (20 = 1) y lo que sobra se guarda', () => {
     const s = stateWith([], today, today);
     s.inventory = { jades: 0, shards: 0, specialPasses: 3, starlight: 87 };

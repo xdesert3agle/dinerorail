@@ -2,9 +2,10 @@ import { emptyPurchase, JPY_PER_EUR, packPrice, packShards, packsTotal, SHARD_PA
 import { JADES_PER_PULL } from '../engine/rules';
 import type { AppState, ShardPackPurchase } from '../engine/types';
 import { withSettings } from '../state/store';
-import { fmtInt, fmtSinglesShort } from './format';
+import { fmtInt, wholeSingles } from './format';
 import { Icon } from './Icon';
 import { NumberField } from './NumberField';
+import { Tip } from './Tip';
 import { Toggle } from './Toggle';
 
 interface Props {
@@ -18,6 +19,15 @@ const rate = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2 });
 export function ShardPacks({ state, onChange }: Props) {
   const inYen = state.settings.packsInYen;
   const total = packsTotal(state.shardPacks, inYen);
+  // Las Esquirlas se cambian 1:1 por Jades: en la cabecera, solo las tiradas enteras; lo que sobra, en la explicación.
+  const packSingles = wholeSingles(total.shards / JADES_PER_PULL);
+  const spareJades = total.shards - packSingles * JADES_PER_PULL;
+  // Por qué no suman, si no suman: «Contar los paquetes» (aquí) o «Contar Esquirlas como Jades» (Recursos actuales).
+  const notCounted = !state.settings.includePacks
+    ? 'Ahora no cuentan: «Contar los paquetes» está apagado.'
+    : !state.settings.includeShards
+      ? 'Ahora no cuentan: «Contar Esquirlas como Jades» está apagado en Recursos actuales.'
+      : '';
 
   const update = (id: string, patch: Partial<ShardPackPurchase>) =>
     onChange((s) => ({
@@ -26,14 +36,28 @@ export function ShardPacks({ state, onChange }: Props) {
     }));
 
   return (
-    <section className="card">
+    <section className="card card-packs">
       <header className="card-header">
         <h2>Paquetes de Esquirlas Oníricas</h2>
-        {/* Siempre presente (oculto si no hay nada) para que la cabecera no cambie de alto al aparecer. */}
-        <span className={`muted with-icon${total.shards > 0 ? '' : ' invisible'}`}>
-          <Icon kind="pass" size={18} decorative />
-          {fmtSinglesShort(total.shards / JADES_PER_PULL)} singles · {euros.format(total.euros)}
-        </span>
+        {/*
+          Las tiradas que dan, como el total de las otras tarjetas; lo que cuestan va en la fila Total.
+          Siempre presente (oculto si no hay nada) para que la cabecera no cambie de alto al aparecer.
+        */}
+        <Tip
+          className={`card-total${total.shards > 0 ? '' : ' invisible'}${notCounted ? ' is-off' : ''}`}
+          content={[
+            spareJades > 0
+              ? `Las Esquirlas dan ${fmtInt(packSingles)} tiradas y sobran ${fmtInt(spareJades)} Jades`
+              : `Las Esquirlas dan ${fmtInt(packSingles)} tiradas`,
+            notCounted,
+          ]
+            .filter(Boolean)
+            .join('\n')}
+        >
+          <Icon kind="pass" size={22} decorative />
+          <span className="sr-only">Tiradas de los paquetes: </span>
+          {fmtInt(packSingles)}
+        </Tip>
       </header>
 
       {/* Tabla para los lectores de pantalla (cada cifra con su columna); en pantalla, una rejilla. */}
@@ -42,7 +66,7 @@ export function ShardPacks({ state, onChange }: Props) {
           {/* Cada título al inicio de su columna (sobre el icono o el borde del campo), como en los eventos. */}
           <span role="columnheader">Pack</span>
           <span role="columnheader">Precio</span>
-          <span role="columnheader">Cristales</span>
+          <span role="columnheader">Por compra</span>
           <span role="columnheader">Cantidad</span>
           <span role="columnheader">
             <span className="sr-only">Primera compra</span>
@@ -57,8 +81,10 @@ export function ShardPacks({ state, onChange }: Props) {
           const price = euros.format(packPrice(pack, inYen));
           return (
             <div key={pack.id} className={`pack-row ${shards > 0 ? '' : 'is-empty'}`} role="row">
+              {/* «×6.480» con el icono: el título de la tarjeta ya dice que son Esquirlas. */}
               <span className="pack-name" role="cell">
-                Esquirlas Oníricas ×{fmtInt(pack.base)}
+                <Icon kind="shard" size={18} decorative />
+                <span className="sr-only">Esquirlas Oníricas </span>×{fmtInt(pack.base)}
               </span>
               <span
                 role="cell"
@@ -83,7 +109,7 @@ export function ShardPacks({ state, onChange }: Props) {
                 />
               </span>
               <span role="cell">
-                <label className="check" title="Primera compra: el doble de cristales">
+                <label className="check" title="Primera compra: el doble de Esquirlas">
                   <input
                     type="checkbox"
                     checked={purchase.firstBonus}
@@ -93,7 +119,7 @@ export function ShardPacks({ state, onChange }: Props) {
                   x2
                 </label>
               </span>
-              {/* Como en Cristales: icono a la izquierda y cifra a la derecha. */}
+              {/* Como en Por compra: icono a la izquierda y cifra a la derecha. */}
               <strong className="num pack-total" role="cell">
                 <Icon kind="shard" size={18} decorative />
                 <span className="pack-total-value">{shards > 0 ? fmtInt(shards) : '—'}</span>
@@ -101,19 +127,44 @@ export function ShardPacks({ state, onChange }: Props) {
             </div>
           );
         })}
+        {/* Fila de total: lo que cuestan bajo Precio y las Esquirlas que dan bajo Total. */}
+        <div className={`pack-row pack-footer ${total.shards > 0 ? '' : 'is-empty'}`} role="row">
+          <span className="pack-name" role="rowheader">
+            Total
+          </span>
+          <strong className="num pack-price" role="cell">
+            {euros.format(total.euros)}
+          </strong>
+          <span role="cell" />
+          <span role="cell" />
+          <span role="cell" />
+          <strong className="num pack-total" role="cell">
+            <Icon kind="shard" size={18} decorative />
+            <span className="pack-total-value">{total.shards > 0 ? fmtInt(total.shards) : '—'}</span>
+          </strong>
+        </div>
       </div>
 
-      <Toggle
-        checked={inYen}
-        onChange={(packsInYen) => onChange(withSettings({ packsInYen }))}
-        title={`Cambio: ${rate.format(JPY_PER_EUR)} ¥/€`}
-      >
-        Pagar con precios de Japón (¥)
-      </Toggle>
-      <p className="muted small">
-        Se cuentan como comprados hoy y se cambian 1:1 por Jades. Con el x2 solo la primera compra da el doble; las
-        siguientes dan lo normal más su bonus.
-      </p>
+      {/*
+        Contar los paquetes: apagado, no suman en nada pero las cantidades se quedan (¿llego sin pagar?).
+        Junto al de los precios de Japón, como un grupo de ajustes de la tabla.
+      */}
+      <div className="field-group">
+        <Toggle
+          checked={state.settings.includePacks}
+          onChange={(includePacks) => onChange(withSettings({ includePacks }))}
+          title="Apagado, los paquetes no cuentan en nada y se ve si llegas sin pagar (las cantidades se quedan)"
+        >
+          Contar los paquetes
+        </Toggle>
+        <Toggle
+          checked={inYen}
+          onChange={(packsInYen) => onChange(withSettings({ packsInYen }))}
+          title={`Cambio: ${rate.format(JPY_PER_EUR)} ¥/€`}
+        >
+          Pagar con precios de Japón (¥)
+        </Toggle>
+      </div>
     </section>
   );
 }

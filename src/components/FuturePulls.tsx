@@ -41,6 +41,7 @@ import { Icon } from './Icon';
 import { KIND_GLYPH, KIND_LABEL } from './kinds';
 import { Toggle } from './Toggle';
 import { NameCombobox } from './NameCombobox';
+import { Tip } from './Tip';
 
 interface Props {
   state: AppState;
@@ -49,6 +50,8 @@ interface Props {
   catalog: Catalog | null;
   /** Qué copia es cada fila del plan, para mostrar su dupe. */
   copies: (RowCopy | null)[];
+  /** Probabilidad de cada fila (junto con las anteriores), ya escrita; la calcula App con la previsión. */
+  chances: string[];
   onChange: ChangeState;
 }
 
@@ -59,7 +62,7 @@ const dec1 = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 });
 
 const NO_SUGGESTIONS: CatalogEntry[] = [];
 
-export function FuturePulls({ state, result, catalog, copies, onChange }: Props) {
+export function FuturePulls({ state, result, catalog, copies, chances, onChange }: Props) {
   const plan = state.plannedPulls;
   const countStarlight = state.settings.countStarlight;
   const rows = planPulls(plan, state.pity, result.wholeSingles, {
@@ -132,7 +135,7 @@ export function FuturePulls({ state, result, catalog, copies, onChange }: Props)
   };
 
   return (
-    <section className="card">
+    <section className="card card-plan">
       <header className="card-header">
         <h2>Planificación de tiradas</h2>
         <div className="header-actions">
@@ -183,6 +186,7 @@ export function FuturePulls({ state, result, catalog, copies, onChange }: Props)
                   row={rows[i]}
                   suggestions={catalog?.[pull.kind] ?? NO_SUGGESTIONS}
                   dupe={dupeOf(copies[i] ?? null)}
+                  chance={chances[i] ?? ''}
                   portrait={portraitOf(pull)}
                   onUpdate={(patch) => updatePull(pull.id, patch)}
                   autoFocus={pull.id === focusId}
@@ -205,7 +209,7 @@ export function FuturePulls({ state, result, catalog, copies, onChange }: Props)
                 `5★ E6 = ${STARLIGHT_PER_5_STAR_E6} Cosmiluz`,
                 `Cono 4★ = ${STARLIGHT_PER_4_STAR.lightCone} Cosmiluz`,
                 `Cono 5★ = ${STARLIGHT_PER_5_STAR} Cosmiluz`,
-                `${STARLIGHT_PER_PASS} Cosmiluz = 1 single`,
+                `${STARLIGHT_PER_PASS} Cosmiluz = 1 tirada`,
                 '',
                 `4★: ${pct.format(FOUR_STAR_RATE)} por tirada con el garantizado`,
                 `(1 cada ${dec.format(PULLS_PER_4_STAR)} tiradas; de media ${dec1.format(STARLIGHT_PER_AVERAGE_4_STAR.character)}`,
@@ -215,22 +219,22 @@ export function FuturePulls({ state, result, catalog, copies, onChange }: Props)
               <Icon kind="starlight" size={20} decorative />
               Contar Cosmiluz de las tiradas
             </Toggle>
-            <div
-              className={`pull-cost ${left >= 0 ? 'status-ok' : 'status-short'}`}
-              title={[
-                `${fmtInt(result.wholeSingles)} singles el ${formatDate(result.targetDate)} − ${fmtInt(grossTotal)} de las tiradas`,
+            {/* El balance dice con palabras si llega; el signo sobraba. */}
+            <Tip
+              as="div"
+              // Solo en rojo si faltan; si sobran, en el color de las cifras de encima (es lo normal, no un aviso).
+              className={left < 0 ? 'pull-cost status-short' : 'pull-cost'}
+              content={[
+                `${fmtInt(result.wholeSingles)} tiradas el ${formatDate(result.targetDate)} − ${fmtInt(grossTotal)} que cuesta el plan`,
                 countStarlight
                   ? `+ ${fmtInt(refunded)} de vuelta por la Cosmiluz Inextinguible`
                   : 'Sin contar la Cosmiluz Inextinguible',
               ].join('\n')}
             >
+              <span className="pull-balance-label">{left < 0 ? 'Faltan' : 'Sobran'}</span>
               <Icon kind="pass" size={26} decorative />
-              <strong>
-                <span className="sr-only">Balance: </span>
-                {left > 0 ? '+' : left < 0 ? '−' : ''}
-                {fmtInt(Math.abs(left))}
-              </strong>
-            </div>
+              <strong>{fmtInt(Math.abs(left))}</strong>
+            </Tip>
           </div>
         </div>
       )}
@@ -244,6 +248,8 @@ interface RowProps {
   suggestions: CatalogEntry[];
   /** Eidolón que da esta fila (1…6), o null si no es un dupe. */
   dupe: number | null;
+  /** Probabilidad de tenerla junto con las anteriores ("21 %"). */
+  chance: string;
   /** URL de la miniatura, o null si la fila no tiene nombre del catálogo. */
   portrait: string | null;
   autoFocus: boolean;
@@ -251,7 +257,7 @@ interface RowProps {
   onRemove: () => void;
 }
 
-function SortablePullRow({ pull, row, suggestions, dupe, portrait, onUpdate, autoFocus, onRemove }: RowProps) {
+function SortablePullRow({ pull, row, suggestions, dupe, chance, portrait, onUpdate, autoFocus, onRemove }: RowProps) {
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({
     id: pull.id,
   });
@@ -316,6 +322,14 @@ function SortablePullRow({ pull, row, suggestions, dupe, portrait, onUpdate, aut
         <span className="field-label" aria-hidden="true">
           {KIND_LABEL[pull.kind]}
         </span>
+        {/*
+          Su probabilidad, en la línea del tipo, a la derecha: la respuesta a «¿llego?» junto al objetivo.
+          Con las probabilidades reales (no usa la casilla «Gano 50/50»).
+        */}
+        <Tip className="pull-chance" content="Probabilidad de tenerlo, junto con todos los anteriores">
+          <span className="sr-only">Probabilidad: </span>
+          {chance}
+        </Tip>
         <NameCombobox
           inputClassName="pull-name"
           value={pull.name}
@@ -327,30 +341,41 @@ function SortablePullRow({ pull, row, suggestions, dupe, portrait, onUpdate, aut
         />
       </div>
 
-      {/* Con el garantizado, la primera fila de ese banner se gana seguro: la casilla queda fija. */}
+      {/*
+        Con el garantizado, la primera fila de ese banner se gana seguro: la casilla queda fija y dice
+        «Garantizado». Los dos textos ocupan el mismo hueco para que la columna no cambie de ancho.
+      */}
       <label
         className="check pull-win"
-        title={row.guaranteed ? 'Tienes el garantizado: se gana seguro' : 'Gana el 50/50 (si no, cuenta el doble)'}
+        title={
+          row.guaranteed
+            ? 'Tienes el garantizado: se gana seguro'
+            : 'Márcala si cuentas con ganar el 50/50; si no, se cuenta perdido (el doble de tiradas)'
+        }
       >
         <input
           type="checkbox"
           checked={row.guaranteed || pull.winsFiftyFifty}
           disabled={row.guaranteed}
-          aria-label={row.guaranteed ? `${label}: garantizado, se gana seguro` : `${label}: gana el 50/50`}
+          aria-label={row.guaranteed ? `${label}: garantizado, se gana seguro` : `${label}: gano el 50/50`}
           onChange={(e) => onUpdate({ winsFiftyFifty: e.target.checked })}
         />
-        50/50
+        <span className="swap">
+          <span className={row.guaranteed ? undefined : 'invisible'}>Garantizado</span>
+          <span className={row.guaranteed ? 'invisible' : undefined}>Gano 50/50</span>
+        </span>
       </label>
 
-      <div
+      <Tip
+        as="div"
         className="pull-cost"
-        title={`${row.costDetail} = ${fmtInt(row.cost)} tiradas${row.usesPity ? ' (descuenta tu pity actual)' : ''}`}
+        content={`${row.costDetail} = ${fmtInt(row.cost)} tiradas${row.usesPity ? ' (descuenta tu pity actual)' : ''}`}
       >
         <Icon kind="pass" size={26} decorative />
         <strong>{fmtInt(row.cost)}</strong>
         {/* El borde rojo del nombre no llega a los lectores de pantalla: lo dicen aquí. */}
         {!row.affordable && <span className="sr-only">, no llega con lo que tendrás</span>}
-      </div>
+      </Tip>
 
       <button type="button" className="btn btn-ghost btn-remove" aria-label={`Quitar ${label}`} onClick={onRemove}>
         ✕

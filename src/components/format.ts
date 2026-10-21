@@ -10,12 +10,18 @@ const dec2 = nf(2);
 
 export const fmtInt = (n: number) => int.format(n);
 export const fmtSingles = (n: number, digits: 1 | 2 = 2) => (digits === 1 ? dec1 : dec2).format(n);
-/** Como fmtSingles, pero sin decimales cuando la cifra es entera (81 en vez de 81,00). */
-export const fmtSinglesShort = (n: number) => (Math.abs(n - Math.round(n)) < 1e-9 ? int.format(Math.round(n)) : dec2.format(n));
+/** Singles enteras, las que se pueden tirar: 81,5 son 81 (el margen salva los errores de coma flotante). */
+export const wholeSingles = (n: number) => Math.floor(n + 1e-9);
 
 const timeFmt = new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digit' });
 // A mano y no con Intl: según el navegador, es-ES sale con punto ("nov.") o sin él ("nov").
 const MONTHS = ['ene.', 'feb.', 'mar.', 'abr.', 'may.', 'jun.', 'jul.', 'ago.', 'sept.', 'oct.', 'nov.', 'dic.'];
+
+/** Día y mes de una fecha, como "11 nov." (sin año: para fechas cercanas, con la cuenta atrás al lado). */
+export const fmtDayMonth = (iso: string) => {
+  const [, month, day] = iso.split('-').map(Number);
+  return `${day} ${MONTHS[month - 1]}`;
+};
 
 /** Fecha y hora de un momento (ms), como "5 nov. 2026 a las 18:30". */
 export const fmtMoment = (ms: number) => {
