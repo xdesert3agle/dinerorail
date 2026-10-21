@@ -2,29 +2,32 @@ import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties
 import { createPortal } from 'react-dom';
 
 interface Props {
-  /** Texto de la explicación; los saltos de línea se respetan. */
-  content: string;
+  /**
+   * La explicación: un texto (los saltos de línea se respetan) o contenido con iconos. Si lleva iconos
+   * decorativos, que incluya su texto para los lectores de pantalla (.sr-only).
+   */
+  content: ReactNode;
   children: ReactNode;
   /** Elemento que hace de disparador: un div para las casillas de estadísticas, un span para lo demás. */
   as?: 'span' | 'div';
   className?: string;
-  /** Nombre accesible del disparador, si su texto no lo dice solo (p. ej. el (i)). */
-  label?: string;
 }
 
 /** Margen con los bordes de la ventana y separación con el dato. */
 const EDGE = 8;
 const GAP = 6;
+/** Espera al pasar el ratón antes de abrirla (con teclado y al tocar se abre al momento). */
+const HOVER_DELAY = 400;
 
 /**
  * Explicación de un dato que se abre en todos los dispositivos (el `title` solo sale con el ratón):
- * - Ratón: al pasar por encima.
+ * - Ratón: al pasar por encima, tras un momento (HOVER_DELAY).
  * - Teclado: al enfocar el dato (es enfocable); Esc la cierra.
  * - Táctil: al tocar el dato; se cierra al volver a tocarlo o al tocar fuera.
  * Para los lectores de pantalla el texto es la descripción del dato (aria-describedby), siempre presente.
  * La burbuja va en un portal, fija bajo el dato (o encima si no cabe), para que ninguna tarjeta la recorte.
  */
-export function Tip({ content, children, as: Tag = 'span', className, label }: Props) {
+export function Tip({ content, children, as: Tag = 'span', className }: Props) {
   const id = useId();
   const triggerRef = useRef<HTMLElement | null>(null);
   const bubbleRef = useRef<HTMLSpanElement | null>(null);
@@ -53,7 +56,8 @@ export function Tip({ content, children, as: Tag = 'span', className, label }: P
       window.removeEventListener('scroll', place, true);
       window.removeEventListener('resize', place);
     };
-  }, [open, content]);
+    // Se recoloca si cambia el texto; con iconos (un elemento nuevo en cada render) se quedaría en bucle.
+  }, [open, typeof content === 'string' ? content : null]);
 
   useEffect(() => {
     if (!open) return;
@@ -72,11 +76,18 @@ export function Tip({ content, children, as: Tag = 'span', className, label }: P
   }, [open]);
 
   // Ya abierta (el ratón encima y luego el foco del clic), no se vuelve a esconder para recolocarla.
+  // Con una ref y no con `open`: el retraso del ratón la llama después, con el valor de entonces.
+  const openRef = useRef(open);
+  openRef.current = open;
   const show = () => {
-    if (open) return;
+    if (openRef.current) return;
     setPos({ visibility: 'hidden' });
     setOpen(true);
   };
+  // Con el ratón espera un poco: al cruzar por encima de varios datos no van saltando burbujas.
+  const hoverTimer = useRef<number | undefined>(undefined);
+  const cancelHover = () => window.clearTimeout(hoverTimer.current);
+  useEffect(() => cancelHover, []);
 
   return (
     <>
@@ -86,25 +97,29 @@ export function Tip({ content, children, as: Tag = 'span', className, label }: P
         }}
         className={className ? `tip-trigger ${className}` : 'tip-trigger'}
         tabIndex={0}
-        aria-label={label}
         aria-describedby={id}
         onPointerDown={(e) => {
           if (e.pointerType !== 'mouse') lastTouch.current = Date.now();
         }}
         onPointerEnter={(e) => {
-          if (e.pointerType === 'mouse') show();
+          if (e.pointerType !== 'mouse') return;
+          cancelHover();
+          hoverTimer.current = window.setTimeout(show, HOVER_DELAY);
         }}
         onPointerLeave={(e) => {
-          if (e.pointerType === 'mouse') setOpen(false);
+          if (e.pointerType !== 'mouse') return;
+          cancelHover();
+          setOpen(false);
         }}
         onFocus={() => {
           if (!byTouch()) show();
         }}
         onBlur={() => setOpen(false)}
         onClick={(e) => {
-          // Dentro de un <label> (el (i) de los campos), el clic no debe pasar el foco al campo.
-          e.preventDefault();
+          // Con el ratón no hace nada (abre el hover): dentro de un <label>, el clic sigue enfocando su campo.
           if (!byTouch()) return;
+          // Al tocar, abre o cierra; dentro de un <label>, sin enfocar el campo (no saca el teclado).
+          e.preventDefault();
           if (open) setOpen(false);
           else show();
         }}

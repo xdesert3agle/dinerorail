@@ -19,9 +19,15 @@ const rate = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2 });
 export function ShardPacks({ state, onChange }: Props) {
   const inYen = state.settings.packsInYen;
   const total = packsTotal(state.shardPacks, inYen);
-  // Las Esquirlas se cambian 1:1 por Jades: en la cabecera, solo las singles enteras; lo que sobra, en la explicación.
+  // Las Esquirlas se cambian 1:1 por Jades: en la cabecera, solo las tiradas enteras; lo que sobra, en la explicación.
   const packSingles = wholeSingles(total.shards / JADES_PER_PULL);
   const spareJades = total.shards - packSingles * JADES_PER_PULL;
+  // Por qué no suman, si no suman: «Contar los paquetes» (aquí) o «Contar Esquirlas como Jades» (Recursos actuales).
+  const notCounted = !state.settings.includePacks
+    ? 'Ahora no cuentan: «Contar los paquetes» está apagado.'
+    : !state.settings.includeShards
+      ? 'Ahora no cuentan: «Contar Esquirlas como Jades» está apagado en Recursos actuales.'
+      : '';
 
   const update = (id: string, patch: Partial<ShardPackPurchase>) =>
     onChange((s) => ({
@@ -30,23 +36,26 @@ export function ShardPacks({ state, onChange }: Props) {
     }));
 
   return (
-    <section className="card">
+    <section className="card card-packs">
       <header className="card-header">
         <h2>Paquetes de Esquirlas Oníricas</h2>
         {/*
-          Las singles que dan, como el total de las otras tarjetas; lo que cuestan va en la fila Total.
+          Las tiradas que dan, como el total de las otras tarjetas; lo que cuestan va en la fila Total.
           Siempre presente (oculto si no hay nada) para que la cabecera no cambie de alto al aparecer.
         */}
         <Tip
-          className={`card-total${total.shards > 0 ? '' : ' invisible'}`}
-          content={
+          className={`card-total${total.shards > 0 ? '' : ' invisible'}${notCounted ? ' is-off' : ''}`}
+          content={[
             spareJades > 0
-              ? `Las Esquirlas dan ${fmtInt(packSingles)} singles y sobran ${fmtInt(spareJades)} Jades`
-              : `Las Esquirlas dan ${fmtInt(packSingles)} singles`
-          }
+              ? `Las Esquirlas dan ${fmtInt(packSingles)} tiradas y sobran ${fmtInt(spareJades)} Jades`
+              : `Las Esquirlas dan ${fmtInt(packSingles)} tiradas`,
+            notCounted,
+          ]
+            .filter(Boolean)
+            .join('\n')}
         >
           <Icon kind="pass" size={22} decorative />
-          <span className="sr-only">Singles de los paquetes: </span>
+          <span className="sr-only">Tiradas de los paquetes: </span>
           {fmtInt(packSingles)}
         </Tip>
       </header>
@@ -72,8 +81,10 @@ export function ShardPacks({ state, onChange }: Props) {
           const price = euros.format(packPrice(pack, inYen));
           return (
             <div key={pack.id} className={`pack-row ${shards > 0 ? '' : 'is-empty'}`} role="row">
+              {/* «×6.480» con el icono: el título de la tarjeta ya dice que son Esquirlas. */}
               <span className="pack-name" role="cell">
-                Esquirlas Oníricas ×{fmtInt(pack.base)}
+                <Icon kind="shard" size={18} decorative />
+                <span className="sr-only">Esquirlas Oníricas </span>×{fmtInt(pack.base)}
               </span>
               <span
                 role="cell"
@@ -134,13 +145,26 @@ export function ShardPacks({ state, onChange }: Props) {
         </div>
       </div>
 
-      <Toggle
-        checked={inYen}
-        onChange={(packsInYen) => onChange(withSettings({ packsInYen }))}
-        title={`Cambio: ${rate.format(JPY_PER_EUR)} ¥/€`}
-      >
-        Pagar con precios de Japón (¥)
-      </Toggle>
+      {/*
+        Contar los paquetes: apagado, no suman en nada pero las cantidades se quedan (¿llego sin pagar?).
+        Junto al de los precios de Japón, como un grupo de ajustes de la tabla.
+      */}
+      <div className="field-group">
+        <Toggle
+          checked={state.settings.includePacks}
+          onChange={(includePacks) => onChange(withSettings({ includePacks }))}
+          title="Apagado, los paquetes no cuentan en nada y se ve si llegas sin pagar (las cantidades se quedan)"
+        >
+          Contar los paquetes
+        </Toggle>
+        <Toggle
+          checked={inYen}
+          onChange={(packsInYen) => onChange(withSettings({ packsInYen }))}
+          title={`Cambio: ${rate.format(JPY_PER_EUR)} ¥/€`}
+        >
+          Pagar con precios de Japón (¥)
+        </Toggle>
+      </div>
     </section>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
 import { Icon, type IconKind } from './Icon';
 import { Tip } from './Tip';
 
@@ -16,14 +16,14 @@ interface Props {
   /** Icono dentro del campo, a la izquierda. */
   icon?: IconKind;
   className?: string;
-  /** Texto de ayuda en un icono (i) junto a la etiqueta: sale al pasar el ratón, al enfocarlo o al tocarlo. */
-  info?: string;
+  /** Texto de ayuda de la etiqueta (punteada): sale al pasar el ratón, al enfocarla o al tocarla. */
+  info?: ReactNode;
 }
 
 /**
  * Campo numérico que deja el input vacío mientras se escribe sin forzar un 0. Al salir del campo vuelve a
  * mostrar el valor de verdad: si el padre lo ha recortado (un Eidolón 9 que queda en 6), se ve el 6.
- * La ayuda del (i) y la pista van como descripción del campo (aria-describedby), no dentro de su nombre.
+ * La ayuda de la etiqueta y la pista van también como descripción del campo (aria-describedby), no en su nombre.
  */
 export function NumberField({
   label,
@@ -50,33 +50,22 @@ export function NumberField({
   const infoId = info ? `${id}-info` : undefined;
   const hintId = hint ? `${id}-hint` : undefined;
   const describedBy = [infoId, hintId].filter(Boolean).join(' ') || undefined;
-  const labelHead = label.slice(0, Math.max(0, label.lastIndexOf(' ')));
-  const labelLast = label.slice(label.lastIndexOf(' ') + 1);
-  const headId = `${id}-label-head`;
-  const lastId = `${id}-label-last`;
-  const labelledBy = info && !hideLabel ? [labelHead && headId, lastId].filter(Boolean).join(' ') : undefined;
 
   return (
     <div className={['field', compact && 'field-compact', className].filter(Boolean).join(' ')}>
       {/*
-        Con (i): la última palabra y el (i) van juntos (si la etiqueta no cabe, se parte antes y el (i) no baja
-        solo). El nombre del campo sale de las palabras (aria-labelledby), no del (i); su clic no enfoca el campo.
+        Con ayuda, la propia etiqueta la explica (punteada, como en la previsión): sin icono (i), cabe en una línea.
+        Con el ratón, su clic sigue enfocando el campo; al tocarla, abre la explicación sin sacar el teclado.
       */}
-      {info && !hideLabel ? (
-        <label htmlFor={id} className="field-label">
-          {labelHead && <span id={headId}>{labelHead} </span>}
-          <span className="nowrap">
-            <span id={lastId}>{labelLast}</span>
-            <Tip className="info" content={info} label={`Más información: ${label}`}>
-              i
-            </Tip>
-          </span>
-        </label>
-      ) : (
-        <label htmlFor={id} className={hideLabel ? 'sr-only' : 'field-label'}>
-          {label}
-        </label>
-      )}
+      <label htmlFor={id} className={hideLabel ? 'sr-only' : 'field-label'}>
+        {info && !hideLabel ? (
+          <Tip className="tip-term" content={info}>
+            {label}
+          </Tip>
+        ) : (
+          label
+        )}
+      </label>
       {info && (
         <span id={infoId} className="sr-only">
           {info}
@@ -90,7 +79,6 @@ export function NumberField({
           // El teclado numérico de iOS no tiene signo menos: solo cuando no se admiten negativos.
           inputMode={min !== undefined && min >= 0 ? 'numeric' : undefined}
           autoComplete="off"
-          aria-labelledby={labelledBy}
           aria-describedby={describedBy}
           value={text}
           min={min}

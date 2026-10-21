@@ -73,6 +73,11 @@ export interface Settings {
   countStarlight: boolean;
   /** Pagar los paquetes con los precios de Japón, pasados a euros. */
   packsInYen: boolean;
+  /**
+   * Contar los paquetes de Esquirlas planificados («Contar los paquetes», en su tarjeta). Apagado, no cuentan en
+   * nada, pero las cantidades se quedan: sirve para ver si se llega sin pagar.
+   */
+  includePacks: boolean;
   /** Tiradas que se cuentan para sacar un 5★ en cada banner (peor caso de Tiradas futuras). */
   hardPity: Record<PullKind, number>;
 }

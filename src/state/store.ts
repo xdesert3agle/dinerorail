@@ -234,6 +234,7 @@ export function normalizeState(raw: unknown): AppState {
       countStarlight:
         typeof settings.countStarlight === 'boolean' ? settings.countStarlight : d.settings.countStarlight,
       packsInYen: typeof settings.packsInYen === 'boolean' ? settings.packsInYen : d.settings.packsInYen,
+      includePacks: typeof settings.includePacks === 'boolean' ? settings.includePacks : d.settings.includePacks,
       hardPity,
     },
   };

@@ -135,7 +135,7 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
   };
 
   return (
-    <section className="card">
+    <section className="card card-plan">
       <header className="card-header">
         <h2>Planificación de tiradas</h2>
         <div className="header-actions">
@@ -209,7 +209,7 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
                 `5★ E6 = ${STARLIGHT_PER_5_STAR_E6} Cosmiluz`,
                 `Cono 4★ = ${STARLIGHT_PER_4_STAR.lightCone} Cosmiluz`,
                 `Cono 5★ = ${STARLIGHT_PER_5_STAR} Cosmiluz`,
-                `${STARLIGHT_PER_PASS} Cosmiluz = 1 single`,
+                `${STARLIGHT_PER_PASS} Cosmiluz = 1 tirada`,
                 '',
                 `4★: ${pct.format(FOUR_STAR_RATE)} por tirada con el garantizado`,
                 `(1 cada ${dec.format(PULLS_PER_4_STAR)} tiradas; de media ${dec1.format(STARLIGHT_PER_AVERAGE_4_STAR.character)}`,
@@ -222,15 +222,13 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
             {/* El balance dice con palabras si llega; el signo sobraba. */}
             <Tip
               as="div"
-              className={`pull-cost ${left >= 0 ? 'status-ok' : 'status-short'}`}
+              // Solo en rojo si faltan; si sobran, en el color de las cifras de encima (es lo normal, no un aviso).
+              className={left < 0 ? 'pull-cost status-short' : 'pull-cost'}
               content={[
-                `${fmtInt(result.wholeSingles)} singles el ${formatDate(result.targetDate)} − ${fmtInt(grossTotal)} de las tiradas`,
+                `${fmtInt(result.wholeSingles)} tiradas el ${formatDate(result.targetDate)} − ${fmtInt(grossTotal)} que cuesta el plan`,
                 countStarlight
                   ? `+ ${fmtInt(refunded)} de vuelta por la Cosmiluz Inextinguible`
                   : 'Sin contar la Cosmiluz Inextinguible',
-                '',
-                `Con tus tiradas por 5★ (${state.settings.hardPity.character} personaje, ${state.settings.hardPity.lightCone} cono)`,
-                'y tus casillas «Gano 50/50»',
               ].join('\n')}
             >
               <span className="pull-balance-label">{left < 0 ? 'Faltan' : 'Sobran'}</span>

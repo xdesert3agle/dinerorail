@@ -1,5 +1,3 @@
-import type { Result } from '../engine/calculate';
-import { formatDate } from '../engine/dates';
 import { BANNERS, STARLIGHT_PER_4_STAR, type BannerModel } from '../engine/rules';
 import type { AppState, PullKind } from '../engine/types';
 import { fmtInt, fmtSingles } from './format';
@@ -9,7 +7,6 @@ import { RUNS, type PlanOddsView } from './usePlanOdds';
 
 interface Props {
   state: AppState;
-  result: Result;
   /** La simulación del plan (null si no hay nada planificado); el % de cada objetivo va en su fila. */
   view: PlanOddsView | null;
 }
@@ -38,62 +35,81 @@ const MODEL_HELP = [
 /** Dice en qué se distingue de la planificación, que cuenta con los ajustes del usuario. */
 const worstCaseHelp = (hardPity: Record<PullKind, number>) =>
   [
-    `Singles que lo garantizan todo pase lo que pase: todos los 5★ en el pity duro (${BANNERS.character.hardPity} personaje, ${BANNERS.lightCone.hardPity} cono), ` +
+    `Tiradas que lo garantizan todo pase lo que pase: todos los 5★ en el pity duro (${BANNERS.character.hardPity} personaje, ${BANNERS.lightCone.hardPity} cono), ` +
       'todos los 50/50 perdidos y solo el 4★ garantizado, del tipo que menos Cosmiluz da.',
     `La planificación, en cambio, cuenta tus tiradas por 5★ (${hardPity.character} personaje, ${hardPity.lightCone} cono) y tus casillas «Gano 50/50».`,
   ].join('\n');
 
-export function Odds({ state, result, view }: Props) {
+export function Odds({ state, view }: Props) {
   if (!view) return null;
   const { odds, sure, pct } = view;
   const plan = state.plannedPulls;
-  const budget = result.wholeSingles;
 
   return (
-    <section className="card">
+    <section className="card card-odds">
       <header className="card-header">
         <h2>
           <Tip content={MODEL_HELP}>Previsión de suerte</Tip>
         </h2>
-        <Tip className="card-total" content={`Singles el ${formatDate(result.targetDate)}`}>
-          <Icon kind="pass" size={22} decorative />
-          {fmtInt(budget)}
-        </Tip>
+        {/* Sin total: las tiradas con las que se simula son las del Resumen. */}
       </header>
 
-      {/* Cada casilla se puede tocar o enfocar para ver qué significa. */}
+      {/*
+        Lo que significa cada cifra se abre desde su etiqueta (punteada), no desde toda la casilla: con cinco
+        casillas grandes, al mover el ratón por la tarjeta iban saltando burbujas.
+      */}
       <dl className="odds-stats">
-        <Tip as="div" content="Probabilidad de conseguir todas las tiradas planificadas con las singles de ese día">
-          <dt>Conseguirlo todo</dt>
+        <div>
+          <dt>
+            <Tip className="tip-term" content="Probabilidad de conseguir todas las tiradas planificadas con las tiradas de ese día">
+              Conseguirlo todo
+            </Tip>
+          </dt>
           <dd>{pct.at(-1)}</dd>
-        </Tip>
-        <Tip as="div" content="Cuántas tiradas planificadas conseguirías de media, en orden">
-          <dt>Objetivos esperados</dt>
+        </div>
+        <div>
+          <dt>
+            <Tip className="tip-term" content="Cuántas tiradas planificadas conseguirías de media, en orden">
+              Objetivos esperados
+            </Tip>
+          </dt>
           <dd>
             {fmtSingles(odds.expectedTargets, 1)} <span className="muted">de {plan.length}</span>
           </dd>
-        </Tip>
-        <Tip as="div" content="La mitad de las veces bastan estas singles para conseguirlo todo">
-          <dt>Suerte media</dt>
+        </div>
+        <div>
+          <dt>
+            <Tip className="tip-term" content="La mitad de las veces bastan estas tiradas para conseguirlo todo">
+              Suerte media
+            </Tip>
+          </dt>
           <dd className="with-icon">
             <Icon kind="pass" size={28} decorative />
             {fmtInt(odds.medianNeeded)}
           </dd>
-        </Tip>
-        <Tip as="div" content="El 90 % de las veces bastan estas singles para conseguirlo todo">
-          <dt>90 % seguro</dt>
+        </div>
+        <div>
+          <dt>
+            <Tip className="tip-term" content="El 90 % de las veces bastan estas tiradas para conseguirlo todo">
+              90 % seguro
+            </Tip>
+          </dt>
           <dd className="with-icon">
             <Icon kind="pass" size={28} decorative />
             {fmtInt(odds.p90Needed)}
           </dd>
-        </Tip>
-        <Tip as="div" content={worstCaseHelp(state.settings.hardPity)}>
-          <dt>Peor caso</dt>
+        </div>
+        <div>
+          <dt>
+            <Tip className="tip-term" content={worstCaseHelp(state.settings.hardPity)}>
+              Peor caso
+            </Tip>
+          </dt>
           <dd className="with-icon">
             <Icon kind="pass" size={28} decorative />
             {fmtInt(sure.at(-1) ?? 0)}
           </dd>
-        </Tip>
+        </div>
       </dl>
     </section>
   );

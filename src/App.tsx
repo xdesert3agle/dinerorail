@@ -301,7 +301,7 @@ export default function App() {
                 chances={planOdds?.pct ?? []}
                 onChange={change}
               />
-              <Odds state={state} result={result} view={planOdds} />
+              <Odds state={state} view={planOdds} />
               <Breakdown result={result} />
             </aside>
           </div>

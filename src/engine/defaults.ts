@@ -210,6 +210,7 @@ export function defaultState(today = todayISO()): AppState {
       includeShards: true,
       countStarlight: true,
       packsInYen: false,
+      includePacks: true,
       hardPity: { ...DEFAULT_HARD_PITY },
     },
   };

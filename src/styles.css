@@ -39,6 +39,16 @@
   --field-compact-h: calc(1rem * 1.45 + 14px);
   /* Sombra de lo que flota sobre la página: desplegables, calendario y popover de la galería. */
   --shadow-pop: 0 10px 30px color-mix(in srgb, var(--text) 18%, transparent);
+  /*
+   * Escala de espaciado: 4 dentro de un grupo pequeño (etiqueta y campo), 8 entre piezas de un grupo, 12 entre
+   * grupos dentro de una tarjeta (y entre campos de una rejilla), 16 entre tarjetas y de relleno, 20 entre
+   * bloques de una tarjeta. El 6 queda solo para el paso de filas que se repiten (eventos, paquetes, chips).
+   */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
   line-height: 1.45;
 }
@@ -511,9 +521,16 @@ p {
   align-items: center;
   gap: 6px;
 }
-/* Iconos dentro de un texto entre paréntesis ("(💠→💎)"): pegados al texto. */
+/* Iconos pegados al texto que acompañan ("Esquirlas💠", "20 Cosmiluz = 1 tirada" con iconos). */
 .with-icon-tight {
   gap: 2px;
+}
+/*
+ * "Contar Esquirlas💠 como Jades💎": la imagen de la Esquirla casi no tiene margen y la del Jade trae unos
+ * 2px transparentes a cada lado (medido); con este margen, los dos iconos quedan igual de separados de su palabra.
+ */
+.shards-as-jades > .icon:first-of-type {
+  margin-left: 2px;
 }
 .reward {
   display: inline-flex;
@@ -794,28 +811,59 @@ p {
 .layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 16px;
+  gap: var(--space-4);
 }
 .col-inputs,
 .col-results {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 16px;
+  gap: var(--space-4);
   align-content: start;
   min-width: 0;
 }
-/* En móvil, el resultado va primero. */
-.col-results {
-  order: -1;
+/*
+ * En una columna (por debajo de 1180px) las tarjetas se intercalan en el orden de uso: el resultado, lo que
+ * se tiene, el plan y su previsión, y después lo que se rellena menos (eventos, paquetes) y el desglose.
+ * Las columnas desaparecen (display: contents) y cada tarjeta lleva su orden; el hueco sigue siendo el de .layout.
+ */
+@media (max-width: 1179px) {
+  .col-inputs,
+  .col-results {
+    display: contents;
+  }
+  .card-summary {
+    order: 1;
+  }
+  .card-inventory {
+    order: 2;
+  }
+  .card-plan {
+    order: 3;
+  }
+  .card-odds {
+    order: 4;
+  }
+  .card-events {
+    order: 5;
+  }
+  .card-packs {
+    order: 6;
+  }
+  .card-breakdown {
+    order: 7;
+  }
 }
-@media (min-width: 1040px) {
+/*
+ * Dos columnas desde 1180px (antes 1040): por debajo, la de resultados dejaba el nombre de cada tirada en
+ * unos 100px. A partes iguales: la planificación necesita tanto sitio como las entradas.
+ */
+@media (min-width: 1180px) {
   .layout {
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: start;
   }
-  .col-results {
-    order: 0;
-  }
+}
+@media (min-width: 1040px) {
   .layout-settings {
     grid-template-columns: minmax(0, 820px) 18rem;
   }
@@ -1177,20 +1225,31 @@ p {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 16px;
+  padding: var(--space-4);
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 12px;
+  gap: var(--space-3);
   min-width: 0;
 }
+/*
+ * Sin partirse: si no cabe, es el título el que pasa a dos líneas, y el total o los botones siguen arriba a la
+ * derecha (partiéndose, el total bajaba solo a otra línea según cuántas cifras tuviera).
+ */
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   /* Como si llevara un botón: el contenido empieza a la misma altura en todas las tarjetas. */
   min-height: var(--control-h);
+}
+.card-header > * {
+  flex: none;
+}
+.card-header > h2 {
+  flex: 0 1 auto;
+  min-width: 0;
 }
 /* Títulos de las tarjetas en mayúsculas, con algo de espaciado para que no queden apretados. */
 .card-header h2 {
@@ -1304,6 +1363,54 @@ p {
   align-items: center;
   gap: 6px;
 }
+/*
+ * Fecha objetivo en la cabecera del Resumen («En 42 días · 01/12»): dato secundario, como un subtítulo,
+ * junto al título y no a la derecha, donde caería sobre la ilustración del tema.
+ */
+.hero .card-header {
+  justify-content: flex-start;
+  gap: var(--space-3);
+}
+.hero-date {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-variant-numeric: var(--num-variant);
+  white-space: nowrap;
+}
+/* Esquirlas que no se cuentan como Jades, o paquetes que no cuentan: apagados. */
+.hero-stats dd.is-off,
+.card-total.is-off {
+  color: var(--text-muted);
+}
+/* En móvil, cada cifra en su fila (etiqueta a la izquierda y valor a la derecha): en tres columnas no cabían. */
+@media (max-width: 560px) {
+  .hero-stats {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+  .hero-stats div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 8px;
+  }
+  .hero-stats dd {
+    margin: 0;
+  }
+  /*
+   * En móvil la ilustración ocupa casi toda la tarjeta y quedaba detrás de la cifra: se
+   * atenúa y su lado izquierdo (las llaves del dibujo) se desvanece del todo; los engranajes de la
+   * decoración de Aha se quitan.
+   */
+  .hero-art {
+    opacity: 0.6;
+    -webkit-mask-image: linear-gradient(to right, transparent 30%, #000 75%);
+    mask-image: linear-gradient(to right, transparent 30%, #000 75%);
+  }
+  .hero-deco.masks {
+    display: none;
+  }
+}
 
 /* Aha: la tarjeta Resumen deja ver un poco los naipes del fondo (solo el fondo de la tarjeta es translúcido). */
 :root[data-skin='aha'] .hero {
@@ -1319,6 +1426,12 @@ p {
   font-weight: 400;
   font-size: 1.125rem;
   letter-spacing: 0.02em;
+}
+/* En móvil, un poco más pequeños: la letra de naipe es ancha y el total o los botones tienen que caber al lado. */
+@media (max-width: 560px) {
+  :root[data-skin='aha'] .card-header h2 {
+    font-size: 1rem;
+  }
 }
 /* El título de la app, en la misma letra de naipe (solo tiene mayúsculas). */
 :root[data-skin='aha'] .title {
@@ -1361,10 +1474,10 @@ p {
 .grid-3,
 .grid-4 {
   display: grid;
-  gap: 10px;
+  gap: var(--space-3);
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
-@media (min-width: 640px) {
+@media (min-width: 721px) {
   .grid-3 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -1375,6 +1488,11 @@ p {
 /* Campos alineados por abajo: si una etiqueta ocupa dos líneas, las casillas siguen a la misma altura. */
 .grid-4 {
   align-items: end;
+}
+/* Campos con su interruptor debajo (inventario y Esquirlas): juntos, como el pity y su garantizado. */
+.field-group {
+  display: grid;
+  gap: var(--space-2);
 }
 /* Campo de pity con su interruptor de garantizado debajo. */
 .pity-field {
@@ -1392,32 +1510,6 @@ p {
   font-size: 0.8125rem;
   color: var(--text-secondary);
 }
-/* Icono (i) de ayuda junto a una etiqueta: el texto sale con Tip (ratón, foco o toque). */
-.info {
-  display: inline-grid;
-  place-items: center;
-  width: 14px;
-  height: 14px;
-  margin-left: 5px;
-  /* Puede asomar hasta 5px en el hueco entre columnas: así el (i) de "Cosmiluz Inextinguible" no baja solo a otra línea. */
-  margin-right: -5px;
-  border: 1px solid currentColor;
-  border-radius: 50%;
-  font-size: 0.625rem;
-  font-weight: 700;
-  font-style: normal;
-  line-height: 1;
-  vertical-align: 1px;
-  color: var(--text-muted);
-  cursor: help;
-}
-.info:hover {
-  color: var(--text);
-}
-/* Palabras que no se separan: la última de una etiqueta y su (i), para que el (i) no baje solo de línea. */
-.nowrap {
-  white-space: nowrap;
-}
 /*
  * Dato con explicación (Tip.tsx): se abre al pasar el ratón, al enfocarlo o al tocarlo. Enfocable, con el
  * mismo anillo que los controles; el cursor de ayuda dice que tiene algo que contar.
@@ -1428,6 +1520,12 @@ p {
 .tip-trigger:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+/* Término con explicación (las etiquetas de la previsión): subrayado punteado discreto, como una abreviatura. */
+.tip-term {
+  text-decoration: underline dotted color-mix(in srgb, currentColor 55%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
 }
 /* La burbuja: como el popover de la galería (borde del acento y sombra de lo que flota), en pequeño. */
 .tip {
@@ -2065,13 +2163,41 @@ tfoot td {
   color: var(--text);
   font-variant-numeric: var(--num-variant);
 }
-/* «Faltan» / «Sobran» del balance: palabra de etiqueta, no cifra. */
+/*
+ * El ticket, que se vea igual de grande que la cifra: el dibujo, inclinado y estrecho, tiene que medir unas
+ * 1,3 veces su alto para no parecer más pequeño (elegido comparando tamaños: 28px con la letra de naipe de
+ * Aha, cuyas cifras miden 17px). Sparxie, en proporción a sus cifras de Courier (12px).
+ */
+.card-total .icon {
+  width: 28px;
+  height: 28px;
+}
+/* Courier deja sus cifras altas en la línea: el ticket sube con ellas para quedar centrado. */
+:where(:root[data-skin='sparxie']) .card-total .icon {
+  position: relative;
+  top: -1.5px;
+  width: 20px;
+  height: 20px;
+}
+/*
+ * «Faltan» / «Sobran» del balance: palabra de etiqueta, no cifra. En la misma línea base que la cifra (no
+ * centrada en su caja): con la letra de naipe, centrada quedaba 4,5px más alta y no se leía como una frase.
+ * El ticket sigue centrado.
+ */
 .pull-balance-label {
   font-size: 1rem;
-  font-weight: 600;
 }
-.status-ok {
-  color: var(--success-text);
+.pull-summary .pull-cost > :is(.pull-balance-label, strong) {
+  align-self: baseline;
+}
+/* La cifra, del alto del ticket: así sigue centrada con él, como las de las filas de encima. */
+.pull-summary .pull-cost strong {
+  line-height: 26px;
+}
+@media (max-width: 560px) {
+  .pull-summary .pull-cost strong {
+    line-height: 20px;
+  }
 }
 .status-short {
   color: var(--danger);
@@ -2185,6 +2311,35 @@ tfoot td {
 .btn-remove:hover {
   color: var(--text);
 }
+/*
+ * En pantallas táctiles, zona de toque de al menos 44 × 44px en los controles pequeños (✕, casillas, selector
+ * de tema), sin cambiar lo que se ve: una capa invisible centrada que sobresale. Donde 44px taparía el campo
+ * de al lado, menos: 36px de alto en las casillas (8px de hueco con el campo de encima) y 24 × 24 (el mínimo
+ * de WCAG 2.5.8) en el % de cada fila, que está pegado al campo del nombre.
+ * El selector claro/oscuro ya usa ::after (su línea invisible de texto), así que el suyo va en ::before.
+ */
+@media (pointer: coarse) {
+  :is(.btn-remove, .check, .skin-option, .theme-option) {
+    position: relative;
+  }
+  :is(.btn-remove, .check, .skin-option, .pull-chance)::after,
+  .theme-option::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+  .check::after {
+    height: max(100%, 36px);
+  }
+  .pull-chance::after {
+    width: max(100%, 24px);
+    height: max(100%, 24px);
+  }
+}
 /* El balance se alinea con los costes dejando a la derecha el hueco de la X. */
 .pull-list {
   --pull-remove: 24px;
@@ -2207,9 +2362,9 @@ tfoot td {
  * En pantallas estrechas, dos líneas por tirada: en una el nombre se quedaba en dos letras.
  * Arriba, asa · miniatura · nombre entero; debajo del nombre, 50/50 · coste · quitar. El pie también
  * se parte: la casilla de la Cosmiluz arriba y el balance debajo, en la columna de los costes.
- * Corta en 640px: por debajo, en una línea el nombre ya tiene menos sitio que en escritorio.
+ * Corta en 720px, como las demás filas que se parten (eventos, paquetes).
  */
-@media (max-width: 640px) {
+@media (max-width: 720px) {
   .pull-list {
     grid-template-columns: auto auto minmax(0, 1fr) auto auto;
   }
@@ -2247,9 +2402,9 @@ tfoot td {
 /* Patches & events */
 .patch-block {
   border-top: 1px solid var(--grid);
-  padding-top: 12px;
+  padding-top: var(--space-3);
   display: grid;
-  gap: 8px;
+  gap: var(--space-3);
 }
 /* La línea solo separa una actualización de otra; bajo la cabecera ya separa el gap de la tarjeta. */
 .card-header + .patch-block {
@@ -2260,7 +2415,7 @@ tfoot td {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 10px;
+  gap: var(--space-2);
 }
 .patch-head .date-field {
   width: 9.5rem;
@@ -2366,9 +2521,12 @@ tfoot td {
 /* Paquetes de Esquirlas: pack · precio · Esquirlas por compra · cantidad · x2 · total. */
 .pack-list {
   display: grid;
-  /* Cantidad: hueco para 2 cifras más las flechas. */
-  grid-template-columns: minmax(0, 1fr) auto auto 4rem auto auto;
-  column-gap: 16px;
+  /*
+   * Cantidad: hueco para 2 cifras más las flechas. Precio, de ancho fijo ("9.999,99 €"): con auto crecía con
+   * el total de la última fila y movía las demás columnas.
+   */
+  grid-template-columns: minmax(0, 1fr) 5.5rem auto 4rem auto auto;
+  column-gap: var(--space-3);
   row-gap: 6px;
   align-items: center;
 }
@@ -2419,6 +2577,18 @@ tfoot td {
 }
 .pack-price {
   color: var(--text-secondary);
+  justify-self: end;
+}
+/* Nombre del paquete: el icono de Esquirla y «×6.480» (el título de la tarjeta ya dice que son Esquirlas). */
+.pack-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-variant-numeric: var(--num-variant);
+}
+/* El título de Precio, sobre las cifras (alineadas a la derecha en su hueco fijo). */
+.pack-header > :nth-child(2) {
+  justify-self: end;
 }
 /*
  * En móvil, dos líneas por paquete: en seis columnas el nombre y el precio se pisaban.
@@ -2428,10 +2598,10 @@ tfoot td {
  * Corta en 720px: por debajo, en seis columnas el nombre ya ocupaba dos o tres líneas.
  */
 @media (max-width: 720px) {
-  /* Por compra, cantidad y x2 juntos a la izquierda; el total, a la derecha bajo el precio. */
+  /* Por compra, cantidad y x2 juntos a la izquierda; el total, a la derecha. */
   .pack-list {
     grid-template-columns: auto 4rem auto minmax(0, 1fr);
-    column-gap: 10px;
+    column-gap: var(--space-3);
     row-gap: 0;
   }
   .pack-row {
@@ -2452,14 +2622,24 @@ tfoot td {
     clip: rect(0 0 0 0);
     white-space: nowrap;
   }
-  /* Nombre y precio comparten la primera línea entera; el nombre deja sitio al precio. */
+  /*
+   * Arriba, el nombre y su precio juntos a la izquierda (el precio en gris: es un dato del paquete). La columna
+   * de la derecha queda para los totales, bajo su título.
+   */
   .pack-row > .pack-name {
-    grid-area: 1 / 1 / 2 / -1;
-    padding-right: 4.5rem;
+    grid-area: 1 / 1 / 2 / 2;
   }
   .pack-row > .pack-price {
-    grid-area: 1 / 1 / 2 / -1;
-    justify-self: end;
+    grid-area: 1 / 2 / 2 / 4;
+    justify-self: start;
+  }
+  /* La fila Total, en una sola línea: el total de Esquirlas sube a la de los euros, en su columna. */
+  .pack-list .pack-row.pack-footer > .pack-total {
+    grid-row: 1;
+    grid-column: 4;
+  }
+  .pack-footer > span:empty {
+    display: none;
   }
   .pack-row > .pack-total,
   .pack-header > :last-child {
@@ -2521,8 +2701,10 @@ tfoot td {
   color: var(--warning-text);
   margin-top: -2px;
 }
+/* El texto de «+ Evento» alineado con la columna de los nombres: el botón fantasma lleva 12px de relleno y 1px de borde. */
 .btn-add {
   justify-self: start;
+  margin-left: -13px;
 }
 /*
  * Fecha de cobro: borde y relleno (9px), icono con su aire (28px) y la fecha más ancha. En Figtree, 92px
@@ -2535,14 +2717,46 @@ tfoot td {
 :root[data-skin='sparxie'] .event-row {
   --event-date-col: 8.3125rem;
 }
-@media (max-width: 640px) {
+/*
+ * Hasta 720px, dos líneas por evento: arriba el nombre (entero) y quitar; debajo fecha, Jades y Pases.
+ * Los Pases llegan hasta el borde (también bajo la columna de quitar) para que quepan sus cifras y flechas.
+ */
+@media (max-width: 720px) {
   .event-header {
     display: none;
   }
   .event-row {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 1.5rem;
+    grid-template-columns: var(--event-date-col) 5.375rem minmax(0, 1fr) 1.5rem;
     padding-bottom: 8px;
     border-bottom: 1px dashed var(--grid);
+  }
+  .event-row > input[type='text'] {
+    grid-column: 1 / 4;
+  }
+  .event-row > .btn {
+    grid-column: 4;
+    grid-row: 1;
+  }
+  .event-row > .date-field {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .event-row > .field:nth-child(3) {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  .event-row > .field:nth-child(4) {
+    grid-column: 3 / 5;
+    grid-row: 2;
+  }
+}
+/*
+ * En los móviles más estrechos (por debajo de ~380px) los Pases ya no caben al lado de la fecha y los Jades:
+ * nombre, fecha y Jades · Pases, en tres líneas.
+ */
+@media (max-width: 380px) {
+  .event-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 1.5rem;
   }
   .event-row > input[type='text'] {
     grid-column: 1 / 3;
@@ -2566,6 +2780,15 @@ tfoot td {
 }
 .bar-col {
   width: 30%;
+}
+/* En móvil, la barra más estrecha y menos relleno: con el 30 %, los nombres de las fuentes ocupaban tres líneas. */
+@media (max-width: 560px) {
+  .bar-col {
+    width: 18%;
+  }
+  .breakdown :is(th, td) {
+    padding-inline: 6px;
+  }
 }
 .bar {
   height: 8px;

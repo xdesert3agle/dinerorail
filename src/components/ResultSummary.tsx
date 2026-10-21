@@ -1,10 +1,11 @@
 import type { ComponentType } from 'react';
 import type { Result } from '../engine/calculate';
 import { formatDate } from '../engine/dates';
-import { fmtInt, fmtSingles } from './format';
+import { fmtDayMonth, fmtInt, fmtSingles } from './format';
 import type { Skin } from '../engine/types';
 import { Icon } from './Icon';
 import { Masks } from './Masks';
+import { Tip } from './Tip';
 import { Threads } from './Threads';
 import { Wireframe } from './Wireframe';
 
@@ -16,10 +17,16 @@ const DECORATION: Record<Skin, ComponentType | null> = {
   sparxie: null,
 };
 
+/** "En 42 días · 11 nov." (o "Hoy · 21 oct."): la cuenta atrás y la fecha corta. */
+function dateLabel(result: Result): string {
+  const when = result.days === 0 ? 'Hoy' : result.days === 1 ? 'En 1 día' : `En ${fmtInt(result.days)} días`;
+  return `${when} · ${fmtDayMonth(result.targetDate)}`;
+}
+
 export function ResultSummary({ result, skin }: { result: Result; skin: Skin }) {
   if (!result.valid) {
     return (
-      <section className="card hero">
+      <section className="card hero card-summary">
         <header className="card-header">
           <h2>Resumen</h2>
         </header>
@@ -30,22 +37,24 @@ export function ResultSummary({ result, skin }: { result: Result; skin: Skin }) 
 
   const { final } = result;
   const Decoration = DECORATION[skin];
+  const counted = result.shards > 0 || result.shardsHeld === 0;
   return (
     // Sin aria-live: la tarjeta cambia con cada tecla y el lector de pantalla la repetiría entera.
-    <section className="card hero">
+    <section className="card hero card-summary">
       <header className="card-header">
         <h2>Resumen</h2>
+        {/* La fecha objetivo, a la vista: de ella sale la cifra (la fecha se cambia en Recursos actuales). */}
+        <Tip className="hero-date" content={`Fecha objetivo: ${formatDate(result.targetDate)}`}>
+          {dateLabel(result)}
+        </Tip>
       </header>
       {Decoration && <Decoration />}
-      {/* Solo la cifra; la fecha, los Jades sueltos y lo ganado en el periodo quedan en el tooltip. */}
-      <div
-        className="hero-value"
-        title={`El ${formatDate(result.targetDate)} (${fmtInt(result.days)} días) · ${fmtInt(result.leftoverJades)} Jades sueltos · +${fmtSingles(result.incomeSingles, 1)} singles ganadas en el periodo`}
-      >
+      {/* Solo la cifra, sin explicación: en el Resumen, cuantas menos burbujas, mejor. */}
+      <div className="hero-value">
         <Icon kind="pass" size={64} decorative />
         {fmtInt(result.wholeSingles)}
         {/* El icono del Pase ya dice la unidad; la palabra queda solo para lectores de pantalla. */}
-        <span className="sr-only">singles</span>
+        <span className="sr-only">tiradas</span>
       </div>
 
       <dl className="hero-stats">
@@ -63,11 +72,13 @@ export function ResultSummary({ result, skin }: { result: Result; skin: Skin }) 
             {fmtInt(final.specialPasses)}
           </dd>
         </div>
-        <div>
+        {/* Las del inventario más las de los paquetes que cuentan («Contar los paquetes», en su tarjeta). */}
+        <div className="hero-shards">
           <dt>Esquirlas Oníricas</dt>
-          <dd>
+          <dd className={counted ? undefined : 'is-off'}>
             <Icon kind="shard" size={28} decorative />
-            {result.shards > 0 ? fmtInt(result.shards) : '—'}
+            {result.shardsHeld > 0 ? fmtInt(result.shardsHeld) : '—'}
+            {!counted && <span className="sr-only"> (no se cuentan como Jades)</span>}
           </dd>
         </div>
       </dl>
@@ -80,7 +91,7 @@ export function Breakdown({ result }: { result: Result }) {
   const max = Math.max(...result.bySource.map((t) => t.singles), 0.0001);
 
   return (
-    <section className="card">
+    <section className="card card-breakdown">
       <header className="card-header">
         <h2>Desglose por fuente</h2>
       </header>
@@ -90,7 +101,7 @@ export function Breakdown({ result }: { result: Result }) {
             <tr>
               <th>Fuente</th>
               <th className="num">Cobros</th>
-              <th className="num">Singles</th>
+              <th className="num">Tiradas</th>
               <th className="bar-col" aria-hidden="true" />
             </tr>
           </thead>
