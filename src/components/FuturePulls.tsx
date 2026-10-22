@@ -20,7 +20,14 @@ import { CSS } from '@dnd-kit/utilities';
 import { useState } from 'react';
 import type { Result } from '../engine/calculate';
 import type { Catalog, CatalogEntry } from '../engine/catalog';
-import { characterPortraitUrl, dupeOf, lightConeImageUrl, resolve, type RowCopy } from '../engine/dupes';
+import {
+  characterPortraitUrl,
+  dupeOf,
+  lightConeIconUrl,
+  lightConeImageUrl,
+  resolve,
+  type RowCopy,
+} from '../engine/dupes';
 import { formatDate } from '../engine/dates';
 import { planPulls, type PlannedPullResult } from '../engine/pulls';
 import {
@@ -91,10 +98,13 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
         : 'Fila quitada de la planificación.',
     );
   // Miniatura de cada fila: el retrato del personaje o el icono del cono (null si no está en el catálogo).
+  // Del cono, primero el de StarRailRes y, si no lo tiene, el de nanoka.
   const portraitOf = (pull: PlannedPull) => {
     const entry = catalog ? resolve(pull.name, catalog[pull.kind]) : null;
     if (!entry) return null;
-    return pull.kind === 'character' ? characterPortraitUrl(entry.id) : lightConeImageUrl(entry.id);
+    return pull.kind === 'character'
+      ? [characterPortraitUrl(entry.id)]
+      : [lightConeIconUrl(entry.id), lightConeImageUrl(entry.id)];
   };
   // La fila recién añadida enfoca su nombre para poder escribir directamente.
   const [focusId, setFocusId] = useState<string | null>(null);
@@ -250,8 +260,8 @@ interface RowProps {
   dupe: number | null;
   /** Probabilidad de tenerla junto con las anteriores ("21 %"). */
   chance: string;
-  /** URL de la miniatura, o null si la fila no tiene nombre del catálogo. */
-  portrait: string | null;
+  /** URLs de la miniatura, por orden de preferencia, o null si la fila no tiene nombre del catálogo. */
+  portrait: string[] | null;
   autoFocus: boolean;
   onUpdate: (patch: Partial<PlannedPull>) => void;
   onRemove: () => void;
@@ -296,8 +306,8 @@ function SortablePullRow({ pull, row, suggestions, dupe, chance, portrait, onUpd
         <span className={`glyph ${KIND_GLYPH[pull.kind]}`} />
         {portrait && (
           <img
-            key={portrait}
-            src={portrait}
+            key={portrait.join(' ')}
+            src={portrait[0]}
             alt=""
             // Como en la galería (que la pide en modo CORS por la máscara): el icono del cono se descarga una vez.
             crossOrigin="anonymous"
@@ -307,8 +317,18 @@ function SortablePullRow({ pull, row, suggestions, dupe, chance, portrait, onUpd
             loading="lazy"
             decoding="async"
             draggable={false}
+            // Cargada: el cono quita entonces su fondo (ver .pull-portrait-lightCone en styles.css).
+            onLoad={(e) => e.currentTarget.classList.add('is-loaded')}
+            // Si falla, prueba la siguiente URL; agotadas, se oculta y deja ver el icono del tipo.
             onError={(e) => {
-              e.currentTarget.style.visibility = 'hidden';
+              const img = e.currentTarget;
+              const next = Number(img.dataset.fallback ?? 0) + 1;
+              if (next < portrait.length) {
+                img.dataset.fallback = String(next);
+                img.src = portrait[next];
+              } else {
+                img.style.visibility = 'hidden';
+              }
             }}
           />
         )}

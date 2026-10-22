@@ -3,6 +3,7 @@ import { formatDesc, type Effect } from '../engine/details';
 import { dupeImageUrl, lightConeImageUrl, type Dupe } from '../engine/dupes';
 import { MAX_SUPERIMPOSITION } from '../engine/rules';
 import { prefetchDetails, useDetails, type DetailsRef } from '../state/details';
+import { reducedMotion } from './motion';
 
 interface Props {
   /** Dupes de los personajes del plan, hasta 6. */
@@ -101,8 +102,17 @@ const POP_EDGE = 8;
 /** Lo más cerca que puede ir la flecha de arriba o de abajo del popover, para no caer en las esquinas redondeadas (px). */
 const ARROW_INSET = 26;
 
+interface PopoverProps {
+  side: 'left' | 'right';
+  item: Item;
+  anchor: HTMLElement;
+  /** Ya se ha salido de la imagen: se funde y avisa con onLeft al terminar. */
+  leaving?: boolean;
+  onLeft?: () => void;
+}
+
 /** El popover de una imagen: qué hace ese Eidolón o el efecto del cono en esa superposición. */
-function Popover({ side, item, anchor }: { side: 'left' | 'right'; item: Item; anchor: HTMLElement }) {
+function Popover({ side, item, anchor, leaving, onLeft }: PopoverProps) {
   const { details, failed } = useDetails(item.ref);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -138,7 +148,14 @@ function Popover({ side, item, anchor }: { side: 'left' | 'right'; item: Item; a
   }
 
   return (
-    <div ref={ref} className={`dupe-pop dupe-pop-${side}`} aria-hidden="true">
+    <div
+      ref={ref}
+      className={`dupe-pop dupe-pop-${side}${leaving ? ' is-leaving' : ''}`}
+      aria-hidden="true"
+      onAnimationEnd={(e) => {
+        if (e.animationName === 'dupe-pop-out') onLeft?.();
+      }}
+    >
       <div className="dupe-pop-head">
         <span className="dupe-badge">
           {item.ref.kind === 'character' ? 'E' : 'S'}
@@ -181,8 +198,11 @@ function Popover({ side, item, anchor }: { side: 'left' | 'right'; item: Item; a
  */
 function Side({ side, items }: { side: 'left' | 'right'; items: Item[] }) {
   const [hover, setHover] = useState<{ index: number; anchor: HTMLElement } | null>(null);
+  // El último popover del que se ha salido, mientras se funde.
+  const [leaving, setLeaving] = useState<{ index: number; anchor: HTMLElement } | null>(null);
   if (items.length === 0) return null;
   const hovered = hover && items[hover.index];
+  const fading = leaving && items[leaving.index];
   return (
     <>
       <div className={`dupes dupes-${side}`} aria-hidden="true">
@@ -209,7 +229,10 @@ function Side({ side, items }: { side: 'left' | 'right'; items: Item[] }) {
                 onPointerMove={tilt}
                 onPointerLeave={(e) => {
                   untilt(e);
-                  settleDown(e.currentTarget.closest<HTMLElement>('.dupe-slot')!);
+                  const slot = e.currentTarget.closest<HTMLElement>('.dupe-slot')!;
+                  settleDown(slot);
+                  // Sin animaciones no llega el final del fundido: se quita directamente.
+                  if (!reducedMotion()) setLeaving({ index: i, anchor: slot });
                   setHover(null);
                 }}
               >
@@ -227,8 +250,18 @@ function Side({ side, items }: { side: 'left' | 'right'; items: Item[] }) {
       {/*
         Con el índice como clave: al pasar rápido de una imagen a la de al lado, salir de una y entrar en
         la otra llegan juntas y el popover no llega a quitarse; así se monta uno nuevo y vuelve a aparecer
-        con su fundido.
+        con su fundido. El que se va lleva otra clave: puede fundirse a la vez que entra el de la misma imagen.
       */}
+      {fading && (
+        <Popover
+          key={`out-${leaving.index}`}
+          side={side}
+          item={fading}
+          anchor={leaving.anchor}
+          leaving
+          onLeft={() => setLeaving((l) => (l === leaving ? null : l))}
+        />
+      )}
       {hovered && <Popover key={hover.index} side={side} item={hovered} anchor={hover.anchor} />}
     </>
   );

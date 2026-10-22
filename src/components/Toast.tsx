@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FocusEvent } from 'react';
 import type { AppState } from '../engine/types';
+import { reducedMotion } from './motion';
 
 /** Lo que tarda en irse solo. Se para mientras el ratón o el foco están encima (WCAG 2.2.1). */
 export const TOAST_MS = 5000;
@@ -73,8 +74,6 @@ function ToastName({ name }: { name: string }) {
     </span>
   );
 }
-
-const reducedMotion = () =>window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
  * Toast con fundido de entrada y de salida. La región (role="status") está siempre montada para que los

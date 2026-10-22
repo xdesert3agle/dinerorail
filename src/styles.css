@@ -1212,9 +1212,19 @@ p {
   .dupe-pop {
     animation: dupe-pop-in 0.18s ease-out;
   }
+  .dupe-pop.is-leaving {
+    animation: dupe-pop-out 0.15s ease-in forwards;
+  }
 }
 @keyframes dupe-pop-in {
   from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+/* Al revés que la entrada: baja un poco mientras se funde. */
+@keyframes dupe-pop-out {
+  to {
     opacity: 0;
     transform: translateY(8px);
   }
@@ -1932,6 +1942,19 @@ tfoot td {
 }
 .pull-portrait-character {
   border-radius: 50%;
+}
+/*
+ * El cono va sin fondo, sobre la fila: una vez cargado se quitan el del hueco y el de la imagen, y se
+ * oculta el icono del tipo para que no asome por la parte transparente. Sin imagen, queda el recuadro.
+ */
+.pull-portrait-lightCone:has(img.is-loaded) {
+  background: none;
+}
+.pull-portrait-lightCone img {
+  background: none;
+}
+.pull-portrait-lightCone:has(img.is-loaded) .glyph {
+  visibility: hidden;
 }
 /* Algo de zoom: la cara llena más el círculo (el hueco recorta lo que sobra). */
 .pull-portrait-character img {

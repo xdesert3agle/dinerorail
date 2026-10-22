@@ -21,6 +21,14 @@ export const MAX_LIGHT_CONES = 6;
 export const lightConeImageUrl = (lightConeId: string) =>
   `https://static.nanoka.cc/assets/hsr/lightconemediumicon/${lightConeId}.webp`;
 
+/**
+ * Icono de un cono de luz en el repo de assets StarRailRes (el raw de
+ * https://github.com/Mar-7th/StarRailRes/blob/master/icon/light_cone/<id>.png, que sirve CORS).
+ * Puede no tener aún el contenido beta: el planificador recurre entonces a lightConeImageUrl.
+ */
+export const lightConeIconUrl = (lightConeId: string) =>
+  `https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/icon/light_cone/${lightConeId}.png`;
+
 export interface Dupe {
   characterId: string;
   /** Eidolón que da esta copia: 1…6. */
