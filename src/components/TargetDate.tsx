@@ -1,9 +1,9 @@
 import { useId } from 'react';
 import { addDays, toDayNum, WEEKDAYS, weekdayOf } from '../engine/dates';
-import { upcomingKeyDates } from '../engine/keyDates';
+import { patchText, upcomingKeyDates } from '../engine/keyDates';
 import type { AppState } from '../engine/types';
 import { DateField } from './DateField';
-import { fmtDayMonth, fmtInt } from './format';
+import { fmtDayMonth, fmtInt, fmtMonth } from './format';
 
 interface Props {
   state: AppState;
@@ -15,9 +15,6 @@ const QUICK_TARGETS = [
   { label: '+1 semana', days: 7 },
   { label: '+3 semanas', days: 21 },
 ];
-
-/** "mié": el día de la semana abreviado (los parches salen en miércoles). */
-const weekdayShort = (iso: string) => WEEKDAYS[weekdayOf(toDayNum(iso))].slice(0, 3);
 
 /** "hoy", "mañana" o "en 19 días". */
 function countdown(iso: string, today: string): string {
@@ -45,6 +42,7 @@ export function TargetDate({ state, today, onChange }: Props) {
           id={targetDateId}
           value={state.targetDate}
           min={today}
+          marks={keyDates.map((d) => ({ date: d.date, label: [d.label, patchText(d)].filter(Boolean).join(' · ') }))}
           onChange={(v) => onChange((s) => ({ ...s, targetDate: v }))}
         />
         <div className="chips">
@@ -65,28 +63,47 @@ export function TargetDate({ state, today, onChange }: Props) {
       </div>
 
       {/*
-        Atajos a días señalados: una fila por fecha, a todo el ancho, con lo que hace falta para elegir (el día
-        de la semana y cuánto falta). Pulsar una pone esa fecha objetivo; la de la fecha puesta queda marcada.
+        Atajos a días señalados, cada uno como una hoja de calendario (mes y día) con su nombre, el día de la
+        semana y cuánto falta. Pulsar una pone esa fecha objetivo; la de la fecha puesta queda marcada.
       */}
       {keyDates.length > 0 && (
         <div className="key-dates" role="group" aria-labelledby={keyDatesId}>
           <span className="field-label" id={keyDatesId}>
             Fechas destacadas
           </span>
-          {keyDates.map((d) => (
-            <button
-              key={d.date + d.label}
-              type="button"
-              className="btn key-date"
-              aria-pressed={state.targetDate === d.date}
-              onClick={() => onChange((s) => ({ ...s, targetDate: d.date }))}
-            >
-              <span className="key-date-name">{d.label}</span>
-              <span className="key-date-when">
-                {weekdayShort(d.date)} {fmtDayMonth(d.date)} · {countdown(d.date, today)}
-              </span>
-            </button>
-          ))}
+          <div className="key-date-list">
+            {keyDates.map((d) => {
+              const weekday = WEEKDAYS[weekdayOf(toDayNum(d.date))];
+              const when = countdown(d.date, today);
+              const patch = patchText(d);
+              return (
+                <button
+                  key={d.date + d.label}
+                  type="button"
+                  className="btn key-date"
+                  aria-pressed={state.targetDate === d.date}
+                  // La hoja no se lee: el nombre del botón dice la fecha entera.
+                  aria-label={`${d.label}${patch ? `, ${patch}` : ''}: ${weekday} ${fmtDayMonth(d.date)}, ${when}`}
+                  onClick={() => onChange((s) => ({ ...s, targetDate: d.date }))}
+                >
+                  <span className="key-date-leaf" aria-hidden="true">
+                    <span className="key-date-month">{fmtMonth(d.date)}</span>
+                    <span className="key-date-day">{Number(d.date.slice(8))}</span>
+                  </span>
+                  {/* El nombre con su parche al lado (en gris), y debajo el día de la semana y cuánto falta. */}
+                  <span className="key-date-text" aria-hidden="true">
+                    <span className="key-date-title">
+                      <span className="key-date-name">{d.label}</span>
+                      {patch && <span className="key-date-patch">{patch}</span>}
+                    </span>
+                    <span className="key-date-when">
+                      {weekday} ({when})
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
     </section>

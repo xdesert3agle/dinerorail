@@ -49,6 +49,7 @@ import { KIND_GLYPH, KIND_LABEL } from './kinds';
 import { Toggle } from './Toggle';
 import { NameCombobox } from './NameCombobox';
 import { Tip } from './Tip';
+import { RemoveGlyph } from './RemoveGlyph';
 
 interface Props {
   state: AppState;
@@ -398,7 +399,7 @@ function SortablePullRow({ pull, row, suggestions, dupe, chance, portrait, onUpd
       </Tip>
 
       <button type="button" className="btn btn-ghost btn-remove" aria-label={`Quitar ${label}`} onClick={onRemove}>
-        ✕
+        <RemoveGlyph />
       </button>
     </div>
   );

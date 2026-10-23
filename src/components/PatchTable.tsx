@@ -9,6 +9,7 @@ import { fmtSingles } from './format';
 import { DateField } from './DateField';
 import { NumberField } from './NumberField';
 import { PLAIN_TEXT_INPUT } from './inputs';
+import { RemoveGlyph } from './RemoveGlyph';
 
 interface Props {
   state: AppState;
@@ -86,7 +87,7 @@ export function PatchTable({ state, today, onChange }: Props) {
                   )
                 }
               >
-                ✕
+                <RemoveGlyph />
               </button>
             </div>
           </div>
@@ -161,7 +162,7 @@ export function PatchTable({ state, today, onChange }: Props) {
                       )
                     }
                   >
-                    ✕
+                    <RemoveGlyph />
                   </button>
                   {status && <span className="event-status">{status}</span>}
                 </div>

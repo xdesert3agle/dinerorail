@@ -412,7 +412,7 @@ label {
  * (Aha): Courier Prime (Sparxie) es monoespaciada y en Segoe UI ya son de ancho fijo.
  */
 :root {
-  --num-variant: normal;
+  --num-variant: tabular-nums;
 }
 body {
   margin: 0;
@@ -1277,7 +1277,7 @@ p {
   isolation: isolate;
   gap: 4px;
   border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
-  background: radial-gradient(420px 220px at 100% 0%, var(--glow), transparent 70%), var(--surface);
+  background: var(--surface);
 }
 /* La tarjeta va más apretada que las demás (gap de 4px): el título se separa un poco más de la cifra. */
 .hero .card-header {
@@ -1427,9 +1427,7 @@ p {
 
 /* Aha: la tarjeta Resumen deja ver un poco los naipes del fondo (solo el fondo de la tarjeta es translúcido). */
 :root[data-skin='aha'] .hero {
-  background:
-    radial-gradient(420px 220px at 100% 0%, var(--glow), transparent 70%),
-    color-mix(in srgb, var(--surface) 50%, transparent);
+  background: color-mix(in srgb, var(--surface) 50%, transparent);
 }
 /* Aha: títulos de tarjeta con letra de naipe. Sin negrita: la fuente solo tiene un peso y se vería falseada. */
 :root[data-skin='aha'] .card-header h2 {
@@ -1479,7 +1477,6 @@ p {
   font-size: 3.5rem;
   font-weight: 400;
   letter-spacing: 0;
-  text-shadow: 0 0 24px color-mix(in srgb, var(--deco) 25%, transparent);
 }
 
 /* Forms */
@@ -1678,33 +1675,73 @@ select:focus {
   border-radius: 999px;
 }
 /*
- * Fechas destacadas: bajo la fecha y sus atajos, con el aire entre grupos. Una fila por fecha a todo el ancho
- * (la tarjeta no deja media anchura vacía): el nombre a la izquierda; el día y la cuenta atrás, a la derecha.
+ * Fechas destacadas: bajo la fecha y sus atajos, con el aire entre grupos. Cada una es una hoja de calendario
+ * (el mes en una banda de acento y el día grande) con su nombre y cuánto falta al lado; varias van en fila y
+ * bajan de línea si no caben.
  */
 .key-dates {
   display: grid;
-  gap: 6px;
+  gap: var(--space-2);
   margin-top: var(--space-3);
 }
-.key-dates .field-label {
-  margin-bottom: 2px;
+.key-date-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 .key-date {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
+  display: inline-flex;
+  align-items: center;
   gap: var(--space-3);
-  width: 100%;
+  max-width: 100%;
+  padding: 6px 16px 6px 6px;
   text-align: left;
 }
-.key-date-name {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.key-date-when {
+/*
+ * La hoja es de papel: blanca en claro y, en oscuro, del color del texto con la cifra oscura (en el tono de la
+ * tarjeta se perdía contra el botón). light-dark() sigue al color-scheme que pone cada modo en :root.
+ */
+.key-date-leaf {
   flex: none;
+  display: grid;
+  width: 44px;
+  overflow: hidden;
+  text-align: center;
+  color: light-dark(var(--text), var(--surface));
+  background: light-dark(var(--surface), var(--text));
+  border: 1px solid light-dark(var(--border), var(--text));
+  border-radius: 6px;
+}
+.key-date-month {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 16px;
+  color: var(--on-accent);
+  background: var(--accent);
+}
+.key-date-day {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 28px;
+  font-variant-numeric: var(--num-variant);
+}
+.key-date-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.key-date-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: var(--space-2);
+}
+.key-date-name {
+  font-weight: 600;
+}
+.key-date-patch,
+.key-date-when {
+  font-size: 0.8125rem;
   color: var(--text-secondary);
   font-variant-numeric: var(--num-variant);
 }
@@ -1715,6 +1752,39 @@ select:focus {
 }
 .key-date[aria-pressed='true'] .key-date-name {
   color: var(--accent-text);
+}
+/* En Aha, el día con la letra de naipe de los títulos (un solo peso: sin negrita). */
+:root[data-skin='aha'] .key-date-day {
+  font-family: 'Card Characters', system-ui, sans-serif;
+  font-weight: 400;
+}
+/*
+ * En Sparxie, la cifra en máquina de escribir, como el resto de números del tema (en su serif grande el «11» se
+ * leía «ll»), y esquinas casi rectas, como sus ventanas.
+ */
+:where(:root[data-skin='sparxie']) .key-date-day {
+  font-family: var(--font-type);
+}
+:where(:root[data-skin='sparxie']) .key-date-leaf {
+  border-radius: 2px;
+}
+/* Calendario: los días señalados llevan un punto debajo del número (blanco si es el día elegido). */
+.air-datepicker-cell.-day-.is-key-date {
+  position: relative;
+}
+.air-datepicker-cell.-day-.is-key-date::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 3px;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.air-datepicker-cell.-day-.is-key-date.-selected-::after {
+  background: var(--on-accent);
 }
 /*
  * Iconos de interfaz monocromos (personaje, cono de luz): el PNG blanco se usa como máscara sobre el color
@@ -2360,8 +2430,8 @@ tfoot td {
   border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
 }
 /*
- * Botón de quitar (✕) en todo el sitio: como el asa del planificador (24px de ancho, todo el alto de su
- * fila, gris que se aclara al pasar el ratón), con la X centrada.
+ * Botón de quitar (la X de RemoveGlyph) en todo el sitio: como el asa del planificador (24px de ancho, todo
+ * el alto de su fila, gris que se aclara al pasar el ratón), con la X centrada.
  */
 .btn-remove {
   display: grid;
@@ -2372,6 +2442,9 @@ tfoot td {
   font-size: 0.75rem;
   line-height: 1.2;
   color: var(--text-muted);
+}
+.remove-glyph {
+  display: block;
 }
 .btn-remove:hover {
   color: var(--text);

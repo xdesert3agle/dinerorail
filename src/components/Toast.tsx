@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FocusEvent } from 'react';
 import type { AppState } from '../engine/types';
 import { reducedMotion } from './motion';
+import { RemoveGlyph } from './RemoveGlyph';
 
 /** Lo que tarda en irse solo. Se para mientras el ratón o el foco están encima (WCAG 2.2.1). */
 export const TOAST_MS = 5000;
@@ -135,7 +136,7 @@ export function Toast({ message, onUndo, onClose }: Props) {
             </button>
           )}
           <button type="button" className="btn btn-ghost btn-remove" aria-label="Cerrar aviso" onClick={leave}>
-            ✕
+            <RemoveGlyph />
           </button>
         </div>
       )}
