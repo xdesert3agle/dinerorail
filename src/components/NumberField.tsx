@@ -1,6 +1,25 @@
-import { useEffect, useId, useState, type ReactNode } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { fmtInt } from './format';
 import { Icon, type IconKind } from './Icon';
 import { Tip } from './Tip';
+
+/** Lo que la capa de la cifra con puntos copia del input para que su texto caiga en el mismo sitio. */
+const OVERLAY_PROPS = [
+  'paddingTop',
+  'paddingRight',
+  'paddingBottom',
+  'paddingLeft',
+  'borderTopWidth',
+  'borderRightWidth',
+  'borderBottomWidth',
+  'borderLeftWidth',
+  'fontFamily',
+  'fontSize',
+  'fontWeight',
+  'lineHeight',
+  'textAlign',
+  'letterSpacing',
+] as const;
 
 interface Props {
   label: string;
@@ -41,11 +60,53 @@ export function NumberField({
 }: Props) {
   const id = useId();
   const [text, setText] = useState(String(value));
+  const [focused, setFocused] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [overlay, setOverlay] = useState<CSSProperties | null>(null);
 
   useEffect(() => {
     // Solo se sincroniza cuando el valor cambia desde fuera (p. ej. al importar).
     setText((t) => (Number(t) === value && t !== '' ? t : String(value)));
   }, [value]);
+
+  /*
+   * Sin foco, las cifras de 4 o más llevan su punto de miles («12.480», como el resto de la app). Un input
+   * numérico no puede mostrarlo, así que una capa encima pinta la cifra formateada y el texto del input queda
+   * transparente (como el nombre del planificador). Con el foco se ve y se escribe el número tal cual.
+   * La capa copia la caja y el relleno del input: así cae en el mismo sitio con icono, compacto o a la derecha.
+   */
+  const masked = !focused && Number.isInteger(value) && Math.abs(value) >= 1000 && Number(text) === value;
+  useLayoutEffect(() => {
+    const input = inputRef.current;
+    if (!masked || !input) {
+      setOverlay(null);
+      return;
+    }
+    const place = () => {
+      const cs = getComputedStyle(input);
+      const style: Record<string, string | number> = {
+        left: input.offsetLeft,
+        top: input.offsetTop,
+        width: input.offsetWidth,
+        height: input.offsetHeight,
+      };
+      for (const p of OVERLAY_PROPS) style[p] = cs[p];
+      // Alineado como el input, pero con flex: si la cifra con punto no cabe (Courier en los Jades de un evento),
+      // sobra por el lado del inicio y su final sigue donde el del número crudo, en vez de salirse por la derecha.
+      style.justifyContent = cs.textAlign === 'right' || cs.textAlign === 'end' ? 'flex-end' : cs.textAlign === 'center' ? 'center' : 'flex-start';
+      setOverlay(style as CSSProperties);
+    };
+    place();
+    // Los rellenos cambian con el ancho de pantalla (filas que se parten en el móvil), y la letra con el tema,
+    // que App pone en <html> después del primer pintado (data-skin, data-theme).
+    window.addEventListener('resize', place);
+    const themeWatch = new MutationObserver(place);
+    themeWatch.observe(document.documentElement, { attributes: true, attributeFilter: ['data-skin', 'data-theme'] });
+    return () => {
+      window.removeEventListener('resize', place);
+      themeWatch.disconnect();
+    };
+  }, [masked]);
 
   const infoId = info ? `${id}-info` : undefined;
   const hintId = hint ? `${id}-hint` : undefined;
@@ -74,8 +135,11 @@ export function NumberField({
       <span className={icon ? 'input-wrap has-icon' : 'input-wrap'}>
         {icon && <Icon kind={icon} size={compact ? 20 : 24} decorative />}
         <input
+          ref={inputRef}
           id={id}
           type="number"
+          className={overlay ? 'is-masked' : undefined}
+          onFocus={() => setFocused(true)}
           // El teclado numérico de iOS no tiene signo menos: solo cuando no se admiten negativos.
           inputMode={min !== undefined && min >= 0 ? 'numeric' : undefined}
           autoComplete="off"
@@ -90,6 +154,7 @@ export function NumberField({
             if (e.target.value !== '' && Number.isFinite(n)) onChange(n);
           }}
           onBlur={() => {
+            setFocused(false);
             if (text === '' || !Number.isFinite(Number(text))) {
               setText('0');
               onChange(0);
@@ -98,6 +163,11 @@ export function NumberField({
             }
           }}
         />
+        {overlay && (
+          <span className="num-mask" style={overlay} aria-hidden="true">
+            {fmtInt(value)}
+          </span>
+        )}
       </span>
       {hint && (
         <span id={hintId} className="field-hint">

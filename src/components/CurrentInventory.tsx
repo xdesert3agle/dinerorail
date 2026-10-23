@@ -87,7 +87,7 @@ export function CurrentInventory({ state, result, onChange }: Props) {
         </Toggle>
       </div>
 
-      <div className="grid-2 group-gap">
+      <div className="grid-2 group-gap pity-grid">
         {PITY_FIELDS.map(({ kind, label, guaranteedLabel }) => (
           <div key={kind} className="pity-field">
             <NumberField

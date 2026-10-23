@@ -77,7 +77,7 @@ export function ResultSummary({ result, skin }: { result: Result; skin: Skin }) 
           <dt>Esquirlas Oníricas</dt>
           <dd className={counted ? undefined : 'is-off'}>
             <Icon kind="shard" size={28} decorative />
-            {result.shardsHeld > 0 ? fmtInt(result.shardsHeld) : '—'}
+            {fmtInt(result.shardsHeld)}
             {!counted && <span className="sr-only"> (no se cuentan como Jades)</span>}
           </dd>
         </div>

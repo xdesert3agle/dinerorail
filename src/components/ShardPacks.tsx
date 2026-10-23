@@ -123,7 +123,7 @@ export function ShardPacks({ state, onChange }: Props) {
               {/* Como en Por compra: icono a la izquierda y cifra a la derecha. */}
               <strong className="num pack-total" role="cell">
                 <Icon kind="shard" size={18} decorative />
-                <span className="pack-total-value">{shards > 0 ? fmtInt(shards) : '—'}</span>
+                <span className="pack-total-value">{fmtInt(shards)}</span>
               </strong>
             </div>
           );
@@ -141,7 +141,7 @@ export function ShardPacks({ state, onChange }: Props) {
           <span role="cell" />
           <strong className="num pack-total" role="cell">
             <Icon kind="shard" size={18} decorative />
-            <span className="pack-total-value">{total.shards > 0 ? fmtInt(total.shards) : '—'}</span>
+            <span className="pack-total-value">{fmtInt(total.shards)}</span>
           </strong>
         </div>
       </div>

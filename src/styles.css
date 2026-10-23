@@ -22,7 +22,6 @@
   --deco-opacity: 0.35;
   --deco-ink: #8e2453;
   --deco-ink-opacity: 0.6;
-  --glow: rgba(214, 64, 127, 0.1);
   --danger: #d03b3b;
   --success-text: #006300;
   --warning-bg: #fff4dc;
@@ -73,7 +72,6 @@
     --deco-opacity: 0.55;
     --deco-ink: #f7d9e8;
     --deco-ink-opacity: 0.85;
-    --glow: rgba(229, 83, 155, 0.13);
     --danger: #f0605a;
     --success-text: #0ca30c;
     --warning-bg: #3a2c0b;
@@ -100,7 +98,6 @@
   --deco-opacity: 0.55;
   --deco-ink: #f7d9e8;
   --deco-ink-opacity: 0.85;
-  --glow: rgba(229, 83, 155, 0.13);
   --danger: #f0605a;
   --success-text: #0ca30c;
   --warning-bg: #3a2c0b;
@@ -125,7 +122,10 @@
   --grid: #eedcd8;
   --axis: #d9c0bb;
   --border: rgba(70, 10, 10, 0.1);
-  --series-1: #c4262d;
+  --series-1: #7a6360; /* Barras de datos en el gris del texto apagado: el rojo queda para los problemas. */
+  /* Interruptor encendido: verde musgo apagado (dice «encendido» sin competir con el rojo de los avisos). */
+  --switch-on: #4f8a5f;
+  --switch-knob-on: #ffffff;
   --accent: #c4262d;
   --accent-text: #a51d24;
   --accent-soft: #fbd9d6;
@@ -134,7 +134,6 @@
   --deco-ink: #7a1418;
   --deco-ink-opacity: 0.6;
   --bevel-lo: rgba(120, 40, 40, 0.12);
-  --glow: rgba(208, 51, 58, 0.1);
   --page-pattern-opacity: 0.17;
   --card-title: #c8102e;
 }
@@ -150,7 +149,9 @@
     --grid: #2f1a1c;
     --axis: #4a2a2d;
     --border: rgba(255, 200, 190, 0.09);
-    --series-1: #e23b3f;
+    --series-1: #9c8481;
+    --switch-on: #56966a;
+    --switch-knob-on: #ffffff;
     --accent: #e23b3f;
     --accent-text: #ff7a72;
     --accent-soft: #4d1416;
@@ -159,7 +160,6 @@
     --deco-ink: #fbeee9;
     --deco-ink-opacity: 0.85;
     --bevel-lo: rgba(0, 0, 0, 0.45);
-    --glow: rgba(226, 59, 63, 0.15);
     --page-pattern-opacity: 0.21;
     --card-title: var(--text);
     --danger: #f0605a;
@@ -177,7 +177,9 @@
   --grid: #2f1a1c;
   --axis: #4a2a2d;
   --border: rgba(255, 200, 190, 0.09);
-  --series-1: #e23b3f;
+  --series-1: #9c8481;
+  --switch-on: #56966a;
+  --switch-knob-on: #ffffff;
   --accent: #e23b3f;
   --accent-text: #ff7a72;
   --accent-soft: #4d1416;
@@ -186,7 +188,6 @@
   --deco-ink: #fbeee9;
   --deco-ink-opacity: 0.85;
   --bevel-lo: rgba(0, 0, 0, 0.45);
-  --glow: rgba(226, 59, 63, 0.15);
   --page-pattern-opacity: 0.21;
   --card-title: var(--text);
   --danger: #f0605a;
@@ -216,7 +217,6 @@
   --accent-soft: #d3f3e3;
   --deco: #b4bab7;
   --deco-opacity: 1;
-  --glow: rgba(26, 154, 95, 0.06);
   --danger: #d03b3b;
   --success-text: #0d7346;
   --warning-bg: #fbf0e2;
@@ -249,7 +249,6 @@
     --accent-text: #3ecf8e;
     --accent-soft: #173a2a;
     --deco: #5d5f5e;
-    --glow: rgba(62, 207, 142, 0.06);
     --danger: #f0605a;
     --success-text: #3ecf8e;
     --warning-bg: #2e2416;
@@ -275,7 +274,6 @@
   --accent-text: #3ecf8e;
   --accent-soft: #173a2a;
   --deco: #5d5f5e;
-  --glow: rgba(62, 207, 142, 0.06);
   --danger: #f0605a;
   --success-text: #3ecf8e;
   --warning-bg: #2e2416;
@@ -305,7 +303,6 @@
   --accent-soft: #afe5dd;
   --deco: #000000;
   --deco-opacity: 0;
-  --glow: transparent;
   --danger: #c42020;
   --success-text: #3f7d4e;
   --warning-bg: #faf5c6;
@@ -417,8 +414,8 @@ label {
 body {
   margin: 0;
   min-height: 100vh;
-  /* Un resplandor vino muy tenue arriba a la derecha, como luz de escenario. */
-  background: radial-gradient(1200px 600px at 85% -10%, var(--glow), transparent 70%) no-repeat, var(--page);
+  /* Fondo plano (antes, un resplandor con degradado arriba a la derecha; fuera, como el del Resumen). */
+  background: var(--page);
   color: var(--text);
 }
 /*
@@ -454,7 +451,7 @@ h1 {
   font-size: 1.5rem;
 }
 h2 {
-  font-size: 1.0625rem;
+  font-size: 1.125rem;
 }
 h3 {
   font-size: 0.75rem;
@@ -554,6 +551,24 @@ p {
 }
 .field-compact .input-wrap.has-icon .icon {
   left: 6px;
+}
+/*
+ * Cifra con punto de miles sobre un campo numérico sin foco (NumberField): la capa toma del input su caja,
+ * bordes (transparentes) y rellenos, y el texto del input se vuelve transparente debajo.
+ */
+.input-wrap input.is-masked {
+  color: transparent;
+}
+.num-mask {
+  position: absolute;
+  display: flex;
+  box-sizing: border-box;
+  border: 0 solid transparent;
+  overflow: hidden;
+  white-space: nowrap;
+  color: var(--text);
+  font-variant-numeric: var(--num-variant);
+  pointer-events: none;
 }
 .field-compact .input-wrap.has-icon input {
   padding-left: 32px;
@@ -769,7 +784,7 @@ p {
   align-items: center;
   gap: 6px;
   font: inherit;
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   color: var(--text-secondary);
   background: none;
   border: none;
@@ -1152,7 +1167,7 @@ p {
   border: 2px solid var(--accent);
   border-radius: var(--radius);
   box-shadow: var(--shadow-pop);
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   line-height: 1.45;
   pointer-events: none;
   user-select: none;
@@ -1510,6 +1525,12 @@ p {
   gap: 8px;
   align-content: start;
 }
+/* En móviles estrechos, un pity debajo del otro: en dos columnas, «Siguiente cono de luz garantizado» ocupaba tres líneas. */
+@media (max-width: 430px) {
+  .pity-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 .field {
   display: grid;
   gap: 4px;
@@ -1618,8 +1639,9 @@ button:focus-visible {
   color: var(--text-secondary);
   cursor: pointer;
 }
+/* Marcadas en el color del texto, no en el acento: el color queda para lo que avisa de un problema («Faltan»). */
 .check input {
-  accent-color: var(--accent);
+  accent-color: var(--text);
   width: 16px;
   height: 16px;
 }
@@ -1713,11 +1735,12 @@ select:focus {
   border-radius: 6px;
 }
 .key-date-month {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   line-height: 16px;
+  /* El fondo del día elegido en el calendario: pensado para llevar texto (--accent no llega a 4,5:1 en Aha oscuro). */
   color: var(--on-accent);
-  background: var(--accent);
+  background: var(--selected-bg);
 }
 .key-date-day {
   font-size: 1.25rem;
@@ -1943,8 +1966,13 @@ select:focus {
       background-position 0.15s;
   }
 }
+/*
+ * Encendido: pista del color del texto y botón del de la tarjeta (oscuro sobre claro en modo oscuro), no el
+ * acento: el color queda para lo que avisa de un problema («Faltan»).
+ */
 .switch input:checked + span {
-  background-color: var(--accent);
+  --knob: var(--switch-knob-on, var(--surface));
+  background-color: var(--switch-on, var(--text));
   background-position: 100% 50%;
 }
 .switch input:focus-visible + span {
@@ -2129,7 +2157,7 @@ tfoot td {
   z-index: 1;
   top: 7px;
   right: 9px;
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   line-height: 1.2;
   color: var(--text-secondary);
@@ -2271,7 +2299,7 @@ tfoot td {
   align-items: center;
   justify-content: flex-end;
   gap: 6px;
-  font-size: 1.375rem;
+  font-size: 1.25rem;
   line-height: 1;
   font-variant-numeric: var(--num-variant);
 }
@@ -2286,7 +2314,7 @@ tfoot td {
 }
 /*
  * Total en singles de una tarjeta, en su cabecera (Recursos actuales, Paquetes, Previsión de suerte): como los
- * costes de la planificación (misma letra de cifras del tema), algo más pequeño para no competir con el título.
+ * costes de la planificación (misma letra de cifras del tema y mismo tamaño, 20px: un tamaño menos en la escala).
  */
 .card-total {
   display: inline-flex;
@@ -2322,7 +2350,7 @@ tfoot td {
 .pull-balance-label {
   font-size: 1rem;
 }
-.pull-summary .pull-cost > :is(.pull-balance-label, strong) {
+.pull-balance > :is(.pull-balance-label, strong) {
   align-self: baseline;
 }
 /* La cifra, del alto del ticket: así sigue centrada con él, como las de las filas de encima. */
@@ -2333,6 +2361,44 @@ tfoot td {
   .pull-summary .pull-cost strong {
     line-height: 20px;
   }
+}
+/*
+ * Lo que devuelve la Cosmiluz, pegado al texto de su interruptor: una pastilla gris «🎫 +35» (suelta, el «+»
+ * se leía como «las tiradas + 35»). Un dato, no un aviso. Sin partirse: el ticket no se separa de su cifra.
+ */
+.pull-refund {
+  padding: 1px 8px 1px 5px;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  /* Un paso de tono que se vea (con --surface-2 era 1,15:1 y apenas se notaba el fondo). */
+  background: color-mix(in srgb, var(--text) 12%, var(--surface));
+  border-radius: 999px;
+  white-space: nowrap;
+  font-variant-numeric: var(--num-variant);
+}
+/*
+ * Texto del interruptor y pastilla centrados entre sí (y así con el interruptor), no en la línea de texto:
+ * ahí la pastilla quedaba 2,4px por encima del centro del interruptor. Si no cabe, la pastilla baja de línea.
+ */
+.refund-label {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 2px;
+}
+/*
+ * La cifra, 1px más abajo (medido sobre la tinta, en Aha y Sparxie): centrada en la pastilla quedaba 1,2px alta
+ * y con la línea base 1px por encima de la de la etiqueta. Así comparten línea base y queda a 0,2px del centro.
+ */
+.pull-refund-num {
+  position: relative;
+  top: 1px;
+}
+/* En Sparxie, la cifra en máquina de escribir (en la letra de píxeles de las etiquetas, el 5 parece una S). */
+:where(:root[data-skin='sparxie']) .pull-refund {
+  font-family: var(--font-type);
+  border-radius: 2px;
 }
 .status-short {
   color: var(--danger);
@@ -2478,13 +2544,13 @@ tfoot td {
     height: max(100%, 24px);
   }
 }
-/* El balance se alinea con los costes dejando a la derecha el hueco de la X. */
+/* El pie se alinea con los costes dejando a la derecha el hueco de la X. */
 .pull-list {
   --pull-remove: 24px;
 }
 /*
- * El balance va fuera de las columnas de las filas: así su ancho nunca ensancha la columna
- * de costes. Se alinea con ellos dejando a la derecha el hueco del botón de quitar.
+ * Pie de la lista, fuera de las columnas de las filas (así su ancho nunca ensancha la columna de costes): el
+ * interruptor de la Cosmiluz a la izquierda y el balance a la derecha, alineado con los costes.
  */
 .pull-summary {
   grid-column: 1 / -1;
@@ -2496,10 +2562,19 @@ tfoot td {
   padding-top: 8px;
   padding-right: calc(var(--pull-remove) + var(--pull-gap));
 }
+/* En el móvil, el interruptor arriba y el balance debajo, en la columna de los costes. */
+@media (max-width: 720px) {
+  .pull-summary {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .pull-summary .pull-balance {
+    margin-left: auto;
+  }
+}
 /*
  * En pantallas estrechas, dos líneas por tirada: en una el nombre se quedaba en dos letras.
- * Arriba, asa · miniatura · nombre entero; debajo del nombre, 50/50 · coste · quitar. El pie también
- * se parte: la casilla de la Cosmiluz arriba y el balance debajo, en la columna de los costes.
+ * Arriba, asa · miniatura · nombre entero; debajo del nombre, 50/50 · coste · quitar.
  * Corta en 720px, como las demás filas que se parten (eventos, paquetes).
  */
 @media (max-width: 720px) {
@@ -2519,13 +2594,6 @@ tfoot td {
     grid-column: 3;
     justify-self: start;
   }
-  .pull-summary {
-    flex-wrap: wrap;
-    row-gap: 8px;
-  }
-  .pull-summary .pull-cost {
-    margin-left: auto;
-  }
 }
 @media (max-width: 560px) {
   .pull-cost {
@@ -2534,6 +2602,15 @@ tfoot td {
   .pull-cost .icon {
     width: 20px;
     height: 20px;
+  }
+}
+/*
+ * En móviles estrechos (≤430px, el corte de las pestañas), la casilla del 50/50 empieza bajo la miniatura:
+ * en su columna se quedaba en ~100px a 360px y «Garantizado» se montaba sobre el ticket del coste.
+ */
+@media (max-width: 430px) {
+  .pull-row .pull-win {
+    grid-column: 2 / 4;
   }
 }
 
@@ -2702,7 +2779,7 @@ tfoot td {
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  font-size: 1.0625rem;
+  font-size: 1.125rem;
   font-variant-numeric: var(--num-variant);
 }
 /*
@@ -2801,9 +2878,9 @@ tfoot td {
     padding: calc(6px - var(--input-nudge)) 6px calc(6px + var(--input-nudge));
   }
   .pack-total {
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
   }
-  /* A 15px: 60,6px en Figtree; Sparxie aprieta sus cifras en móvil y se queda en 56,7px. */
+  /* Hueco para 5 cifras con punto (medido a 15px: 60,6px en Figtree; a 14px sobra; Sparxie, 56,7px). */
   .pack-total-value {
     min-width: 3.875rem;
   }
@@ -3483,7 +3560,9 @@ tfoot td {
   outline: 2px dotted var(--text);
   outline-offset: 2px;
 }
+/* Sparxie conserva su turquesa encendido (no es color de alarma) y su botón crema. */
 :where(:root[data-skin='sparxie']) .switch input:checked + span {
+  --knob: inherit;
   background-color: var(--accent);
   background-position:
     right 4px center,

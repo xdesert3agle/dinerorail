@@ -207,7 +207,11 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
             </SortableContext>
           </DndContext>
 
-          {/* Casilla de la Cosmiluz a la izquierda y balance a la derecha, alineado con los costes. */}
+          {/*
+            Pie: el interruptor de la Cosmiluz con lo que devuelve pegado a su texto («+35», así se ve de quién es)
+            y el balance a la derecha, alineado con los costes. La cuenta se sigue a la vista: costes − Cosmiluz
+            frente a las tiradas del Resumen.
+          */}
           <div className="pull-summary">
             <Toggle
               checked={countStarlight}
@@ -228,13 +232,23 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
               ].join('\n')}
             >
               <Icon kind="starlight" size={20} decorative />
-              Contar Cosmiluz de las tiradas
+              <span className="refund-label">
+                Contar Cosmiluz de las tiradas
+                {/* Apagada, el hueco se reserva (nada se mueve al encenderla); en palabras para los lectores. */}
+                <span className={`pull-refund with-icon with-icon-tight${countStarlight ? '' : ' invisible'}`}>
+                  <Icon kind="pass" size={16} decorative />
+                  <span className="pull-refund-num" aria-hidden="true">
+                    +{fmtInt(refunded)}
+                  </span>
+                  {countStarlight && <span className="sr-only">(devuelve {fmtInt(refunded)} tiradas)</span>}
+                </span>
+              </span>
             </Toggle>
             {/* El balance dice con palabras si llega; el signo sobraba. */}
             <Tip
               as="div"
               // Solo en rojo si faltan; si sobran, en el color de las cifras de encima (es lo normal, no un aviso).
-              className={left < 0 ? 'pull-cost status-short' : 'pull-cost'}
+              className={left < 0 ? 'pull-cost pull-balance status-short' : 'pull-cost pull-balance'}
               content={[
                 `${fmtInt(result.wholeSingles)} tiradas el ${formatDate(result.targetDate)} − ${fmtInt(grossTotal)} que cuesta el plan`,
                 countStarlight
