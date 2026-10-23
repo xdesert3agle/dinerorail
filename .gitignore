@@ -3,3 +3,4 @@ dist
 *.local
 *.tsbuildinfo
 profile.json
+.taste-skill/

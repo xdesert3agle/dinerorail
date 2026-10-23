@@ -834,23 +834,26 @@ p {
   .card-summary {
     order: 1;
   }
-  .card-inventory {
+  .card-target {
     order: 2;
   }
-  .card-plan {
+  .card-inventory {
     order: 3;
   }
-  .card-odds {
+  .card-plan {
     order: 4;
   }
-  .card-events {
+  .card-odds {
     order: 5;
   }
-  .card-packs {
+  .card-events {
     order: 6;
   }
-  .card-breakdown {
+  .card-packs {
     order: 7;
+  }
+  .card-breakdown {
+    order: 8;
   }
 }
 /*
@@ -1673,6 +1676,45 @@ select:focus {
 }
 .chip {
   border-radius: 999px;
+}
+/*
+ * Fechas destacadas: bajo la fecha y sus atajos, con el aire entre grupos. Una fila por fecha a todo el ancho
+ * (la tarjeta no deja media anchura vacía): el nombre a la izquierda; el día y la cuenta atrás, a la derecha.
+ */
+.key-dates {
+  display: grid;
+  gap: 6px;
+  margin-top: var(--space-3);
+}
+.key-dates .field-label {
+  margin-bottom: 2px;
+}
+.key-date {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
+  width: 100%;
+  text-align: left;
+}
+.key-date-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.key-date-when {
+  flex: none;
+  color: var(--text-secondary);
+  font-variant-numeric: var(--num-variant);
+}
+/* La que es la fecha objetivo: borde y nombre en el acento; sin relleno, que el acento es para los datos. */
+.key-date[aria-pressed='true'] {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.key-date[aria-pressed='true'] .key-date-name {
+  color: var(--accent-text);
 }
 /*
  * Iconos de interfaz monocromos (personaje, cono de luz): el PNG blanco se usa como máscara sobre el color

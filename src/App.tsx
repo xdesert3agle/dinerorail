@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEve
 import { AccountPanel } from './components/AccountPanel';
 import { ContentSync } from './components/ContentSync';
 import { CurrentInventory } from './components/CurrentInventory';
+import { TargetDate } from './components/TargetDate';
 import { DupeGallery } from './components/DupeGallery';
 import { FuturePulls } from './components/FuturePulls';
 import { Icon } from './components/Icon';
@@ -287,7 +288,8 @@ export default function App() {
         {tab === 'main' ? (
           <div className="layout" role="tabpanel" id="panel-main" aria-labelledby="tab-main">
             <div className="col-inputs">
-              <CurrentInventory state={state} result={result} today={today} onChange={change} />
+              <TargetDate state={state} today={today} onChange={change} />
+              <CurrentInventory state={state} result={result} onChange={change} />
               <PatchTable state={state} today={today} onChange={change} />
               <ShardPacks state={state} onChange={change} />
             </div>

@@ -1,20 +1,16 @@
-import { useId } from 'react';
 import type { Result } from '../engine/calculate';
-import { addDays } from '../engine/dates';
 import { clampPity } from '../engine/pulls';
 import { STARLIGHT_PER_PASS } from '../engine/rules';
 import type { AppState, Inventory, PullKind } from '../engine/types';
 import { withSettings } from '../state/store';
 import { fmtInt, wholeSingles } from './format';
 import { Icon } from './Icon';
-import { DateField } from './DateField';
 import { NumberField } from './NumberField';
 import { Toggle } from './Toggle';
 
 interface Props {
   state: AppState;
   result: Result;
-  today: string;
   onChange: (update: (s: AppState) => AppState) => void;
 }
 
@@ -23,13 +19,7 @@ const PITY_FIELDS: { kind: PullKind; label: string; guaranteedLabel: string }[] 
   { kind: 'lightCone', label: 'Pity de cono de luz', guaranteedLabel: 'Siguiente cono de luz garantizado' },
 ];
 
-const QUICK_TARGETS = [
-  { label: '+1 semana', days: 7 },
-  { label: '+3 semanas', days: 21 },
-];
-
-export function CurrentInventory({ state, result, today, onChange }: Props) {
-  const targetDateId = useId();
+export function CurrentInventory({ state, result, onChange }: Props) {
   const inv = state.inventory;
   const { hardPity } = state.settings;
   const setInv = (patch: Partial<Inventory>) => onChange((s) => ({ ...s, inventory: { ...s.inventory, ...patch } }));
@@ -114,42 +104,11 @@ export function CurrentInventory({ state, result, today, onChange }: Props) {
               onChange={(v) => setGuaranteed(kind, v)}
               title="Perdiste el último 50/50: el próximo 5★ será el destacado seguro"
             >
-              {/* «Siguiente»: solo el próximo 5★ de ese banner es seguro. El banner lo dice el campo de encima; entero para los lectores de pantalla. */}
-              <span aria-hidden="true">Siguiente garantizado</span>
-              <span className="sr-only">{guaranteedLabel}</span>
+              {/* «Siguiente»: solo el próximo 5★ de ese banner es seguro. */}
+              {guaranteedLabel}
             </Toggle>
           </div>
         ))}
-      </div>
-
-      {/* La fecha y los atajos van en la misma fila flexible para que los atajos queden centrados con la casilla. */}
-      <div className="field group-gap">
-        <label className="field-label" htmlFor={targetDateId}>
-          Fecha objetivo
-        </label>
-        <div className="target-row">
-          <DateField
-            id={targetDateId}
-            value={state.targetDate}
-            min={today}
-            onChange={(v) => onChange((s) => ({ ...s, targetDate: v }))}
-          />
-          <div className="chips">
-            {QUICK_TARGETS.map((q) => (
-              <button
-                key={q.days}
-                type="button"
-                className="chip"
-                // Suma a la fecha puesta (pulsarlo otra vez la vuelve a mover); si se quedó en el pasado, desde hoy.
-                onClick={() =>
-                  onChange((s) => ({ ...s, targetDate: addDays(s.targetDate < today ? today : s.targetDate, q.days) }))
-                }
-              >
-                {q.label}
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
     </section>
   );
