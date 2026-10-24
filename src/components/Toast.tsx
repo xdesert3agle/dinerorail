@@ -6,13 +6,12 @@ import { RemoveGlyph } from './RemoveGlyph';
 /** Lo que tarda en irse solo. Se para mientras el ratón o el foco están encima (WCAG 2.2.1). */
 export const TOAST_MS = 5000;
 
-/** Aviso abajo de la pantalla. Con `undo`, ofrece volver a ese estado (el de antes de un borrado o una importación). */
+/** Aviso abajo de la pantalla. Con `undo`, ofrece volver a ese estado (el de antes de un borrado o de cargar un perfil). */
 export interface ToastMessage {
   /** Distinto en cada aviso: reinicia la cuenta atrás aunque el texto se repita. */
   id: number;
   text: string;
   undo?: AppState;
-  error?: boolean;
 }
 
 interface Props {
@@ -113,7 +112,7 @@ export function Toast({ message, onUndo, onClose }: Props) {
       {message && (
         <div
           key={message.id}
-          className={`toast${message.error ? ' is-error' : ''}${leaving ? ' is-leaving' : ''}`}
+          className={`toast${leaving ? ' is-leaving' : ''}`}
           onPointerEnter={() => setHoverId(message.id)}
           onPointerLeave={() => setHoverId(null)}
           onFocus={() => setFocusId(message.id)}

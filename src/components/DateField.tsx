@@ -87,7 +87,7 @@ export function DateField({ value, onChange, min, id, 'aria-label': ariaLabel, m
     // Se crea una sola vez: el mínimo y el valor se sincronizan en los efectos de abajo.
   }, []);
 
-  // Si la fecha cambia desde fuera (atajos, importar), el calendario la sigue sin volver a avisar.
+  // Si la fecha cambia desde fuera (atajos, deshacer), el calendario la sigue sin volver a avisar.
   useEffect(() => {
     const picker = pickerRef.current;
     if (!picker) return;

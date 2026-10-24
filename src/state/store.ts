@@ -160,10 +160,10 @@ function normalizeAccount(v: unknown): Account {
   };
 }
 
-/** Valida un estado leído de localStorage o de un JSON importado, rellenando lo que falte con los valores por defecto. */
+/** Valida un estado leído de localStorage, rellenando lo que falte con los valores por defecto. */
 export function normalizeState(raw: unknown): AppState {
   const d = defaultState();
-  if (!isObj(raw) || raw.version !== 1) throw new Error('El archivo no es una copia de seguridad válida (versión desconocida).');
+  if (!isObj(raw) || raw.version !== 1) throw new Error('Estado guardado no válido (versión desconocida).');
   const inv = isObj(raw.inventory) ? raw.inventory : {};
   const pity = isObj(raw.pity) ? raw.pity : {};
   const settings = isObj(raw.settings) ? raw.settings : {};
@@ -271,24 +271,4 @@ export function useAppState() {
     }
   }, [state]);
   return [state, setState] as const;
-}
-
-export function exportState(state: AppState): void {
-  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `hsr-jades-${new Date().toISOString().slice(0, 10)}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-export async function importState(file: File): Promise<AppState> {
-  let raw: unknown;
-  try {
-    raw = JSON.parse(await file.text());
-  } catch {
-    throw new Error('El archivo no es un JSON válido. Elige una copia exportada con «Exportar JSON».');
-  }
-  return normalizeState(raw);
 }

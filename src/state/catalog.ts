@@ -14,7 +14,7 @@ import {
 } from '../engine/catalog';
 import type { PullKind } from '../engine/types';
 
-// Va aparte del estado de la app: es una caché de datos del juego, no se exporta ni se importa.
+// Va aparte del estado de la app: es una caché de datos del juego.
 const CATALOG_KEY = 'hsr-jades:catalog:v1';
 const LAST_SYNC_KEY = 'hsr-jades:catalog-last-sync';
 

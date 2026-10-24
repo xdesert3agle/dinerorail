@@ -65,7 +65,7 @@ export function NumberField({
   const [overlay, setOverlay] = useState<CSSProperties | null>(null);
 
   useEffect(() => {
-    // Solo se sincroniza cuando el valor cambia desde fuera (p. ej. al importar).
+    // Solo se sincroniza cuando el valor cambia desde fuera (p. ej. al deshacer).
     setText((t) => (Number(t) === value && t !== '' ? t : String(value)));
   }, [value]);
 

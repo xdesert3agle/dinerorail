@@ -3220,9 +3220,6 @@ tfoot td {
   font-size: 0.875rem;
   pointer-events: auto;
 }
-.toast.is-error {
-  border-color: var(--danger);
-}
 /* Siempre en una línea: si no cabe, se recorta el nombre entre «» (ToastName), nunca lo de alrededor. */
 .toast-text {
   display: flex;
@@ -3773,7 +3770,4 @@ tfoot td {
   border: 1px solid var(--border);
   border-radius: 3px;
   box-shadow: var(--shadow-win);
-}
-:where(:root[data-skin='sparxie']) .toast.is-error {
-  border-color: var(--danger);
 }

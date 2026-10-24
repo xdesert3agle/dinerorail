@@ -19,7 +19,7 @@ import { todayISO } from './engine/dates';
 import { planCopies, planDupes, planLightCones } from './engine/dupes';
 import type { Skin, ThemeMode } from './engine/types';
 import { useCatalog } from './state/catalog';
-import { exportState, HIDDEN_SKINS, importState, useAppState, withSettings, type ChangeState } from './state/store';
+import { HIDDEN_SKINS, useAppState, withSettings, type ChangeState } from './state/store';
 
 const SKINS: { id: Skin; label: string; title: string }[] = [
   { id: 'kafka', label: 'Kafka', title: 'Tema Kafka: magenta y telaraña' },
@@ -101,7 +101,6 @@ export default function App() {
   const toastId = useRef(0);
   const notify = (message: Omit<ToastMessage, 'id'>) => setToast({ ...message, id: ++toastId.current });
   const [tab, setTab] = useState<Tab>(tabFromHash);
-  const fileInput = useRef<HTMLInputElement>(null);
   const mainRef = useRef<HTMLElement>(null);
   const tabRefs = useRef<Partial<Record<Tab, HTMLButtonElement | null>>>({});
 
@@ -188,17 +187,6 @@ export default function App() {
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', page);
   }, [skin, theme, systemDark]);
 
-  const onImport = async (file: File | undefined) => {
-    if (!file) return;
-    try {
-      const imported = await importState(file);
-      notify({ text: 'Datos importados.', undo: state });
-      setState(imported);
-    } catch (e) {
-      notify({ text: e instanceof Error ? e.message : 'No se ha podido leer el archivo.', error: true });
-    }
-  };
-
   return (
     <div className="app">
       {/* Para teclado: salta la cabecera. Es un botón y no un enlace con hash, que aquí cambiaría de pestaña. */}
@@ -241,22 +229,6 @@ export default function App() {
               </button>
             ))}
           </div>
-          <button type="button" className="btn" onClick={() => exportState(state)}>
-            Exportar JSON
-          </button>
-          <button type="button" className="btn" onClick={() => fileInput.current?.click()}>
-            Importar JSON
-          </button>
-          <input
-            ref={fileInput}
-            type="file"
-            accept="application/json,.json"
-            hidden
-            onChange={(e) => {
-              void onImport(e.target.files?.[0]);
-              e.target.value = '';
-            }}
-          />
         </div>
       </header>
       <nav className="tabs" role="tablist" aria-label="Secciones" onKeyDown={onTabKey}>
