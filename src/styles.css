@@ -36,8 +36,11 @@
   /* Alto de un botón (.btn: letra de 0,875rem) y de un campo compacto, para igualar otras piezas con ellos. */
   --control-h: calc(0.875rem * 1.45 + 14px);
   --field-compact-h: calc(1rem * 1.45 + 14px);
-  /* Sombra de lo que flota sobre la página: desplegables, calendario y popover de la galería. */
-  --shadow-pop: 0 10px 30px color-mix(in srgb, var(--text) 18%, transparent);
+  /*
+   * Sombra de lo que flota sobre la página: desplegables, calendario y popover de la galería. En oscuro, negra:
+   * con el color del texto (blanco) era un halo claro. light-dark() sigue al color-scheme de cada modo.
+   */
+  --shadow-pop: 0 10px 30px light-dark(color-mix(in srgb, var(--text) 18%, transparent), rgb(0 0 0 / 0.5));
   /*
    * Escala de espaciado: 4 dentro de un grupo pequeño (etiqueta y campo), 8 entre piezas de un grupo, 12 entre
    * grupos dentro de una tarjeta (y entre campos de una rejilla), 16 entre tarjetas y de relleno, 20 entre
@@ -1399,10 +1402,11 @@ p {
   justify-content: flex-start;
   gap: var(--space-3);
 }
+/* «5 dic. (en 42 días)»: cifras proporcionales, como en las fechas destacadas (es una frase, no una columna). */
 .hero-date {
   font-size: 0.875rem;
   color: var(--text-secondary);
-  font-variant-numeric: var(--num-variant);
+  font-variant-numeric: normal;
   white-space: nowrap;
 }
 /* Esquirlas que no se cuentan como Jades, o paquetes que no cuentan: apagados. */
@@ -1656,8 +1660,9 @@ button:focus-visible {
   gap: 12px;
   align-items: center;
 }
+/* Del ancho de la fecha (siempre dd/mm/aaaa) y su icono, como el «Inicio» de las actualizaciones: 200px sobraban. */
 .target-row .date-field {
-  flex: 0 1 200px;
+  flex: 0 1 9.5rem;
 }
 .chips {
   display: flex;
@@ -1685,9 +1690,9 @@ button:focus-visible {
   opacity: 0.5;
   cursor: not-allowed;
 }
+/* Solo el borde, como las fechas destacadas: el texto en rojo es «fecha elegida» y no se usa para el hover. */
 .chip:hover {
   border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
-  color: var(--accent-text);
 }
 input:focus,
 select:focus {
@@ -1706,16 +1711,117 @@ select:focus {
   gap: var(--space-2);
   margin-top: var(--space-3);
 }
-.key-date-list {
-  display: flex;
-  flex-wrap: wrap;
+/*
+ * Una fila por versión: la versión a la izquierda y sus dos partes en columnas iguales, con la cabecera
+ * «1.ª parte / 2.ª parte» una sola vez (las hojas no la repiten). Cada fila es su propia rejilla con las
+ * mismas columnas, así las hojas quedan alineadas. Decide el ancho de la tarjeta, no el de la pantalla.
+ */
+.key-dates {
+  container-type: inline-size;
+}
+.key-date-table {
+  display: grid;
   gap: var(--space-2);
 }
+.key-date-row {
+  display: grid;
+  /* 3,75rem: lo que mide «Versión» en la cabecera, con aire hasta «1.ª parte». */
+  grid-template-columns: 3.75rem minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: var(--space-2);
+  align-items: stretch;
+}
+.key-date-cell {
+  display: grid;
+  min-width: 0;
+}
+/* La cabecera de columnas hace de título (como las etiquetas de los campos); el título suelto, solo sin ella. */
+.key-date-head {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+.key-dates-title {
+  display: none;
+}
+.key-date-version {
+  align-self: center;
+  font-size: 1rem;
+  font-weight: 600;
+  font-variant-numeric: var(--num-variant);
+}
+:root[data-skin='aha'] .key-date-version {
+  font-family: 'Card Characters', system-ui, sans-serif;
+  font-weight: 400;
+  font-size: 1.125rem;
+}
+:where(:root[data-skin='sparxie']) .key-date-version {
+  font-family: var(--font-type);
+  font-weight: 700;
+}
+/*
+ * 2.ª parte sin anunciar: un hueco con borde discontinuo, sin fondo y en gris, del alto de las hojas de su
+ * fila. No es un botón: no se pulsa, no se enfoca y no cambia al pasar el ratón.
+ */
+.key-date-placeholder {
+  display: flex;
+  align-items: center;
+  padding: 6px 16px;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  border: 1px dashed var(--axis);
+  border-radius: 8px;
+  /* Tampoco se selecciona su texto (al arrastrar sobre la lista solo se marcan las fechas de verdad). */
+  user-select: none;
+}
+:where(:root[data-skin='sparxie']) .key-date-placeholder {
+  border-color: var(--border);
+  border-radius: 3px;
+}
+/* Con cabecera de columnas, la parte no se repite en cada hoja. */
+.key-date-phase {
+  display: none;
+}
+/*
+ * Tarjeta estrecha (móvil, o la columna de 1180–1300px): sin cabecera de columnas; la versión encima y sus
+ * hojas debajo, una por línea, y cada hoja dice su parte. Las celdas vacías no ocupan sitio.
+ */
+@container (max-width: 36rem) {
+  .key-date-head {
+    display: none;
+  }
+  .key-dates-title {
+    display: block;
+  }
+  .key-date-row {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 6px;
+  }
+  .key-date-version {
+    align-self: start;
+  }
+  .key-date-cell.is-empty {
+    display: none;
+  }
+  .key-date-phase {
+    display: inline;
+  }
+}
+/* «Ver N más»: un enlace discreto bajo las hojas, no otro botón que compita con ellas. */
+/*
+ * Con relleno para que el tinte del hover no acabe en la primera y la última letra, y el mismo margen
+ * negativo para que el texto siga alineado con la columna de «Versión».
+ */
+.key-dates-more {
+  justify-self: start;
+  padding-inline: 8px;
+  margin-left: -8px;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
 .key-date {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: var(--space-3);
-  max-width: 100%;
+  min-width: 0;
   padding: 6px 16px 6px 6px;
   text-align: left;
 }
@@ -1762,11 +1868,12 @@ select:focus {
 .key-date-name {
   font-weight: 600;
 }
+/* Cifras proporcionales: van dentro de una frase («miércoles (en 18 días)») y no se alinean con nada. */
 .key-date-patch,
 .key-date-when {
   font-size: 0.8125rem;
   color: var(--text-secondary);
-  font-variant-numeric: var(--num-variant);
+  font-variant-numeric: normal;
 }
 /* La que es la fecha objetivo: borde y nombre en el acento; sin relleno, que el acento es para los datos. */
 .key-date[aria-pressed='true'] {
@@ -1775,6 +1882,21 @@ select:focus {
 }
 .key-date[aria-pressed='true'] .key-date-name {
   color: var(--accent-text);
+}
+/*
+ * Hover: el de los atajos de la misma tarjeta (borde teñido de acento); el genérico de .btn (borde a --axis) casi
+ * no se veía en oscuro. La ya elegida no reacciona: pulsarla otra vez no hace nada (antes el hover le quitaba el
+ * borde rojo). Sparxie mantiene su hover de botón, pero la elegida tampoco cambia.
+ */
+:root:not([data-skin='sparxie']) .btn.key-date:hover:not([aria-pressed='true']) {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+}
+.btn.key-date[aria-pressed='true'] {
+  cursor: default;
+}
+.btn.key-date[aria-pressed='true']:hover {
+  border-color: var(--accent);
+  background: var(--surface-2);
 }
 /* En Aha, el día con la letra de naipe de los títulos (un solo peso: sin negrita). */
 :root[data-skin='aha'] .key-date-day {
@@ -1845,9 +1967,13 @@ select:focus {
   border-color: transparent;
   color: var(--text-secondary);
 }
-/* Sin el borde de .btn:hover: los fantasma solo se tiñen (como en Sparxie y Grafito). */
+/*
+ * Sin el borde de .btn:hover: los fantasma solo se tiñen (como en Sparxie y Grafito), con un paso de tono que se
+ * vea (con --surface-2 era 1,15:1 y casi no se notaba) y el texto en tinta. Sparxie y Grafito tienen el suyo.
+ */
 .btn-ghost:hover:not(:disabled) {
-  background: var(--surface-2);
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 10%, var(--surface));
   border-color: transparent;
 }
 .btn-danger {
@@ -2272,18 +2398,64 @@ tfoot td {
 .drag-handle svg {
   fill: currentColor;
 }
+/*
+ * Fila arrastrada: el recuadro es una capa por detrás que sobresale 10px a los lados y deja el mismo aire arriba
+ * y abajo (la fila no lleva relleno lateral y la primera no tiene el de arriba; darle relleno a la fila movería
+ * su contenido, que comparte columnas con las demás). Sombra negra en oscuro: con el color del texto era un halo.
+ */
 .pull-row.is-dragging {
   position: relative;
   z-index: 2;
+}
+.pull-row.is-dragging::before {
+  content: '';
+  position: absolute;
+  inset: 0 -10px;
+  z-index: -1;
   background: var(--surface-2);
-  border-radius: 8px;
+  border-radius: 10px;
   box-shadow:
-    0 8px 24px color-mix(in srgb, var(--text) 35%, transparent),
+    0 8px 24px light-dark(color-mix(in srgb, var(--text) 35%, transparent), rgb(0 0 0 / 0.6)),
     0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
 }
-.pull-row.is-dragging .drag-handle {
+.pull-row.is-dragging:first-child::before {
+  top: -8px;
+}
+/*
+ * Fila quitada: se deshace en polvo (el filtro de ruido de FuturePulls dispersa sus píxeles) mientras se apaga y
+ * deriva un poco hacia arriba a la derecha, como si se la llevara el aire. 600ms, como DUST_MS. Ya no se puede tocar.
+ * El SVG del filtro va fuera del flujo para no ocupar una celda de la rejilla.
+ */
+.dust-filter {
+  position: absolute;
+}
+.pull-row.is-leaving {
+  pointer-events: none;
+  animation: pull-dust 600ms ease-in forwards;
+}
+@keyframes pull-dust {
+  0% {
+    opacity: 1;
+    transform: none;
+  }
+  40% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(18px, -10px);
+  }
+}
+
+/*
+ * Agarrada: sin el tinte del hover (el recuadro de la fila ya dice «agarrada»); puntos en el acento y mano
+ * cerrada. Con :hover también, para ganar al hover de los botones fantasma de cada tema.
+ */
+.pull-row.is-dragging .drag-handle,
+.pull-row.is-dragging .drag-handle:hover {
   cursor: grabbing;
   color: var(--accent-text);
+  background: transparent;
 }
 .btn-icon {
   padding: 2px 6px;
@@ -3465,7 +3637,8 @@ tfoot td {
   --adp-cell-border-radius: 2px;
 }
 /* Desplegables, editor de fuentes, fila arrastrada y miniatura de cono: esquinas casi rectas. */
-:where(:root[data-skin='sparxie']) :is(.combo-list, .source-edit, .pull-row.is-dragging, .pull-portrait-lightCone) {
+:where(:root[data-skin='sparxie']) :is(.combo-list, .source-edit, .pull-portrait-lightCone),
+:where(:root[data-skin='sparxie']) .pull-row.is-dragging::before {
   border-radius: 3px;
 }
 :where(:root[data-skin='sparxie']) :is(.combo-option, .dupe-badge) {

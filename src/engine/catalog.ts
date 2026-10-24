@@ -3,13 +3,22 @@ import { isObj } from './util';
 
 /*
  * Catálogo de personajes y conos de luz 5★ para sugerir nombres en la planificación.
- * Sale de los datos de nanoka.cc de una versión beta (".53"), que ya incluye lo que sale en las
- * próximas actualizaciones. Solo trae los nombres en inglés.
+ * La lista sale de nanoka.cc, de su última versión (la beta, `hsr.latest` en su manifest), que ya incluye lo que
+ * sale en las próximas actualizaciones; trae los nombres en inglés, coreano, chino y japonés, no en español.
+ * El nombre en español sale de yatta.moe, por id. Lo que yatta aún no tiene (lo que está en beta) se queda en
+ * inglés hasta que lo publique.
  */
-export const DATA_URL = 'https://static.nanoka.cc/hsr/4.6.53';
-export const CATALOG_URLS: Record<PullKind, string> = {
-  character: `${DATA_URL}/character.json`,
-  lightCone: `${DATA_URL}/lightcone.json`,
+const NANOKA = 'https://static.nanoka.cc';
+export const MANIFEST_URL = `${NANOKA}/manifest.json`;
+/** Si el manifest no responde, la última versión conocida. */
+export const FALLBACK_VERSION = '4.6.54';
+export const nanokaUrl = (version: string) => `${NANOKA}/hsr/${version}`;
+export const catalogUrl = (version: string, kind: PullKind) =>
+  `${nanokaUrl(version)}/${kind === 'character' ? 'character' : 'lightcone'}.json`;
+const YATTA = 'https://sr.yatta.moe/api/v2/es';
+export const YATTA_NAMES_URLS: Record<PullKind, string> = {
+  character: `${YATTA}/avatar`,
+  lightCone: `${YATTA}/equipment`,
 };
 
 export interface CatalogEntry {
@@ -20,9 +29,57 @@ export interface CatalogEntry {
 export interface Catalog {
   /** Momento de la última sincronización correcta (ms desde 1970). */
   syncedAt: number;
+  /** Versión de nanoka de la que salió (los detalles de la galería tiran de la misma). Sin ella, es del formato antiguo. */
+  version?: string;
   character: CatalogEntry[];
   lightCone: CatalogEntry[];
 }
+
+/** La última versión de HSR en el manifest de nanoka ({ hsr: { latest: "4.6.54" } }). */
+export function parseManifestVersion(raw: unknown): string {
+  const latest = isObj(raw) && isObj(raw.hsr) ? raw.hsr.latest : undefined;
+  if (typeof latest !== 'string' || !/^\d+(\.\d+)+$/.test(latest)) throw new Error('Formato inesperado');
+  return latest;
+}
+
+/** Los nombres en español de yatta, por id ({ data: { items: { "1005": { name: "Kafka" } } } }). */
+export function parseYattaNames(raw: unknown): Map<string, string> {
+  if (!isObj(raw) || !isObj(raw.data) || !isObj(raw.data.items)) throw new Error('Formato inesperado');
+  const names = new Map<string, string>();
+  for (const [id, item] of Object.entries(raw.data.items)) {
+    if (isObj(item) && typeof item.name === 'string' && item.name.trim()) names.set(id, cleanName(item.name));
+  }
+  return names;
+}
+
+/** Sincronización automática semanal: los martes a las 10:00, hora local (getDay: 0 = domingo). */
+export const WEEKLY_SYNC = { weekday: 2, hour: 10 } as const;
+
+/** El último martes a las 10:00 que ya ha llegado (hoy mismo si es martes y ya son las 10). */
+export function lastWeeklySync(now: Date): Date {
+  const d = new Date(now);
+  d.setHours(WEEKLY_SYNC.hour, 0, 0, 0);
+  d.setDate(d.getDate() - ((d.getDay() - WEEKLY_SYNC.weekday + 7) % 7));
+  if (d > now) d.setDate(d.getDate() - 7);
+  return d;
+}
+
+/**
+ * El próximo martes a las 10:00. Se suman 7 días de calendario y no 7 × 24 h: en la semana del cambio de hora,
+ * las horas fijas daban las 9:00 o las 11:00.
+ */
+export function nextWeeklySync(now: Date): Date {
+  const d = lastWeeklySync(now);
+  d.setDate(d.getDate() + 7);
+  return d;
+}
+
+/**
+ * Toca sincronizar si no hay catálogo, si es del formato antiguo (sin versión: nombres solo en inglés) o si el
+ * último es anterior al último martes a las 10:00.
+ */
+export const syncDue = (catalog: Pick<Catalog, 'syncedAt' | 'version'> | null, now: Date) =>
+  !catalog || !catalog.version || catalog.syncedAt < lastWeeklySync(now).getTime();
 
 /** El rango viene como "CombatPowerAvatarRarityType5" o "CombatPowerLightconeRarity5". */
 const isFiveStar = (rank: unknown) => typeof rank === 'string' && rank.endsWith('5');
@@ -31,18 +88,20 @@ const isFiveStar = (rank: unknown) => typeof rank === 'string' && rank.endsWith(
 export const cleanName = (name: string) => name.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
 
 /**
- * Convierte el JSON de un endpoint en la lista de 5★, sin repetidos.
- * Se descartan los Trazacaminos (su nombre es "{NICKNAME}"), que no salen en banners.
+ * Convierte el JSON de nanoka en la lista de 5★, sin repetidos, con el nombre en español si yatta lo tiene
+ * (`spanish`, por id) y si no en inglés.
+ * Se descartan los Trazacaminos (su nombre en inglés es "{NICKNAME}"), que no salen en banners.
  * Orden: lo más nuevo primero (por fecha de salida si la hay; si no, por id). Lo que aún no tiene fecha
  * es lo que todavía no ha salido, así que va delante.
  */
-export function parseCatalogEntries(raw: unknown): CatalogEntry[] {
+export function parseCatalogEntries(raw: unknown, spanish: Map<string, string> = new Map()): CatalogEntry[] {
   if (!isObj(raw)) throw new Error('Formato inesperado');
   const items: (CatalogEntry & { release: number })[] = [];
   for (const [id, value] of Object.entries(raw)) {
     if (!isObj(value) || !isFiveStar(value.rank) || typeof value.en !== 'string') continue;
-    const name = cleanName(value.en);
-    if (!name || name.includes('{')) continue;
+    const en = cleanName(value.en);
+    if (!en || en.includes('{')) continue;
+    const name = spanish.get(id) ?? en;
     const release = typeof value.release === 'number' ? value.release : Infinity;
     items.push({ id, name, release });
   }
@@ -60,7 +119,12 @@ export function normalizeCatalog(raw: unknown): Catalog | null {
     Array.isArray(v)
       ? v.filter((e): e is CatalogEntry => isObj(e) && typeof e.id === 'string' && typeof e.name === 'string')
       : [];
-  return { syncedAt: raw.syncedAt, character: entries(raw.character), lightCone: entries(raw.lightCone) };
+  return {
+    syncedAt: raw.syncedAt,
+    ...(typeof raw.version === 'string' && { version: raw.version }),
+    character: entries(raw.character),
+    lightCone: entries(raw.lightCone),
+  };
 }
 
 /** Minúsculas y sin tildes, para buscar sin que importen. */

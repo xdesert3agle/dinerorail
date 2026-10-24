@@ -1,4 +1,4 @@
-import { DATA_URL, cleanName } from './catalog';
+import { cleanName, nanokaUrl } from './catalog';
 import type { PullKind } from './types';
 import { isObj } from './util';
 
@@ -23,8 +23,11 @@ export type DetailsSource = (typeof DETAILS_SOURCES)[number];
 export type Lang = 'es' | 'en';
 export const SOURCE_LANG: Record<DetailsSource, Lang> = { yatta: 'es', nanoka: 'en' };
 
-/** Las dos fuentes con su versión: si cambia alguna, lo guardado deja de valer. */
-export const DETAILS_VERSION = `${YATTA_URL}|${DATA_URL}`;
+/*
+ * Si cambia, lo guardado deja de valer. Solo se guarda lo de yatta (lo de nanoka va en memoria), así que no
+ * depende de la versión de nanoka.
+ */
+export const DETAILS_VERSION = YATTA_URL;
 
 /** Un efecto tal como viene del juego: el texto lleva huecos ("#1[i]%") que se llenan con params. */
 export interface Effect {
@@ -52,9 +55,10 @@ export interface LightConeDetails extends Common {
 
 export type Details = CharacterDetails | LightConeDetails;
 
-export function detailsUrl(source: DetailsSource, kind: PullKind, id: string) {
+/** URL de los detalles en una fuente; nanoka, en la versión del catálogo (`version`). */
+export function detailsUrl(source: DetailsSource, kind: PullKind, id: string, version: string) {
   if (source === 'yatta') return `${YATTA_URL}/${kind === 'character' ? 'avatar' : 'equipment'}/${id}`;
-  return `${DATA_URL}/en/${kind === 'character' ? 'character' : 'lightcone'}/${id}.json`;
+  return `${nanokaUrl(version)}/en/${kind === 'character' ? 'character' : 'lightcone'}/${id}.json`;
 }
 
 const isNumbers = (v: unknown): v is number[] => Array.isArray(v) && v.every((n) => typeof n === 'number');

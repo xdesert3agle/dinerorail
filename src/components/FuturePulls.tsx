@@ -7,6 +7,8 @@ import {
   useSensors,
   type Announcements,
   type DragEndEvent,
+  type DragOverEvent,
+  type UniqueIdentifier,
 } from '@dnd-kit/core';
 import { restrictToParentElement, restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import {
@@ -17,7 +19,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Result } from '../engine/calculate';
 import type { Catalog, CatalogEntry } from '../engine/catalog';
 import {
@@ -46,6 +48,7 @@ import { DupeBadge } from './DupeBadge';
 import { fmtInt } from './format';
 import { Icon } from './Icon';
 import { KIND_GLYPH, KIND_LABEL } from './kinds';
+import { reducedMotion } from './motion';
 import { Toggle } from './Toggle';
 import { NameCombobox } from './NameCombobox';
 import { Tip } from './Tip';
@@ -70,6 +73,13 @@ const dec1 = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 });
 
 const NO_SUGGESTIONS: CatalogEntry[] = [];
 
+/** Cuánto dura el polvo de una fila quitada y hasta dónde se dispersan sus píxeles (px del desplazamiento). */
+const DUST_MS = 600;
+const DUST_SCALE = 70;
+
+/** Cómo encaja una fila desplazada en su nuevo hueco al reordenar: rápida y con un rebote leve al llegar. */
+const SNAP_TRANSITION = { duration: 180, easing: 'cubic-bezier(0.3, 1.35, 0.5, 1)' };
+
 export function FuturePulls({ state, result, catalog, copies, chances, onChange }: Props) {
   const plan = state.plannedPulls;
   const countStarlight = state.settings.countStarlight;
@@ -91,13 +101,23 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
     setPlan((p) => p.map((x) => (x.id === id ? { ...x, ...patch } : x)));
   // El nombre es solo el del catálogo: el dupe de cada fila se calcula aparte (ver planCopies). El aviso lo
   // pone al final del nombre, «Kafka E2», y el toast lo deja fuera del recorte de los nombres largos.
-  const remove = (pull: PlannedPull, dupe: number | null) =>
-    setPlan(
-      (p) => p.filter((x) => x.id !== pull.id),
-      pull.name
-        ? `«${pull.name}${dupe === null ? '' : ` E${dupe}`}» quitado de la planificación.`
-        : 'Fila quitada de la planificación.',
-    );
+  // Al quitar una fila, se deshace en polvo (DUST_MS) y luego sale del plan; sin animación si se pide menos movimiento.
+  const [leaving, setLeaving] = useState<string[]>([]);
+  const remove = (pull: PlannedPull, dupe: number | null) => {
+    const commit = () =>
+      setPlan(
+        (p) => p.filter((x) => x.id !== pull.id),
+        pull.name
+          ? `«${pull.name}${dupe === null ? '' : ` E${dupe}`}» quitado de la planificación.`
+          : 'Fila quitada de la planificación.',
+      );
+    if (reducedMotion()) return commit();
+    setLeaving((l) => [...l, pull.id]);
+    window.setTimeout(() => {
+      commit();
+      setLeaving((l) => l.filter((id) => id !== pull.id));
+    }, DUST_MS);
+  };
   // Miniatura de cada fila: el retrato del personaje o el icono del cono (null si no está en el catálogo).
   // Del cono, primero el de StarRailRes y, si no lo tiene, el de nanoka.
   const portraitOf = (pull: PlannedPull) => {
@@ -121,7 +141,17 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
+  // Al cruzar a otro puesto, un toque corto en el móvil (Android; iOS no deja vibrar desde la web): el «clic»
+  // de cambiar de hueco, como los selectores del sistema.
+  const lastOver = useRef<UniqueIdentifier | null>(null);
+  const onDragOver = ({ over }: DragOverEvent) => {
+    if (!over || over.id === lastOver.current) return;
+    lastOver.current = over.id;
+    navigator.vibrate?.(8);
+  };
+
   const onDragEnd = ({ active, over }: DragEndEvent) => {
+    lastOver.current = null;
     if (!over || active.id === over.id) return;
     setPlan((p) => {
       const from = p.findIndex((x) => x.id === active.id);
@@ -180,7 +210,10 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
             sensors={sensors}
             collisionDetection={closestCenter}
             modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+            onDragStart={({ active }) => (lastOver.current = active.id)}
+            onDragOver={onDragOver}
             onDragEnd={onDragEnd}
+            onDragCancel={() => (lastOver.current = null)}
             accessibility={{
               announcements,
               screenReaderInstructions: {
@@ -201,6 +234,7 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
                   portrait={portraitOf(pull)}
                   onUpdate={(patch) => updatePull(pull.id, patch)}
                   autoFocus={pull.id === focusId}
+                  leaving={leaving.includes(pull.id)}
                   onRemove={() => remove(pull, dupeOf(copies[i] ?? null))}
                 />
               ))}
@@ -278,22 +312,62 @@ interface RowProps {
   /** URLs de la miniatura, por orden de preferencia, o null si la fila no tiene nombre del catálogo. */
   portrait: string[] | null;
   autoFocus: boolean;
+  /** Se está quitando: se deshace en polvo antes de salir del plan. */
+  leaving: boolean;
   onUpdate: (patch: Partial<PlannedPull>) => void;
   onRemove: () => void;
 }
 
-function SortablePullRow({ pull, row, suggestions, dupe, chance, portrait, onUpdate, autoFocus, onRemove }: RowProps) {
+function SortablePullRow({
+  pull,
+  row,
+  suggestions,
+  dupe,
+  chance,
+  portrait,
+  onUpdate,
+  autoFocus,
+  leaving,
+  onRemove,
+}: RowProps) {
+  // El polvo: un filtro de ruido que desplaza los píxeles de la fila cada vez más (de 0 a DUST_SCALE) mientras se
+  // desvanece. El filtro es de cada fila, así dos que se quitan a la vez no se pisan.
+  const dustId = `dust-${pull.id}`;
+  const dustRef = useRef<SVGAnimateElement>(null);
+  useEffect(() => {
+    if (leaving) dustRef.current?.beginElement();
+  }, [leaving]);
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({
     id: pull.id,
+    // Encaje seco al cambiar de puesto (180ms con un leve rebote, en vez de 250ms suaves); sin movimiento si se pide.
+    transition: reducedMotion() ? null : SNAP_TRANSITION,
   });
   const label = pull.name || KIND_LABEL[pull.kind];
 
   return (
     <div
       ref={setNodeRef}
-      className={`pull-row ${row.affordable ? '' : 'is-short'} ${isDragging ? 'is-dragging' : ''}`}
-      style={{ transform: CSS.Translate.toString(transform), transition }}
+      className={`pull-row ${row.affordable ? '' : 'is-short'} ${isDragging ? 'is-dragging' : ''} ${leaving ? 'is-leaving' : ''}`}
+      style={{ transform: CSS.Translate.toString(transform), transition, filter: leaving ? `url(#${dustId})` : undefined }}
     >
+      {leaving && (
+        <svg className="dust-filter" width="0" height="0" aria-hidden="true">
+          <filter id={dustId} x="-20%" y="-50%" width="140%" height="200%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="0" xChannelSelector="R" yChannelSelector="G">
+              <animate
+                ref={dustRef}
+                attributeName="scale"
+                from="0"
+                to={DUST_SCALE}
+                dur={`${DUST_MS}ms`}
+                begin="indefinite"
+                fill="freeze"
+              />
+            </feDisplacementMap>
+          </filter>
+        </svg>
+      )}
       <button
         type="button"
         ref={setActivatorNodeRef}

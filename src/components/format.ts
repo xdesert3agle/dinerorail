@@ -17,6 +17,9 @@ const timeFmt = new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-d
 // A mano y no con Intl: según el navegador, es-ES sale con punto ("nov.") o sin él ("nov").
 const MONTHS = ['ene.', 'feb.', 'mar.', 'abr.', 'may.', 'jun.', 'jul.', 'ago.', 'sept.', 'oct.', 'nov.', 'dic.'];
 
+/** Cuánto falta para un día: "hoy", "mañana" o "en 19 días" (va entre paréntesis tras la fecha o el día). */
+export const fmtCountdown = (days: number) => (days === 0 ? 'hoy' : days === 1 ? 'mañana' : `en ${fmtInt(days)} días`);
+
 /** Solo el mes de una fecha, como "nov." (la cabecera de una hoja de calendario). */
 export const fmtMonth = (iso: string) => MONTHS[Number(iso.split('-')[1]) - 1];
 

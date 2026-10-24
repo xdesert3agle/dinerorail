@@ -1,7 +1,7 @@
 import type { ComponentType } from 'react';
 import type { Result } from '../engine/calculate';
 import { formatDate } from '../engine/dates';
-import { fmtDayMonth, fmtInt, fmtSingles } from './format';
+import { fmtCountdown, fmtDayMonth, fmtInt, fmtSingles } from './format';
 import type { Skin } from '../engine/types';
 import { Icon } from './Icon';
 import { Masks } from './Masks';
@@ -17,10 +17,9 @@ const DECORATION: Record<Skin, ComponentType | null> = {
   sparxie: null,
 };
 
-/** "En 42 días · 11 nov." (o "Hoy · 21 oct."): la cuenta atrás y la fecha corta. */
+/** "11 nov. (en 42 días)", "21 oct. (hoy)": la fecha corta y cuánto falta, como en las fechas destacadas. */
 function dateLabel(result: Result): string {
-  const when = result.days === 0 ? 'Hoy' : result.days === 1 ? 'En 1 día' : `En ${fmtInt(result.days)} días`;
-  return `${when} · ${fmtDayMonth(result.targetDate)}`;
+  return `${fmtDayMonth(result.targetDate)} (${fmtCountdown(result.days)})`;
 }
 
 export function ResultSummary({ result, skin }: { result: Result; skin: Skin }) {

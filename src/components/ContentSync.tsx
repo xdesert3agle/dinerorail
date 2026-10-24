@@ -36,7 +36,7 @@ export function ContentSync({ catalog, syncing, error, lastAttempt, sync }: Cata
       {/* role="status": al terminar de sincronizar se anuncia la fecha nueva. */}
       <p className="muted" role="status">
         {catalog
-          ? `Sincronizado el ${fmtMoment(catalog.syncedAt)}.`
+          ? `Sincronizado el ${fmtMoment(catalog.syncedAt)}. Se actualiza solo los martes a las 10:00.`
           : 'Descarga los personajes y conos de luz 5★ para sugerirlos en la planificación.'}
       </p>
       <div className="content-sync-row">
