@@ -10,6 +10,7 @@ import {
 } from '../engine/details';
 import type { PullKind } from '../engine/types';
 import { isObj } from '../engine/util';
+import { catalogVersion } from './catalog';
 
 /*
  * Caché de los detalles (Eidolones y efectos de conos) para el popover de la galería de dupes. Como el
@@ -96,7 +97,7 @@ async function fetchFirst(ref: DetailsRef): Promise<{ source: DetailsSource; det
   for (const source of DETAILS_SOURCES) {
     if (source === 'yatta' && skipYatta) continue;
     try {
-      const res = await fetch(detailsUrl(source, ref.kind, ref.id));
+      const res = await fetch(detailsUrl(source, ref.kind, ref.id, catalogVersion()));
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const details = parseDetails(source, ref.kind, await res.json());
       // Solo cuenta como que yatta.moe no lo tiene si nanoka.cc sí responde: si fallan las dos, será la red.

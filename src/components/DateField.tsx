@@ -31,20 +31,24 @@ interface Props {
   min?: ISODate;
   id?: string;
   'aria-label'?: string;
+  /** Días señalados: el calendario los marca con un punto y su nombre al pasar por encima. */
+  marks?: { date: ISODate; label: string }[];
 }
 
 /**
  * Campo de fecha con el calendario de air-datepicker en lugar del nativo del navegador.
  * El campo es de solo lectura (se elige en el calendario, también con el teclado) y muestra dd/mm/aaaa.
  */
-export function DateField({ value, onChange, min, id, 'aria-label': ariaLabel }: Props) {
+export function DateField({ value, onChange, min, id, 'aria-label': ariaLabel, marks }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const pickerRef = useRef<AirDatepicker | null>(null);
   // Refs para que el calendario, creado una sola vez, use siempre el valor y el callback actuales.
   const valueRef = useRef(value);
   const onChangeRef = useRef(onChange);
+  const marksRef = useRef(marks);
   valueRef.current = value;
   onChangeRef.current = onChange;
+  marksRef.current = marks;
   // Para los lectores de pantalla: el campo abre un calendario y se dice si está abierto.
   const [open, setOpen] = useState(false);
   const hintId = useId();
@@ -62,6 +66,13 @@ export function DateField({ value, onChange, min, id, 'aria-label': ariaLabel }:
       isMobile: window.matchMedia('(pointer: coarse)').matches,
       onShow: (done) => !done && setOpen(true),
       onHide: (done) => !done && setOpen(false),
+      // Días señalados: clase para el punto (CSS) y su nombre como título de la celda.
+      onRenderCell: ({ date, cellType }) => {
+        if (cellType !== 'day') return;
+        const iso = todayISO(date);
+        const names = marksRef.current?.filter((m) => m.date === iso).map((m) => m.label);
+        if (names?.length) return { classes: 'is-key-date', attrs: { title: names.join(' · ') } };
+      },
       onSelect: ({ date }) => {
         if (!(date instanceof Date)) return;
         const iso = todayISO(date);

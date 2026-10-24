@@ -75,7 +75,7 @@ export function ShardPacks({ state, onChange }: Props) {
         </div>
         {SHARD_PACKS.map((pack) => {
           const purchase = state.shardPacks[pack.id] ?? emptyPurchase();
-          // Lo que da una compra suelta, con o sin el x2 de la primera vez.
+          // Lo que da una compra suelta, con o sin el ×2 de la primera vez.
           const perPack = purchase.firstBonus ? pack.base * 2 : pack.base + pack.bonus;
           const shards = packShards(pack, purchase);
           const price = euros.format(packPrice(pack, inYen));
@@ -113,16 +113,17 @@ export function ShardPacks({ state, onChange }: Props) {
                   <input
                     type="checkbox"
                     checked={purchase.firstBonus}
-                    aria-label={`Primera compra (x2) del paquete de ${price}`}
+                    aria-label={`Primera compra (el doble) del paquete de ${price}`}
                     onChange={(e) => update(pack.id, { firstBonus: e.target.checked })}
                   />
-                  x2
+                  {/* El signo de multiplicar, como en «×6.480»; el lector de pantalla lo dice en palabras (arriba). */}
+                  <span aria-hidden="true">×2</span>
                 </label>
               </span>
               {/* Como en Por compra: icono a la izquierda y cifra a la derecha. */}
               <strong className="num pack-total" role="cell">
                 <Icon kind="shard" size={18} decorative />
-                <span className="pack-total-value">{shards > 0 ? fmtInt(shards) : '—'}</span>
+                <span className="pack-total-value">{fmtInt(shards)}</span>
               </strong>
             </div>
           );
@@ -140,7 +141,7 @@ export function ShardPacks({ state, onChange }: Props) {
           <span role="cell" />
           <strong className="num pack-total" role="cell">
             <Icon kind="shard" size={18} decorative />
-            <span className="pack-total-value">{total.shards > 0 ? fmtInt(total.shards) : '—'}</span>
+            <span className="pack-total-value">{fmtInt(total.shards)}</span>
           </strong>
         </div>
       </div>
