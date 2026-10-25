@@ -1,4 +1,4 @@
-import { useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { searchCatalog, type CatalogEntry } from '../engine/catalog';
 import { PLAIN_TEXT_INPUT } from './inputs';
 
@@ -12,8 +12,6 @@ interface Props {
   'aria-label'?: string;
   /** Enfocar el campo al aparecer (fila recién añadida). */
   autoFocus?: boolean;
-  /** Etiqueta dentro del campo, a la derecha (p. ej. el dupe); se oculta mientras se escribe. */
-  badge?: ReactNode;
 }
 
 /**
@@ -29,7 +27,6 @@ export function NameCombobox({
   inputClassName,
   'aria-label': ariaLabel,
   autoFocus,
-  badge,
 }: Props) {
   const listId = useId();
   const free = entries.length === 0;
@@ -101,7 +98,7 @@ export function NameCombobox({
 
   return (
     <div
-      className={`combo${badge && query === null ? ' has-badge' : ''}${masked ? ' is-masked' : ''}${shown ? ' is-open' : ''}`}
+      className={`combo${masked ? ' is-masked' : ''}${shown ? ' is-open' : ''}`}
     >
       <input
         type="text"
@@ -133,8 +130,6 @@ export function NameCombobox({
           {value}
         </span>
       )}
-      {/* La etiqueta es del nombre elegido: mientras se escribe otro, no se muestra. */}
-      {badge && query === null && <span className="combo-badge">{badge}</span>}
       {shown && (
         <ul id={listId} role="listbox" className="combo-list">
           {suggestions.map((s, i) => (

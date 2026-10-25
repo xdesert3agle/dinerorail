@@ -1,3 +1,4 @@
+import { isPathId, type PathId } from './rules';
 import type { PullKind } from './types';
 import { isObj } from './util';
 
@@ -24,6 +25,8 @@ export const YATTA_NAMES_URLS: Record<PullKind, string> = {
 export interface CatalogEntry {
   id: string;
   name: string;
+  /** Su vía (el `baseType` de nanoka); sin ella si nanoka trae una que aún no está en PATHS. */
+  path?: PathId;
 }
 
 export interface Catalog {
@@ -75,11 +78,14 @@ export function nextWeeklySync(now: Date): Date {
 }
 
 /**
- * Toca sincronizar si no hay catálogo, si es del formato antiguo (sin versión: nombres solo en inglés) o si el
- * último es anterior al último martes a las 10:00.
+ * Toca sincronizar si no hay catálogo, si es de un formato antiguo (sin versión: nombres solo en inglés; sin
+ * vías en los personajes) o si el último es anterior al último martes a las 10:00.
  */
-export const syncDue = (catalog: Pick<Catalog, 'syncedAt' | 'version'> | null, now: Date) =>
-  !catalog || !catalog.version || catalog.syncedAt < lastWeeklySync(now).getTime();
+export const syncDue = (catalog: Pick<Catalog, 'syncedAt' | 'version' | 'character'> | null, now: Date) =>
+  !catalog ||
+  !catalog.version ||
+  !catalog.character.some((e) => e.path) ||
+  catalog.syncedAt < lastWeeklySync(now).getTime();
 
 /** El rango viene como "CombatPowerAvatarRarityType5" o "CombatPowerLightconeRarity5". */
 const isFiveStar = (rank: unknown) => typeof rank === 'string' && rank.endsWith('5');
@@ -103,13 +109,13 @@ export function parseCatalogEntries(raw: unknown, spanish: Map<string, string> =
     if (!en || en.includes('{')) continue;
     const name = spanish.get(id) ?? en;
     const release = typeof value.release === 'number' ? value.release : Infinity;
-    items.push({ id, name, release });
+    items.push({ id, name, release, ...(isPathId(value.baseType) && { path: value.baseType }) });
   }
   items.sort((a, b) => b.release - a.release || Number(b.id) - Number(a.id));
   const seen = new Set<string>();
   return items
     .filter((x) => !seen.has(x.name) && seen.add(x.name))
-    .map(({ id, name }) => ({ id, name }));
+    .map(({ release: _, ...entry }) => entry);
 }
 
 /** Valida un catálogo guardado; null si no sirve. */
@@ -117,7 +123,9 @@ export function normalizeCatalog(raw: unknown): Catalog | null {
   if (!isObj(raw) || typeof raw.syncedAt !== 'number') return null;
   const entries = (v: unknown) =>
     Array.isArray(v)
-      ? v.filter((e): e is CatalogEntry => isObj(e) && typeof e.id === 'string' && typeof e.name === 'string')
+      ? v
+          .filter((e) => isObj(e) && typeof e.id === 'string' && typeof e.name === 'string')
+          .map((e) => ({ id: e.id as string, name: e.name as string, ...(isPathId(e.path) && { path: e.path }) }))
       : [];
   return {
     syncedAt: raw.syncedAt,
@@ -127,12 +135,18 @@ export function normalizeCatalog(raw: unknown): Catalog | null {
   };
 }
 
-/** Minúsculas y sin tildes, para buscar sin que importen. */
-const fold = (s: string) =>
+/**
+ * Para buscar: minúsculas, sin tildes y con los signos que no son letras ni cifras como un espacio (los de en
+ * medio de «Dan Heng - Imbibitor Lunae» o «Aeon ★ Aha»), sin espacios de sobra. Así se encuentran escribiendo
+ * solo las palabras.
+ */
+export const fold = (s: string) =>
   s
     .normalize('NFD')
     .replace(/\p{M}/gu, '')
-    .toLowerCase();
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
 
 /**
  * Sugerencias para lo escrito: primero los nombres que empiezan así, luego los que tienen una palabra

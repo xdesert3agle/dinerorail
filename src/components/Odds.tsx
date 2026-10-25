@@ -24,7 +24,7 @@ const MODEL_HELP = [
   `Simulación de ${fmtInt(RUNS)} intentos con las probabilidades reales:`,
   describeBanner('Personaje', BANNERS.character),
   describeBanner('Cono', BANNERS.lightCone),
-  'Empieza en tu pity actual y con tu garantizado. No usa las casillas «Gano 50/50» de la planificación.',
+  'Empieza en tu pity actual y con tu garantizado. No usa las casillas «50/50 ganado» de la planificación.',
   'Solo dice 100 % si llega incluso en el peor caso absoluto.',
   'El % de cada objetivo, junto con todos los anteriores, va en su fila de la planificación.',
   '',
@@ -37,7 +37,7 @@ const worstCaseHelp = (hardPity: Record<PullKind, number>) =>
   [
     `Tiradas que lo garantizan todo pase lo que pase: todos los 5★ en el pity duro (${BANNERS.character.hardPity} personaje, ${BANNERS.lightCone.hardPity} cono), ` +
       'todos los 50/50 perdidos y solo el 4★ garantizado, del tipo que menos Cosmiluz da.',
-    `La planificación, en cambio, cuenta tus tiradas por 5★ (${hardPity.character} personaje, ${hardPity.lightCone} cono) y tus casillas «Gano 50/50».`,
+    `La planificación, en cambio, cuenta tus tiradas por 5★ (${hardPity.character} personaje, ${hardPity.lightCone} cono) y tus casillas «50/50 ganado».`,
   ].join('\n');
 
 export function Odds({ state, view }: Props) {

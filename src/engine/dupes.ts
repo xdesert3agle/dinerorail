@@ -21,6 +21,9 @@ export const MAX_LIGHT_CONES = 6;
 export const lightConeImageUrl = (lightConeId: string) =>
   `https://static.nanoka.cc/assets/hsr/lightconemediumicon/${lightConeId}.webp`;
 
+/** Icono de una vía en StarRailRes (blanco sobre transparente: se usa como máscara con el color del texto). */
+export const pathIconUrl = (icon: string) => `https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/icon/path/${icon}.png`;
+
 /**
  * Icono de un cono de luz en el repo de assets StarRailRes (el raw de
  * https://github.com/Mar-7th/StarRailRes/blob/master/icon/light_cone/<id>.png, que sirve CORS).

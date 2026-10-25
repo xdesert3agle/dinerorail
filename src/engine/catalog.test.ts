@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  fold,
   lastWeeklySync,
   nextWeeklySync,
   normalizeCatalog,
@@ -27,10 +28,12 @@ describe('sincronización semanal (martes a las 10:00, hora local)', () => {
     expect(nextWeeklySync(at(27, 9))).toEqual(at(27, 10));
   });
 
-  it('toca si no hay catálogo, si es del formato antiguo o si se sincronizó antes del último martes a las 10', () => {
-    const synced = (d: number, h: number) => ({ syncedAt: at(d, h).getTime(), version: '4.6.54' });
+  it('toca si no hay catálogo, si es de un formato antiguo o si se sincronizó antes del último martes a las 10', () => {
+    const character = [{ id: '1005', name: 'Kafka', path: 'Warlock' as const }];
+    const synced = (d: number, h: number) => ({ syncedAt: at(d, h).getTime(), version: '4.6.54', character });
     expect(syncDue(null, at(29, 18))).toBe(true);
-    expect(syncDue({ syncedAt: at(27, 11).getTime() }, at(29, 18))).toBe(true); // sin versión: solo inglés
+    expect(syncDue({ syncedAt: at(27, 11).getTime(), character }, at(29, 18))).toBe(true); // sin versión: solo inglés
+    expect(syncDue({ ...synced(27, 11), character: [{ id: '1005', name: 'Kafka' }] }, at(29, 18))).toBe(true); // sin vías
     expect(syncDue(synced(26, 20), at(29, 18))).toBe(true); // lunes → ya pasó el martes
     expect(syncDue(synced(27, 11), at(29, 18))).toBe(false); // martes después de las 10
     expect(syncDue(synced(27, 11), at(3 + 31, 10, 1))).toBe(true); // el martes siguiente
@@ -65,7 +68,7 @@ describe('fuentes del catálogo', () => {
 
 const CHARACTERS = {
   '1001': { rank: 'CombatPowerAvatarRarityType4', en: 'March 7th', release: 1682460000 },
-  '1102': { rank: 'CombatPowerAvatarRarityType5', en: 'Seele', release: 1682460000 },
+  '1102': { rank: 'CombatPowerAvatarRarityType5', en: 'Seele', release: 1682460000, baseType: 'Rogue' },
   '1213': { rank: 'CombatPowerAvatarRarityType5', en: 'Dan Heng • Imbibitor Lunae', release: 1693353600 },
   '1503': { rank: 'CombatPowerAvatarRarityType5', en: 'Pearl' },
   '1506': { rank: 'CombatPowerAvatarRarityType5', en: 'Silver Wolf LV.<unbreak>999</unbreak>', release: 1776816000 },
@@ -76,6 +79,20 @@ describe('catálogo de personajes y conos', () => {
   it('solo deja los 5★, sin Trazacaminos y sin el marcado del juego', () => {
     const names = parseCatalogEntries(CHARACTERS).map((e) => e.name);
     expect(names).toEqual(['Pearl', 'Silver Wolf LV.999', 'Dan Heng • Imbibitor Lunae', 'Seele']);
+  });
+
+  it('guarda la vía de nanoka si es una conocida', () => {
+    const raw = {
+      '1005': { rank: 'CombatPowerAvatarRarityType5', en: 'Kafka', baseType: 'Warlock' },
+      '1999': { rank: 'CombatPowerAvatarRarityType5', en: 'Nueva', baseType: 'Unknown' },
+    };
+    expect(parseCatalogEntries(raw)).toEqual([
+      { id: '1999', name: 'Nueva' },
+      { id: '1005', name: 'Kafka', path: 'Warlock' },
+    ]);
+    expect(normalizeCatalog({ syncedAt: 1, character: [{ id: '1005', name: 'Kafka', path: 'Nope' }] })?.character).toEqual([
+      { id: '1005', name: 'Kafka' },
+    ]);
   });
 
   it('no repite nombres', () => {
@@ -103,5 +120,20 @@ describe('catálogo de personajes y conos', () => {
     // Empieza por "lun", luego palabra que empieza por "lun"; "Lingsha" no lo contiene.
     expect(searchCatalog(all, 'lun').map((e) => e.id)).toEqual(['3', '1']);
     expect(searchCatalog(all, '  ')).toEqual([]);
+  });
+
+  it('ignora los signos entre palabras, se escriban o no', () => {
+    const all = [
+      { id: '1', name: 'Dan Heng - Imbibitor Lunae' },
+      { id: '2', name: 'Aeon ★ Aha' },
+      { id: '3', name: 'Silver Wolf Niv. 999' },
+    ];
+    const ids = (q: string) => searchCatalog(all, q).map((e) => e.id);
+    expect(ids('dan heng imbibitor')).toEqual(['1']);
+    expect(ids('Dan Heng • Imbibitor')).toEqual(['1']);
+    expect(ids('aeon aha')).toEqual(['2']);
+    expect(ids('niv 999')).toEqual(['3']);
+    expect(ids('★')).toEqual([]);
+    expect(fold('  Dan Heng -  Imbibitor ')).toBe('dan heng imbibitor');
   });
 });

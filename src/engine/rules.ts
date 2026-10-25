@@ -14,6 +14,24 @@ export const MAX_EIDOLON = 6;
 /** Superposición máxima de un cono de luz: S5 (la 5.ª copia). */
 export const MAX_SUPERIMPOSITION = 5;
 
+/**
+ * Vías, en el orden del juego: el código interno (el `baseType` de nanoka), su nombre en español y el nombre de
+ * su icono en StarRailRes (icon/path/<icon>.png).
+ */
+export const PATHS = [
+  { id: 'Warrior', name: 'Destrucción', icon: 'Destruction' },
+  { id: 'Rogue', name: 'Cacería', icon: 'Hunt' },
+  { id: 'Mage', name: 'Erudición', icon: 'Erudition' },
+  { id: 'Shaman', name: 'Armonía', icon: 'Harmony' },
+  { id: 'Warlock', name: 'Nihilidad', icon: 'Nihility' },
+  { id: 'Knight', name: 'Conservación', icon: 'Preservation' },
+  { id: 'Priest', name: 'Abundancia', icon: 'Abundance' },
+  { id: 'Memory', name: 'Reminiscencia', icon: 'Remembrance' },
+  { id: 'Elation', name: 'Exultación', icon: 'Elation' },
+] as const;
+export type PathId = (typeof PATHS)[number]['id'];
+export const isPathId = (v: unknown): v is PathId => PATHS.some((p) => p.id === v);
+
 /** Tiradas que se cuentan por cada 5★ en el peor caso de la planificación, si no se configura otra cosa. */
 export const DEFAULT_HARD_PITY: Record<PullKind, number> = { character: 80, lightCone: 70 };
 

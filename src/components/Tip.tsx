@@ -1,4 +1,14 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import {
+  cloneElement,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactElement,
+  type ReactNode,
+} from 'react';
 import { createPortal } from 'react-dom';
 
 interface Props {
@@ -11,6 +21,11 @@ interface Props {
   /** Elemento que hace de disparador: un div para las casillas de estadísticas, un span para lo demás. */
   as?: 'span' | 'div';
   className?: string;
+  /**
+   * El disparador es un control con su propio foco (un botón, como único hijo): la burbuja sale al pasar el
+   * ratón o al llegar con el teclado, el toque sigue siendo del control y la descripción va en el propio control.
+   */
+  control?: boolean;
 }
 
 /** Margen con los bordes de la ventana y separación con el dato. */
@@ -27,7 +42,7 @@ const HOVER_DELAY = 400;
  * Para los lectores de pantalla el texto es la descripción del dato (aria-describedby), siempre presente.
  * La burbuja va en un portal, fija bajo el dato (o encima si no cabe), para que ninguna tarjeta la recorte.
  */
-export function Tip({ content, children, as: Tag = 'span', className }: Props) {
+export function Tip({ content, children, as: Tag = 'span', className, control }: Props) {
   const id = useId();
   const triggerRef = useRef<HTMLElement | null>(null);
   const bubbleRef = useRef<HTMLSpanElement | null>(null);
@@ -95,9 +110,9 @@ export function Tip({ content, children, as: Tag = 'span', className }: Props) {
         ref={(el: HTMLElement | null) => {
           triggerRef.current = el;
         }}
-        className={className ? `tip-trigger ${className}` : 'tip-trigger'}
-        tabIndex={0}
-        aria-describedby={id}
+        className={control ? className : className ? `tip-trigger ${className}` : 'tip-trigger'}
+        tabIndex={control ? undefined : 0}
+        aria-describedby={control ? undefined : id}
         onPointerDown={(e) => {
           if (e.pointerType !== 'mouse') lastTouch.current = Date.now();
         }}
@@ -111,20 +126,21 @@ export function Tip({ content, children, as: Tag = 'span', className }: Props) {
           cancelHover();
           setOpen(false);
         }}
-        onFocus={() => {
-          if (!byTouch()) show();
+        onFocus={(e) => {
+          // En un control, el clic del ratón también lo enfoca: solo se abre al llegar con el teclado.
+          if (control ? e.target.matches(':focus-visible') : !byTouch()) show();
         }}
         onBlur={() => setOpen(false)}
         onClick={(e) => {
           // Con el ratón no hace nada (abre el hover): dentro de un <label>, el clic sigue enfocando su campo.
-          if (!byTouch()) return;
+          if (control || !byTouch()) return;
           // Al tocar, abre o cierra; dentro de un <label>, sin enfocar el campo (no saca el teclado).
           e.preventDefault();
           if (open) setOpen(false);
           else show();
         }}
       >
-        {children}
+        {control ? cloneElement(children as ReactElement<{ 'aria-describedby'?: string }>, { 'aria-describedby': id }) : children}
       </Tag>
       {createPortal(
         <span ref={bubbleRef} id={id} role="tooltip" className="tip" hidden={!open} style={pos}>

@@ -398,6 +398,13 @@
 *::after {
   box-sizing: border-box;
 }
+/*
+ * Hueco de la barra de desplazamiento siempre reservado: la Calculadora es más alta que la ventana y Cuenta
+ * no, y sin él la barra aparecía y desaparecía al cambiar de pestaña y movía toda la página a los lados.
+ */
+html {
+  scrollbar-gutter: stable;
+}
 button,
 a,
 input,
@@ -1210,6 +1217,18 @@ p {
   gap: 8px;
   min-width: 0;
 }
+/* El Eidolón o la superposición del objeto de la ventana («E2», «S3»): píldora con el acento del tema. */
+.dupe-badge {
+  flex: none;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.4;
+  font-variant-numeric: var(--num-variant);
+}
 .dupe-pop-owner {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1590,6 +1609,7 @@ p {
 }
 input[type='number'],
 input[type='text'],
+input[type='search'],
 select {
   font: inherit;
   /* Cifras como en el resto de la app (ver --num-variant). */
@@ -2264,13 +2284,10 @@ tfoot td {
   padding-bottom: calc(6px + var(--input-nudge));
 }
 /*
- * La etiqueta del dupe y el nombre pintado encima, a la altura del texto del input (no del centro del
- * recuadro). El texto del input queda a (relleno de arriba − relleno de abajo) / 2 = 6px − nudge del
- * centro; así el nombre no salta al entrar a escribir, en ningún tema.
+ * El nombre pintado encima, a la altura del texto del input (no del centro del recuadro). El texto del input
+ * queda a (relleno de arriba − relleno de abajo) / 2 = 6px − nudge del centro; así el nombre no salta al
+ * entrar a escribir, en ningún tema.
  */
-.pull-field .combo-badge {
-  top: calc(50% + 6.5px - var(--input-nudge));
-}
 .pull-field .combo-value {
   top: calc(50% + 6px - var(--input-nudge));
 }
@@ -2297,7 +2314,7 @@ tfoot td {
 /*
  * Nombre elegido, pintado encima del campo mientras no se escribe en él (el texto del input queda
  * transparente): así no lo mueve un carácter de otra fuente, como la ★ (ver NameCombobox). Empieza donde
- * el texto del input (borde + relleno) y se corta con puntos suspensivos antes del dupe.
+ * el texto del input (borde + relleno) y se corta con puntos suspensivos.
  */
 .combo.is-masked input[type='text'] {
   color: transparent;
@@ -2313,33 +2330,6 @@ tfoot td {
   overflow: hidden;
   text-overflow: ellipsis;
   pointer-events: none;
-}
-.combo.has-badge .combo-value {
-  right: calc(3rem + 1px);
-}
-/* Etiqueta dentro del campo, a la derecha (el dupe); el nombre largo se corta antes de llegar a ella. */
-.combo-badge {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  pointer-events: none;
-}
-.combo.has-badge input[type='text'] {
-  padding-right: 3rem;
-}
-/* Dupe de una fila ("E1"): píldora con el acento del tema, aparte del nombre. */
-.dupe-badge {
-  flex: none;
-  padding: 1px 6px;
-  border-radius: 999px;
-  background: var(--accent-soft);
-  color: var(--accent-text);
-  font-size: 0.875rem;
-  font-weight: 700;
-  line-height: 1.4;
-  font-variant-numeric: var(--num-variant);
 }
 .combo-list {
   position: absolute;
@@ -2620,49 +2610,335 @@ tfoot td {
   font-size: 0.875rem;
   color: var(--danger);
 }
-/* Cuenta: importación del perfil (columna estrecha) y lista de personajes con su Eidolón. */
-.account-import p.muted:not(.small) {
+/* Cuenta: importación del perfil (columna estrecha) y lista de los 5★ para marcar los que se tienen. */
+.account-import p.muted {
   font-size: 0.875rem;
 }
 .account-message {
+  margin-top: var(--space-2);
   font-size: 0.875rem;
   color: var(--text-secondary);
 }
 .account-message.is-error {
   color: var(--danger);
 }
-/* Varias columnas de personajes según el ancho; cada fila, nombre a la izquierda y Eidolón a la derecha. */
-.account-list {
+/*
+ * Arriba el buscador, solo y a su ancho (20rem): es lo principal para encontrar a alguien en una lista larga.
+ * Debajo, los filtros que recortan la lista, juntos: las vías y «Ver sólo obtenidos» (que baja si no cabe).
+ */
+.account-tools {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-  gap: 6px 20px;
+  gap: var(--space-3);
+}
+.account-tools .account-search {
+  width: 100%;
+  max-width: 20rem;
+}
+.account-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+}
+/*
+ * Filtro por vías: el control segmentado del selector de tema, con «Todas» y el icono de cada vía. Los iconos,
+ * a 20px y con algo menos de relleno que el texto, para que todas las opciones midan lo mismo de alto.
+ */
+.path-filter {
+  flex-wrap: wrap;
+  /*
+   * 4px entre opciones y no los 2px del selector de tema: aquí se pulsan varias seguidas, y sus aros (1px por
+   * fuera de cada una) se tocaban y parecían montadas.
+   */
+  gap: var(--space-1);
+}
+.path-option {
+  padding: 3px 8px;
+}
+.path-option .path-icon {
+  width: 20px;
+  height: 20px;
+}
+/*
+ * En una tarjeta estrecha (móvil) el filtro no cabe en una línea: sin el fondo de pastilla, que partido en dos se
+ * deformaba, los botones bajan de línea como un grupo de etiquetas, cada uno con su aro al marcarlo.
+ */
+@container account (max-width: 30rem) {
+  .account-tools .path-filter {
+    padding: 0;
+    background: none;
+    border: none;
+  }
+}
+.account-count {
+  font-variant-numeric: var(--num-variant);
+}
+/*
+ * Un grupo por vía: su encabezado (icono, nombre y cuántos se tienen) y sus personajes debajo. El encabezado es
+ * el h3 de grupo de la app, como los de las fuentes de ingresos (misma letra en cada tema), con la misma línea
+ * fina debajo (--grid) a la misma distancia (6px). Entre grupos, 28px y no los 20px de las fuentes: aquí cada
+ * vía tiene muchas filas juntas y el encabezado, con su icono grande, tiene que leerse como de su grupo.
+ */
+.account-groups {
+  display: grid;
+  gap: calc(var(--space-5) + var(--space-2));
+}
+.account-group {
+  display: grid;
+  gap: var(--space-2);
+}
+.account-path {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--grid);
+}
+/*
+ * El icono de la vía de StarRailRes es blanco: se usa como máscara para que tome el color del encabezado. En
+ * em, para que guarde la proporción con la letra de cada tema: unos 32px con los 12px de Aha.
+ */
+.path-icon {
+  flex: none;
+  width: 2.625em;
+  height: 2.625em;
+  background-color: currentColor;
+  -webkit-mask: var(--path-icon) center / contain no-repeat;
+  mask: var(--path-icon) center / contain no-repeat;
+}
+.account-path-count {
+  margin-left: auto;
+  font-variant-numeric: var(--num-variant);
+  letter-spacing: 0;
+  text-transform: none;
+}
+/*
+ * Todos los 5★ en varias columnas según el ancho: retrato y nombre a la izquierda, Eidolones justo después.
+ * Cada columna mide lo que una fila (--account-row-w: el nombre más largo, el retrato, sus huecos y los 135px
+ * de los cristales) y se reparten a los bordes: la primera pegada a la izquierda, como el buscador, y la última
+ * acabando bajo el contador de la vía; lo que sobra queda en medio.
+ */
+.account-characters {
+  container: account / inline-size;
+}
+.account-list {
+  --account-name-w: 8rem;
+  /* 48px: en la escala de 8 y por encima de los 44px que pide un objetivo táctil (el botón es retrato y nombre). */
+  --account-portrait: 3rem;
+  --account-row-w: calc(var(--account-name-w) + var(--account-portrait) + 2 * var(--space-2) + 135px);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, var(--account-row-w));
+  justify-content: space-between;
+  /*
+   * 8px entre filas y no los 6px de las demás listas: estas miden 48px (el retrato) y la pastilla del Eidolón
+   * sobresale 3px por debajo, que con 6px casi tocaba el retrato de la fila siguiente.
+   */
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/*
+ * Si solo cabe una columna (dos filas y su hueco: 2 × ~21rem + 1rem en Sparxie, algo menos en Aha), la fila
+ * ocupa todo el ancho y los cristales van al borde derecho, bajo el contador, como la última columna en escritorio.
+ */
+@container account (max-width: 44rem) {
+  .account-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .account-row {
+    justify-content: space-between;
+  }
 }
 .account-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   min-width: 0;
 }
-.account-name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.account-eidolon {
-  display: inline-flex;
+/*
+ * Retrato y nombre, un solo botón: marca o desmarca que se tiene. Los que no se tienen, apagados. Ancho fijo,
+ * el del nombre más largo (--account-name-w) con el retrato: los cristales quedan justo después y alineados
+ * en todas las filas. En pantallas estrechas encoge.
+ */
+.account-who {
+  display: flex;
+  flex: 0 1 calc(var(--account-name-w) + var(--account-portrait) + var(--space-2));
   align-items: center;
-  gap: 4px;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.account-who:hover,
+.is-owned .account-who {
+  color: var(--text);
+}
+/*
+ * Retrato con, en su esquina de abajo a la derecha, el Eidolón («E2»): el que se tiene en Cuenta y el que da
+ * cada dupe en la planificación. Va en un envoltorio porque el retrato recorta lo que se sale.
+ */
+.avatar {
+  position: relative;
   flex: none;
-  color: var(--text-secondary);
 }
-/* Ancho fijo: una cifra y las flechas. */
-.account-eidolon .field {
-  width: 4.25rem;
+/*
+ * Como las insignias de las fichas del juego: una pastilla pequeña en el color del texto (no en el acento, que
+ * es para los avisos), con un aro del fondo de la tarjeta que la separa de la cara. Sale un poco del retrato.
+ * Las proporciones de la maqueta que eligió el usuario (alta y con aire a los lados), con la letra a 12px, el
+ * mínimo de la escala.
+ */
+.eidolon-badge {
+  position: absolute;
+  right: -6px;
+  bottom: -3px;
+  padding: 0 4px;
+  border: 2px solid var(--surface);
+  border-radius: 999px;
+  background: var(--text);
+  color: var(--surface);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.5;
+  font-variant-numeric: var(--num-variant);
 }
-.account-eidolon input {
-  text-align: right;
+/* Como la miniatura del planificador, en pequeño: el icono del tipo debajo por si la imagen no carga. */
+.account-portrait {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--account-portrait);
+  height: var(--account-portrait);
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--surface-2);
+  color: var(--text-muted);
+}
+.account-portrait img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 0;
+  transform: scale(1.25);
+}
+.account-row:not(.is-owned) .account-portrait img {
+  filter: grayscale(1);
+  opacity: 0.4;
+}
+/*
+ * El icono de reserva (la silueta) solo para cuando la imagen no carga: con ella cargada se oculta, que en los
+ * que no se tienen (retrato semitransparente) se transparentaba encima de la cara.
+ */
+.account-portrait:has(img.is-loaded) .glyph {
+  visibility: hidden;
+}
+/*
+ * Los nombres largos («Dan Heng - Imbibitor Lunae») pasan a una segunda línea en vez de llegar hasta los
+ * cristales: como mucho --account-name-w de ancho, con las dos líneas equilibradas; caben en el alto del
+ * retrato. Si ni así caben, «…» en la segunda.
+ */
+.account-name {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  min-width: 0;
+  max-width: var(--account-name-w);
+  overflow: hidden;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+/*
+ * Los seis Eidolones como trozos de cristal (EidolonShards.tsx), colocados en zigzag dentro de su caja. Cada
+ * botón es una columna con todo el alto del grupo (unos 22 × 39): se pulsa cómodo con el dedo y el ratón no
+ * lo pierde al seguir el zigzag.
+ */
+.eidolon-shards {
+  position: relative;
+  flex: none;
+  width: 135px;
+  height: 39px;
+}
+.eidolon-shard {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.eidolon-shard svg {
+  position: absolute;
+  overflow: visible;
+}
+/* Un poco de transición al iluminarse y al marcarse, para que no cambie de golpe. */
+@media (prefers-reduced-motion: no-preference) {
+  .eidolon-shard {
+    transition: opacity 150ms ease;
+  }
+  .shard-face,
+  .shard-side {
+    transition:
+      fill 150ms ease,
+      stroke 150ms ease;
+  }
+}
+/*
+ * Sin marcar, en contorno: apagado si no se tiene el personaje y claro si se tiene (E0). La cara tapa los
+ * cantos de detrás con el fondo de la tarjeta.
+ */
+.shard-face,
+.shard-side {
+  stroke: var(--axis);
+  stroke-linejoin: round;
+}
+.shard-face {
+  fill: var(--surface);
+  stroke-width: 1.2;
+}
+.shard-side {
+  fill: none;
+  stroke-width: 1;
+}
+.is-owned :is(.shard-face, .shard-side) {
+  stroke: var(--text-muted);
+}
+/* Marcado: la cara en el color del texto y el canto en una mezcla con el fondo, como el grosor del cristal. */
+.eidolon-shard[aria-pressed='true'] .shard-face {
+  fill: var(--text);
+  stroke: none;
+}
+.eidolon-shard[aria-pressed='true'] .shard-side {
+  --shard-edge: color-mix(in srgb, var(--text) 65%, var(--surface));
+  fill: var(--shard-edge);
+  stroke: var(--shard-edge);
+  stroke-width: 0.4;
+}
+/*
+ * Al pasar el ratón se ve lo que quedaría marcado: se iluminan el cristal y todos los de antes (de E0 a E2 se
+ * iluminan E1 y E2), y los marcados de después se apagan un poco porque se desmarcarían. Solo con ratón: en
+ * táctil el hover se quedaría pegado tras el toque.
+ */
+@media (hover: hover) {
+  :is(.eidolon-shard:hover, .eidolon-shard:has(~ .eidolon-shard:hover)):not([aria-pressed='true']) :is(.shard-face, .shard-side) {
+    stroke: var(--text);
+  }
+  .eidolon-shard:hover ~ .eidolon-shard[aria-pressed='true'] {
+    opacity: 0.45;
+  }
 }
 .pull-row.is-short .pull-name {
   border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
@@ -3450,6 +3726,15 @@ tfoot td {
   letter-spacing: 0.03em;
   color: var(--text-secondary);
 }
+/* VT323 es más baja que su tamaño (17px): con la proporción de Aha, el icono de la vía la doblaba. */
+:where(:root[data-skin='sparxie']) .path-icon {
+  width: 2em;
+  height: 2em;
+}
+/* Courier es más ancha: «Permansor Terrae» (16 letras) tiene que caber en una línea. */
+:where(:root[data-skin='sparxie']) .account-list {
+  --account-name-w: 8.75rem;
+}
 :where(:root[data-skin='sparxie']) .app-header::after {
   display: none;
 }
@@ -3638,7 +3923,7 @@ tfoot td {
 :where(:root[data-skin='sparxie']) .pull-row.is-dragging::before {
   border-radius: 3px;
 }
-:where(:root[data-skin='sparxie']) :is(.combo-option, .dupe-badge) {
+:where(:root[data-skin='sparxie']) :is(.combo-option, .dupe-badge, .eidolon-badge) {
   border-radius: 2px;
 }
 :where(:root[data-skin='sparxie']) :is(input, select):focus {

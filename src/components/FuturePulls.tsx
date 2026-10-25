@@ -44,7 +44,6 @@ import {
 import type { AppState, PlannedPull, PullKind } from '../engine/types';
 import { newId } from '../engine/util';
 import { withSettings, type ChangeState } from '../state/store';
-import { DupeBadge } from './DupeBadge';
 import { fmtInt } from './format';
 import { Icon } from './Icon';
 import { KIND_GLYPH, KIND_LABEL } from './kinds';
@@ -389,37 +388,45 @@ function SortablePullRow({
 
       {/*
         Miniatura: el retrato (o el icono del cono) tapa el icono del tipo, que queda debajo para las filas
-        sin nombre o si la imagen no carga. El tipo se elige al añadir la fila y no se cambia.
+        sin nombre o si la imagen no carga. El tipo se elige al añadir la fila y no se cambia. Si la fila es un
+        dupe, su Eidolón va en la esquina, como en la pestaña Cuenta (fuera del recorte de la miniatura).
       */}
-      <span className={`pull-portrait pull-portrait-${pull.kind}`} aria-hidden="true">
-        <span className={`glyph ${KIND_GLYPH[pull.kind]}`} />
-        {portrait && (
-          <img
-            key={portrait.join(' ')}
-            src={portrait[0]}
-            alt=""
-            // Como en la galería (que la pide en modo CORS por la máscara): el icono del cono se descarga una vez.
-            crossOrigin="anonymous"
-            // El tamaño lo pone el CSS (el hueco de la miniatura); estos evitan saltos al cargar.
-            width={54}
-            height={54}
-            loading="lazy"
-            decoding="async"
-            draggable={false}
-            // Cargada: el cono quita entonces su fondo (ver .pull-portrait-lightCone en styles.css).
-            onLoad={(e) => e.currentTarget.classList.add('is-loaded')}
-            // Si falla, prueba la siguiente URL; agotadas, se oculta y deja ver el icono del tipo.
-            onError={(e) => {
-              const img = e.currentTarget;
-              const next = Number(img.dataset.fallback ?? 0) + 1;
-              if (next < portrait.length) {
-                img.dataset.fallback = String(next);
-                img.src = portrait[next];
-              } else {
-                img.style.visibility = 'hidden';
-              }
-            }}
-          />
+      <span className="avatar">
+        <span className={`pull-portrait pull-portrait-${pull.kind}`} aria-hidden="true">
+          <span className={`glyph ${KIND_GLYPH[pull.kind]}`} />
+          {portrait && (
+            <img
+              key={portrait.join(' ')}
+              src={portrait[0]}
+              alt=""
+              // Como en la galería (que la pide en modo CORS por la máscara): el icono del cono se descarga una vez.
+              crossOrigin="anonymous"
+              // El tamaño lo pone el CSS (el hueco de la miniatura); estos evitan saltos al cargar.
+              width={54}
+              height={54}
+              loading="lazy"
+              decoding="async"
+              draggable={false}
+              // Cargada: el cono quita entonces su fondo (ver .pull-portrait-lightCone en styles.css).
+              onLoad={(e) => e.currentTarget.classList.add('is-loaded')}
+              // Si falla, prueba la siguiente URL; agotadas, se oculta y deja ver el icono del tipo.
+              onError={(e) => {
+                const img = e.currentTarget;
+                const next = Number(img.dataset.fallback ?? 0) + 1;
+                if (next < portrait.length) {
+                  img.dataset.fallback = String(next);
+                  img.src = portrait[next];
+                } else {
+                  img.style.visibility = 'hidden';
+                }
+              }}
+            />
+          )}
+        </span>
+        {dupe !== null && (
+          <Tip className="eidolon-badge" content={`Eidolón ${dupe}: copia número ${dupe + 1} de este personaje`}>
+            E{dupe}
+          </Tip>
         )}
       </span>
 
@@ -433,7 +440,7 @@ function SortablePullRow({
         </span>
         {/*
           Su probabilidad, en la línea del tipo, a la derecha: la respuesta a «¿llego?» junto al objetivo.
-          Con las probabilidades reales (no usa la casilla «Gano 50/50»).
+          Con las probabilidades reales (no usa la casilla «50/50 ganado»).
         */}
         <Tip className="pull-chance" content="Probabilidad de tenerlo, junto con todos los anteriores">
           <span className="sr-only">Probabilidad: </span>
@@ -444,7 +451,6 @@ function SortablePullRow({
           value={pull.name}
           entries={suggestions}
           aria-label={`Nombre (${KIND_LABEL[pull.kind].toLowerCase()})`}
-          badge={dupe !== null && <DupeBadge eidolon={dupe} />}
           onChange={(name) => onUpdate({ name })}
           autoFocus={autoFocus}
         />
@@ -466,12 +472,12 @@ function SortablePullRow({
           type="checkbox"
           checked={row.guaranteed || pull.winsFiftyFifty}
           disabled={row.guaranteed}
-          aria-label={row.guaranteed ? `${label}: garantizado, se gana seguro` : `${label}: gano el 50/50`}
+          aria-label={row.guaranteed ? `${label}: garantizado, se gana seguro` : `${label}: 50/50 ganado`}
           onChange={(e) => onUpdate({ winsFiftyFifty: e.target.checked })}
         />
         <span className="swap">
           <span className={row.guaranteed ? undefined : 'invisible'}>Garantizado</span>
-          <span className={row.guaranteed ? 'invisible' : undefined}>Gano 50/50</span>
+          <span className={row.guaranteed ? 'invisible' : undefined}>50/50 ganado</span>
         </span>
       </label>
 
