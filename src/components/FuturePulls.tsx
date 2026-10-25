@@ -424,9 +424,7 @@ function SortablePullRow({
           )}
         </span>
         {dupe !== null && (
-          <Tip className="eidolon-badge" content={`Eidolón ${dupe}: copia número ${dupe + 1} de este personaje`}>
-            E{dupe}
-          </Tip>
+          <span className="eidolon-badge">E{dupe}</span>
         )}
       </span>
 
@@ -442,10 +440,10 @@ function SortablePullRow({
           Su probabilidad, en la línea del tipo, a la derecha: la respuesta a «¿llego?» junto al objetivo.
           Con las probabilidades reales (no usa la casilla «50/50 ganado»).
         */}
-        <Tip className="pull-chance" content="Probabilidad de tenerlo, junto con todos los anteriores">
+        <span className="pull-chance">
           <span className="sr-only">Probabilidad: </span>
           {chance}
-        </Tip>
+        </span>
         <NameCombobox
           inputClassName="pull-name"
           value={pull.name}
