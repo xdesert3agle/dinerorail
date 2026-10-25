@@ -1,25 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { guaranteedNeeded, planOdds, simulatePlan } from './odds';
-import { BANNERS, fiveStarChance } from './rules';
+import { fiveStarChance, fiveStarRate } from './rules';
 import type { PlannedPull, PullKind } from './types';
 
 const pull = (id: string, kind: PullKind): PlannedPull => ({ id, name: id, kind, winsFiftyFifty: false });
 
-/** Tiradas medias hasta un 5★ según el modelo: suma de la probabilidad de seguir sin él. */
-function meanPullsTo5Star(kind: PullKind): number {
-  let survive = 1;
-  let mean = 0;
-  for (let n = 1; n <= BANNERS[kind].hardPity; n++) {
-    mean += survive;
-    survive *= 1 - fiveStarChance(kind, n);
-  }
-  return mean;
-}
-
 describe('probabilidades', () => {
   it('el modelo reproduce las tasas consolidadas oficiales (1,6 % personaje, 1,87 % cono)', () => {
-    expect(1 / meanPullsTo5Star('character')).toBeCloseTo(0.016, 3);
-    expect(1 / meanPullsTo5Star('lightCone')).toBeCloseTo(0.0187, 3);
+    expect(fiveStarRate('character')).toBeCloseTo(0.016, 3);
+    expect(fiveStarRate('lightCone')).toBeCloseTo(0.0187, 3);
   });
 
   it('el pity duro garantiza el 5★', () => {

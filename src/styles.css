@@ -492,6 +492,43 @@ p {
 .invisible {
   visibility: hidden;
 }
+/*
+ * Colores de rareza del juego (Rarity.tsx): el morado de las cartas 4★ y el dorado de las 5★. Son del juego, como
+ * sus iconos, no avisos, así que valen para todos los temas. Pintan la cifra y la estrella juntas (con la cifra en
+ * tinta, el salto de colores junto a la estrella era fuerte), así que como texto: ≥ 4,5:1 con la tarjeta. En claro,
+ * un punto más oscuros que los del juego (morado 5,5:1, dorado 4,71:1); en oscuro, 7,23:1 y 9,13:1. Morado y
+ * dorado se separan también por luminosidad, no solo por tono.
+ */
+:root {
+  --rarity-4: #7a4fcc;
+  --rarity-5: #9a6a1f;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --rarity-4: #b39af0;
+    --rarity-5: #e8b45a;
+  }
+}
+:root[data-theme='dark'] {
+  --rarity-4: #b39af0;
+  --rarity-5: #e8b45a;
+}
+.rarity {
+  white-space: nowrap;
+}
+.rarity-4 {
+  color: var(--rarity-4);
+}
+.rarity-5 {
+  color: var(--rarity-5);
+}
+.rarity-star {
+  width: 0.85em;
+  height: 0.85em;
+  margin-left: 1px;
+  vertical-align: -0.05em;
+  fill: currentColor;
+}
 /* Textos alternativos apilados en el mismo hueco: ocupa lo que el más ancho y no salta al cambiar. */
 .swap {
   display: inline-grid;
@@ -533,7 +570,7 @@ p {
   gap: 2px;
 }
 /*
- * "Contar Esquirlas💠 como Jades💎": la imagen de la Esquirla casi no tiene margen y la del Jade trae unos
+ * "Convertir Esquirlas💠 en Jades💎": la imagen de la Esquirla casi no tiene margen y la del Jade trae unos
  * 2px transparentes a cada lado (medido); con este margen, los dos iconos quedan igual de separados de su palabra.
  */
 .shards-as-jades > .icon:first-of-type {
@@ -1523,6 +1560,24 @@ p {
   font-family: 'Card Characters', system-ui, sans-serif;
   font-weight: 400;
 }
+/*
+ * Los totales de Esquirlas de los paquetes (cada fila y la fila Total): son resultados, como los costes de la
+ * planificación, así que con su misma voz. La letra solo tiene un peso: con compras, la tinta los distingue de
+ * las filas vacías (en gris).
+ */
+:root[data-skin='aha'] .pack-total {
+  font-family: 'Card Characters', system-ui, sans-serif;
+  font-weight: 400;
+}
+/* Sus cifras son de ancho fijo y más anchas: «999.999» mide 81,9px a 18px y 63,7px a 14px (móvil). */
+:root[data-skin='aha'] .pack-total-value {
+  min-width: 5.125rem;
+}
+@media (max-width: 560px) {
+  :root[data-skin='aha'] .pack-total-value {
+    min-width: 4rem;
+  }
+}
 :root[data-skin='aha'] .hero-value {
   font-family: 'Card Characters', system-ui, sans-serif;
   /* 56px fijos (no crece ni encoge con la ventana como en los otros temas). */
@@ -1612,7 +1667,73 @@ p {
   line-height: 1.45;
   text-align: left;
   white-space: pre-line;
+}
+/*
+ * Se puede recorrer con el puntero (WCAG 1.4.13; Tip.tsx la mantiene abierta encima), salvo mientras se funde
+ * al cerrarse: entonces no debe tapar el clic de lo que hay debajo.
+ */
+.tip.is-leaving {
   pointer-events: none;
+}
+/* Una lista de equivalencias dentro de la burbuja (con iconos): una por línea, con aire arriba y abajo. */
+.tip-lines {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  /*
+   * Proximidad: pegada a su título (4px, como su cabecera) y separada del bloque siguiente (12px). Con 8px en
+   * los dos lados, cada título quedaba a medio camino entre su tabla y el bloque anterior.
+   */
+  margin: var(--space-1) 0 var(--space-3);
+}
+/*
+ * Equivalencias en columnas (qué · cifra con su icono; .tip-table-3 añade una tercera): las cifras alineadas a la
+ * derecha, en cifras tabulares, para compararlas de un vistazo. Sin «=»: la etiqueta en color y la cifra cerca
+ * bastan para leer cada fila, y el único «=» queda para la conversión, que sí es una ecuación.
+ */
+.tip-table {
+  display: grid;
+  grid-template-columns: auto auto;
+  column-gap: 6px;
+  row-gap: 2px;
+  align-items: center;
+  /* Columnas a su medida, sin repartir el ancho que sobra de la burbuja. */
+  justify-content: start;
+}
+.tip-table-3 {
+  grid-template-columns: auto auto auto;
+}
+.tip-table-row {
+  display: contents;
+}
+/*
+ * Una cuenta (el balance de la planificación): la raya de la suma, de lado a lado de la tabla, y el resultado en
+ * el peso de los resultados.
+ */
+.tip-table-sum {
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--axis);
+  margin: 2px 0;
+}
+.tip-table-total {
+  font-weight: 700;
+}
+/* La columna de los signos, con más aire respecto al concepto (12px en total): pegada, «reinvertida +» se leía junto. */
+.tip-table-sign {
+  margin-left: calc(var(--space-3) - 6px);
+}
+/* Una tabla que cierra la burbuja: aire arriba, como .tip-lines, pero no abajo. */
+.tip-lines-last {
+  margin-top: var(--space-1);
+}
+.tip-table-value {
+  justify-self: end;
+  font-variant-numeric: var(--num-variant);
+}
+/* La regla que abre la burbuja (la conversión a tiradas): una línea propia, con el aire de un bloque debajo. */
+.tip-rule {
+  display: flex;
+  margin-bottom: var(--space-3);
 }
 .tip[hidden] {
   display: none;
@@ -2158,10 +2279,17 @@ select:focus {
  * así queda centrado aunque la pantalla o el zoom estén al 125 % (con un elemento a 2px
  * del borde, el redondeo de medio píxel lo dejaba un píxel más abajo).
  */
+/*
+ * Apagado: pista hueca, con el contorno y el botón en --text-muted (≥ 4,9:1 con la tarjeta, por encima del 3:1
+ * de WCAG 1.4.11; la pista rellena de --axis daba 1,7:1 y el botón blanco casi desaparecía en claro).
+ * Encendido, rellena: el estado se distingue también por la forma, no solo por el color.
+ */
 .switch span {
+  --knob: var(--text-muted);
   position: absolute;
   inset: 0;
-  background-color: var(--axis);
+  background-color: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--text-muted);
   background-image: radial-gradient(circle closest-side, var(--knob) calc(100% - 2.5px), transparent calc(100% - 2px));
   background-size: 20px 100%;
   background-position: 0 50%;
@@ -2173,6 +2301,7 @@ select:focus {
   .switch span {
     transition:
       background-color 0.15s,
+      box-shadow 0.15s,
       background-position 0.15s;
   }
 }
@@ -2183,13 +2312,25 @@ select:focus {
 .switch input:checked + span {
   --knob: var(--switch-knob-on, var(--surface));
   background-color: var(--switch-on, var(--text));
+  box-shadow: none;
   background-position: 100% 50%;
 }
 .switch input:focus-visible + span {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-/* Interruptor con etiqueta (opciones): el input ocupa todo el interruptor, no los 16px de .check. */
+/*
+ * Interruptor con etiqueta: solo tan ancho como su texto, no toda la fila (en una rejilla, la etiqueta se
+ * estiraba y un clic en el hueco de su derecha lo cambiaba). Con explicación, lo envuelve el Tip.
+ */
+.toggle,
+.toggle-tip {
+  justify-self: start;
+}
+.toggle-tip {
+  display: flex;
+}
+/* El input ocupa todo el interruptor, no los 16px de .check. */
 .toggle .switch {
   flex: none;
 }
@@ -2612,6 +2753,13 @@ tfoot td {
   align-items: center;
   column-gap: 8px;
   row-gap: 2px;
+}
+/* «Cosmiluz» con su icono pegado (2px, como .with-icon-tight) y sin corte entre los dos. */
+.refund-word {
+  white-space: nowrap;
+}
+.refund-word .icon {
+  margin-left: 2px;
 }
 /*
  * La cifra, 1px más abajo (medido sobre la tinta, en Aha y Sparxie): centrada en la pastilla quedaba 1,2px alta
@@ -3282,21 +3430,28 @@ tfoot td {
 .pack-price {
   font-variant-numeric: var(--num-variant);
 }
+/*
+ * Dos pesos en la tarjeta: 400 para los datos de cada paquete y 700 para los resultados (el total de cada fila
+ * con compras y la fila Total). Explícito y no por <strong>: dentro de la fila Total, «bolder» daba 900, que
+ * Figtree no carga (llega a 700) y se pintaba igual que las filas.
+ */
 .pack-total {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  font-size: 1.125rem;
+  font-weight: 700;
   font-variant-numeric: var(--num-variant);
 }
 /*
  * Hueco fijo para 6 cifras con punto de miles (999.999): la columna no cambia de ancho.
- * Medido en negrita: 68,7px en Figtree y 71,4px en Courier Prime (Sparxie), así que 72px.
+ * Medido en negrita a 18px, la talla de la suma (la más ancha de la columna): 72,7px en Figtree con «108.780» (99 compras; el 1 y el 0 son más anchos que el
+ * «999.999» medido antes, 68,7px) y 75,6px en Courier Prime (Sparxie), así que 76px. Aha, con la letra de
+ * naipe, tiene el suyo (con sus demás reglas de letra de naipe).
  */
 .pack-total-value {
   /* En rem y no en ch: las filas vacías no van en negrita y su "ch" es más estrecho. */
-  min-width: 4.5rem;
+  min-width: 4.75rem;
 }
 .pack-price {
   color: var(--text-secondary);
@@ -3313,17 +3468,22 @@ tfoot td {
 .pack-header > :nth-child(2) {
   justify-self: end;
 }
+/* «por compra» tras la cifra: solo en el móvil, donde la columna no tiene título encima. */
+.pack-per {
+  display: none;
+}
 /*
  * En móvil, dos líneas por paquete: en seis columnas el nombre y el precio se pisaban.
- * Arriba, nombre y precio (el € ya dice qué es); debajo, por compra · cantidad · x2 · total, que son las
- * cifras que necesitan título: la cabecera solo enseña esos cuatro. Pack y Precio siguen en la tabla para
- * los lectores de pantalla (ocultos como .sr-only, fuera de la rejilla).
+ * Arriba, los datos del paquete: nombre · precio · Esquirlas por compra (con «por compra» escrito); debajo, lo
+ * que se rellena: cantidad · ×2 · total. Sin cabecera visible: sus títulos caían sobre la línea de arriba
+ * («Cantidad» sobre el precio), y cada línea ya se explica sola (el campo, la casilla, el icono). La cabecera
+ * sigue en la tabla para los lectores de pantalla.
  * Corta en 720px: por debajo, en seis columnas el nombre ya ocupaba dos o tres líneas.
  */
 @media (max-width: 720px) {
-  /* Por compra, cantidad y x2 juntos a la izquierda; el total, a la derecha. */
+  /* Columnas: nombre o cantidad · precio o ×2 · por compra o total. */
   .pack-list {
-    grid-template-columns: auto 4rem auto minmax(0, 1fr);
+    grid-template-columns: auto auto minmax(0, 1fr);
     column-gap: var(--space-3);
     row-gap: 0;
   }
@@ -3335,9 +3495,6 @@ tfoot td {
     border-top: 1px solid var(--grid);
   }
   .pack-header {
-    padding-bottom: 4px;
-  }
-  .pack-header > :nth-child(-n + 2) {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -3345,39 +3502,56 @@ tfoot td {
     clip: rect(0 0 0 0);
     white-space: nowrap;
   }
-  /*
-   * Arriba, el nombre y su precio juntos a la izquierda (el precio en gris: es un dato del paquete). La columna
-   * de la derecha queda para los totales, bajo su título.
-   */
   .pack-row > .pack-name {
-    grid-area: 1 / 1 / 2 / 2;
+    grid-area: 1 / 1;
   }
   .pack-row > .pack-price {
-    grid-area: 1 / 2 / 2 / 4;
+    grid-area: 1 / 2;
     justify-self: start;
   }
-  /* La fila Total, en una sola línea: el total de Esquirlas sube a la de los euros, en su columna. */
+  .pack-row > .pack-shards {
+    grid-area: 1 / 3;
+    justify-content: flex-start;
+  }
+  .pack-per {
+    display: inline;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+  }
+  /* La cantidad bajo el nombre, con su ancho (la columna es la del nombre, más ancha). */
+  .pack-row > :nth-child(4) {
+    grid-area: 2 / 1;
+    justify-self: start;
+    width: 4rem;
+  }
+  .pack-row > :nth-child(5) {
+    grid-area: 2 / 2;
+  }
+  .pack-row > .pack-total {
+    grid-area: 2 / 3;
+    justify-self: end;
+  }
+  /*
+   * La fila Total, en una sola línea: el total de Esquirlas sube a la de los euros, en su columna. Su precio
+   * (en negrita y más largo) se extiende sobre la tercera columna para no ensanchar la de los precios: a 360px,
+   * «por compra» se partía en dos líneas.
+   */
   .pack-list .pack-row.pack-footer > .pack-total {
     grid-row: 1;
-    grid-column: 4;
+  }
+  .pack-list .pack-row.pack-footer > .pack-price {
+    grid-column: 2 / 4;
+  }
+  .pack-shards {
+    white-space: nowrap;
   }
   .pack-footer > span:empty {
     display: none;
   }
-  .pack-row > .pack-total,
-  .pack-header > :last-child {
-    justify-self: end;
-  }
-  .pack-row:not(.pack-header) > :nth-child(n + 3) {
-    grid-row: 2;
-  }
-  .pack-shards {
-    justify-content: flex-start;
-  }
 }
 @media (max-width: 560px) {
-  .pack-list {
-    grid-template-columns: auto 3.75rem auto minmax(0, 1fr);
+  .pack-row > :nth-child(4) {
+    width: 3.75rem;
   }
   .pack-row {
     font-size: 0.875rem;
@@ -3385,12 +3559,28 @@ tfoot td {
   .pack-row input[type='number'] {
     padding: calc(6px - var(--input-nudge)) 6px calc(6px + var(--input-nudge));
   }
-  .pack-total {
+  /* Aquí todos a la talla de la fila, también la suma: en el móvil la fila Total ya va aparte, en su línea. */
+  .pack-list .pack-row.pack-footer .pack-total {
     font-size: 0.875rem;
   }
   /* Hueco para 5 cifras con punto (medido a 15px: 60,6px en Figtree; a 14px sobra; Sparxie, 56,7px). */
   .pack-total-value {
     min-width: 3.875rem;
+  }
+}
+/*
+ * En los móviles más estrechos «por compra» no cabe junto a la cifra (a 360px cabe; a 320px la tarjeta
+ * desbordaba 19px): baja a una línea propia dentro de su celda, bajo la cifra (18px del icono + 6 de hueco).
+ */
+@media (max-width: 350px) {
+  .pack-row > .pack-shards {
+    flex-wrap: wrap;
+    row-gap: 0;
+  }
+  .pack-per {
+    flex-basis: 100%;
+    padding-left: 24px;
+    line-height: 1.2;
   }
 }
 .pack-row.is-empty .pack-total {
@@ -3401,19 +3591,69 @@ tfoot td {
 .pack-row.is-empty .pack-total .icon {
   opacity: 0.4;
 }
-/* Fila de total: separada de los paquetes por la línea fuerte (como el balance de la planificación). */
+/*
+ * Fila de total: separada de los paquetes por la línea fuerte (como el balance de la planificación), toda en
+ * el peso de los resultados.
+ */
 .pack-row.pack-footer {
   border-top: 1px solid var(--axis);
   padding-top: 8px;
-  font-weight: 600;
+  font-weight: 700;
 }
 .pack-footer .pack-price {
   color: var(--text);
+  font-weight: 700;
 }
-/* Sin compras, el total se apaga entero, como las filas vacías. */
-.pack-footer.is-empty :is(.pack-name, .pack-price) {
+/*
+ * La suma, un paso por encima de los totales de cada fila (que van a la talla de la fila): fila 16 < suma 18 <
+ * cabecera 20. A 18px las de cada fila se veían tan grandes como la suma, sobre todo en la letra de naipe.
+ */
+.pack-row.pack-footer .pack-total {
+  font-size: 1.125rem;
+}
+/*
+ * Sin compras, el total se apaga entero, como las filas vacías. «Total» solo de color, sin cambiar de peso: en
+ * el móvil su columna es automática y la negrita al llegar la primera compra movía las demás 0,9px.
+ */
+.pack-footer.is-empty .pack-name {
+  color: var(--text-muted);
+}
+.pack-footer.is-empty .pack-price {
   color: var(--text-muted);
   font-weight: 400;
+}
+/*
+ * Con «Usar paquetes en el plan» apagado, todos los totales de Esquirlas (cada fila y la fila Total) se
+ * apagan como el de la cabecera (en gris, sin cambiar de peso: las columnas no se mueven). Los precios siguen:
+ * es lo que costarían.
+ */
+.pack-list.is-off .pack-total {
+  color: var(--text-muted);
+}
+.pack-list.is-off .pack-total .icon {
+  opacity: 0.4;
+}
+/*
+ * «España» o «Japón» tras «Total»: de qué tienda son los precios (se elige en Configuración); en gris y sin
+ * negrita. Con .swap, el hueco es el de la palabra más ancha y no cambia.
+ */
+.pack-store {
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+/*
+ * El interruptor del pie, a la derecha, bajo el total de Esquirlas que decide: a la izquierda y con más aire se
+ * leía como un pegote suelto bajo la tabla.
+ */
+.card-packs > :is(.toggle, .toggle-tip) {
+  justify-self: end;
+}
+/* Tienda (Configuración): la etiqueta con su explicación y, debajo, España | Japón. */
+.store-field {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
 }
 .event-row.is-ignored > :not(.event-status):not(.btn) {
   opacity: 0.5;
@@ -4059,7 +4299,9 @@ tfoot td {
 }
 
 /* Interruptor: pista cuadrada con marco y un botón cuadrado, también pintado como degradado. */
+/* Su pista apagada ya contrasta (fondo de chip con marco y botón de tinta): conserva su botón crema. */
 :where(:root[data-skin='sparxie']) .switch span {
+  --knob: inherit;
   border-radius: 3px;
   background-color: var(--chip);
   background-image: linear-gradient(var(--knob), var(--knob)), linear-gradient(var(--ink), var(--ink));

@@ -9,6 +9,7 @@ import { Icon } from './components/Icon';
 import { Odds } from './components/Odds';
 import { PatchTable } from './components/PatchTable';
 import { PitySettings } from './components/PitySettings';
+import { StoreSettings } from './components/StoreSettings';
 import { Breakdown, ResultSummary } from './components/ResultSummary';
 import { ShardPacks } from './components/ShardPacks';
 import { Toast, type ToastMessage } from './components/Toast';
@@ -288,6 +289,7 @@ export default function App() {
             {/* Columna estrecha a la derecha en escritorio; en móvil va arriba del todo. */}
             <aside className="col-aside">
               <ContentSync {...catalogSync} />
+              <StoreSettings state={state} onChange={change} />
             </aside>
             <div className="col-settings">
               <PitySettings state={state} onChange={change} />

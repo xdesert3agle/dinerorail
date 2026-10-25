@@ -1,4 +1,5 @@
 import { WEEKDAYS } from '../engine/dates';
+import { JPY_PER_EUR } from '../engine/packs';
 import type { Schedule } from '../engine/types';
 
 // useGrouping 'always': en es-ES los números de 4 cifras no llevan punto por defecto (6560 pero 12.960).
@@ -9,6 +10,11 @@ const dec1 = nf(1);
 const dec2 = nf(2);
 
 export const fmtInt = (n: number) => int.format(n);
+
+/** El cambio fijo de los precios de Japón, «174,25 ¥/€». */
+export const YEN_RATE = `${new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2 }).format(JPY_PER_EUR)} ¥/€`;
+/** Precios de Japón: se eligen en Configuración (Tienda); en la tarjeta de paquetes solo se avisa. */
+export const YEN_PRICES_TIP = `Precios de Japón (¥) pasados a euros a ${YEN_RATE}`;
 export const fmtSingles = (n: number, digits: 1 | 2 = 2) => (digits === 1 ? dec1 : dec2).format(n);
 /** Singles enteras, las que se pueden tirar: 81,5 son 81 (el margen salva los errores de coma flotante). */
 export const wholeSingles = (n: number) => Math.floor(n + 1e-9);

@@ -62,6 +62,20 @@ export function fiveStarChance(kind: PullKind, n: number): number {
   return Math.min(1, b.base + b.softPityStep * (n - b.softPityFrom + 1));
 }
 
+/**
+ * Probabilidad consolidada de 5★ por tirada, contando el pity (la oficial: 1,6 % personaje, 1,87 % cono):
+ * 1 entre las tiradas medias hasta un 5★, que son la suma de la probabilidad de seguir sin él.
+ */
+export function fiveStarRate(kind: PullKind): number {
+  let survive = 1;
+  let mean = 0;
+  for (let n = 1; n <= BANNERS[kind].hardPity; n++) {
+    mean += survive;
+    survive *= 1 - fiveStarChance(kind, n);
+  }
+  return 1 / mean;
+}
+
 /*
  * Cosmiluz Inextinguible que se recupera al tirar. En la tienda, 20 de Cosmiluz = 1 Pase Especial.
  * - 5★ (personaje repetido o cono): 40. Un personaje 5★ más allá de E6 da 100, pero se supone que no.
@@ -76,6 +90,8 @@ export const STARLIGHT_PER_5_STAR_E6 = 100;
 export const STARLIGHT_PER_4_STAR = { character: 20, lightCone: 8 } as const;
 export const STARLIGHT_PER_PASS = 20;
 export const FOUR_STAR_RATE = 0.13;
+/** Probabilidad base de 4★ por tirada, sin contar el garantizado cada 10 (la publicada por el juego). */
+export const FOUR_STAR_BASE_RATE = 0.051;
 /** Probabilidad de que el 4★ sea el destacado, en cada banner (sin contar el garantizado). */
 export const FOUR_STAR_FEATURED_CHANCE: Record<PullKind, number> = { character: 0.5, lightCone: 0.75 };
 /** Reserva total de 4★ y cuántos están destacados en cada banner (y no salen como no destacados). */

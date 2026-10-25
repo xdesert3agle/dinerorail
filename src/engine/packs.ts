@@ -29,6 +29,9 @@ export function packPrice(pack: ShardPack, inYen = false): number {
   return inYen ? pack.priceJpy / JPY_PER_EUR : pack.price;
 }
 
+/** Compras de un mismo paquete que se pueden apuntar: dos cifras, lo que cabe en su columna. */
+export const MAX_PACK_COUNT = 99;
+
 export const emptyPurchase = (): ShardPackPurchase => ({ count: 0, firstBonus: true });
 
 /** Esquirlas de comprar `count` veces un paquete: si aplica el x2, solo la primera compra lo lleva. */

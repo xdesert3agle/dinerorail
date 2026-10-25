@@ -37,6 +37,8 @@ export function ResultSummary({ result, skin }: { result: Result; skin: Skin }) 
   const { final } = result;
   const Decoration = DECORATION[skin];
   const counted = result.shards > 0 || result.shardsHeld === 0;
+  // Las que se tienen pero no suman: las del inventario con «Convertir Esquirlas en Jades» apagado.
+  const unconverted = result.shardsHeld - result.shards;
   return (
     // Sin aria-live: la tarjeta cambia con cada tecla y el lector de pantalla la repetiría entera.
     <section className="card hero card-summary">
@@ -71,13 +73,19 @@ export function ResultSummary({ result, skin }: { result: Result; skin: Skin }) 
             {fmtInt(final.specialPasses)}
           </dd>
         </div>
-        {/* Las del inventario más las de los paquetes que cuentan («Contar los paquetes», en su tarjeta). */}
+        {/*
+          Las que suman a la cifra: las del inventario si se convierten y las de los paquetes si se cuentan (cada
+          una con su interruptor). Si no suma ninguna, las que se tienen, atenuadas.
+        */}
         <div className="hero-shards">
           <dt>Esquirlas Oníricas</dt>
           <dd className={counted ? undefined : 'is-off'}>
             <Icon kind="shard" size={28} decorative />
-            {fmtInt(result.shardsHeld)}
-            {!counted && <span className="sr-only"> (no se cuentan como Jades)</span>}
+            {fmtInt(counted ? result.shards : result.shardsHeld)}
+            {!counted && <span className="sr-only"> (no se convierten en Jades)</span>}
+            {counted && unconverted > 0 && (
+              <span className="sr-only"> (y {fmtInt(unconverted)} del inventario sin convertir)</span>
+            )}
           </dd>
         </div>
       </dl>

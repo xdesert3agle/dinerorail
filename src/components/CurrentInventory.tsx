@@ -75,13 +75,13 @@ export function CurrentInventory({ state, result, onChange }: Props) {
         <Toggle
           checked={state.settings.includeShards}
           onChange={(includeShards) => onChange(withSettings({ includeShards }))}
-          title="Cada Esquirla Onírica cuenta como 1 Jade"
+          tip="Cada Esquirla Onírica cuenta como 1 Jade"
         >
-          {/* Cada icono pegado a su palabra; el espacio antes de «como», fijo (en flex se recortaría). */}
+          {/* Cada icono pegado a su palabra; el espacio antes de «en», fijo (en flex se recortaría). */}
           <span className="with-icon with-icon-tight shards-as-jades">
-            Contar Esquirlas
+            Convertir Esquirlas
             <Icon kind="shard" size={16} decorative />
-            {' como Jades'}
+            {' en Jades'}
             <Icon kind="jade" size={16} decorative />
           </span>
         </Toggle>
@@ -102,7 +102,7 @@ export function CurrentInventory({ state, result, onChange }: Props) {
             <Toggle
               checked={state.guaranteed[kind]}
               onChange={(v) => setGuaranteed(kind, v)}
-              title="Perdiste el último 50/50: el próximo 5★ será el destacado seguro"
+              tip="Perdiste el último 50/50: el próximo 5★ será el destacado seguro"
             >
               {/* «Siguiente»: solo el próximo 5★ de ese banner es seguro. */}
               {guaranteedLabel}

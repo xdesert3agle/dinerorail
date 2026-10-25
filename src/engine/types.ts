@@ -68,14 +68,19 @@ export type ThemeMode = 'system' | 'light' | 'dark';
 export interface Settings {
   skin: Skin;
   theme: ThemeMode;
+  /**
+   * Convertir en Jades las Esquirlas del inventario («Convertir Esquirlas en Jades», en Recursos actuales).
+   * Solo las del inventario: las de los paquetes las decide `includePacks`.
+   */
   includeShards: boolean;
   /** Descontar de las tiradas futuras la Cosmiluz Inextinguible que se recupera. */
   countStarlight: boolean;
   /** Pagar los paquetes con los precios de Japón, pasados a euros. */
   packsInYen: boolean;
   /**
-   * Contar los paquetes de Esquirlas planificados («Contar los paquetes», en su tarjeta). Apagado, no cuentan en
-   * nada, pero las cantidades se quedan: sirve para ver si se llega sin pagar.
+   * Contar los paquetes de Esquirlas planificados («Usar paquetes en el plan», en su tarjeta). Encendido, sus Esquirlas
+   * se convierten siempre en Jades (se compran para tirar), sin depender de `includeShards`. Apagado, no cuentan
+   * en nada, pero las cantidades se quedan: sirve para ver si se llega sin pagar.
    */
   includePacks: boolean;
   /** Tiradas que se cuentan para sacar un 5★ en cada banner (peor caso de Tiradas futuras). */

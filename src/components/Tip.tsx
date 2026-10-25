@@ -17,7 +17,11 @@ interface Props {
    * decorativos, que incluya su texto para los lectores de pantalla (.sr-only).
    */
   content: ReactNode;
-  children: ReactNode;
+  /**
+   * Con `control`, también una función que recibe el id de la burbuja, para poner la descripción en un control
+   * que no es el hijo directo (el input de un interruptor, dentro de su <label>).
+   */
+  children: ReactNode | ((describedBy: string) => ReactNode);
   /** Elemento que hace de disparador: un div para las casillas de estadísticas, un span para lo demás. */
   as?: 'span' | 'div';
   className?: string;
@@ -26,6 +30,16 @@ interface Props {
    * ratón o al llegar con el teclado, el toque sigue siendo del control y la descripción va en el propio control.
    */
   control?: boolean;
+  /**
+   * Dónde sale si cabe: debajo (por defecto) o encima, cuando debajo taparía lo que explica (la etiqueta de un
+   * selector, con sus opciones justo debajo). Si no cabe, al otro lado.
+   */
+  side?: 'below' | 'above';
+  /**
+   * Con `control`, si el toque también la abre (por defecto sí: el ×2 de los paquetes se explica al tocarlo).
+   * Un interruptor no la abre: su etiqueta ya dice qué hace, y la burbuja tapaba lo que cambia.
+   */
+  tapExplains?: boolean;
 }
 
 /** Margen con los bordes de la ventana y separación con el dato (deja sitio a la flecha). */
@@ -35,16 +49,21 @@ const GAP = 10;
 const ARROW_INSET = 24;
 /** Espera al pasar el ratón antes de abrirla (con teclado y al tocar se abre al momento). */
 const HOVER_DELAY = 400;
+/**
+ * Margen al salir del dato con el ratón antes de cerrarla: da tiempo a cruzar el hueco hasta la burbuja, que se
+ * puede recorrer (WCAG 1.4.13: quien usa lupa tiene que poder mover el puntero encima para leerla).
+ */
+const LEAVE_GRACE = 150;
 
 /**
  * Explicación de un dato que se abre en todos los dispositivos (el `title` solo sale con el ratón):
- * - Ratón: al pasar por encima, tras un momento (HOVER_DELAY).
+ * - Ratón: al pasar por encima, tras un momento (HOVER_DELAY); sigue abierta con el puntero sobre la burbuja.
  * - Teclado: al enfocar el dato (es enfocable); Esc la cierra.
  * - Táctil: al tocar el dato; se cierra al volver a tocarlo o al tocar fuera.
  * Para los lectores de pantalla el texto es la descripción del dato (aria-describedby), siempre presente.
  * La burbuja va en un portal, fija bajo el dato (o encima si no cabe), para que ninguna tarjeta la recorte.
  */
-export function Tip({ content, children, as: Tag = 'span', className, control }: Props) {
+export function Tip({ content, children, as: Tag = 'span', className, control, side = 'below', tapExplains = true }: Props) {
   const id = useId();
   const triggerRef = useRef<HTMLElement | null>(null);
   const bubbleRef = useRef<HTMLSpanElement | null>(null);
@@ -67,7 +86,9 @@ export function Tip({ content, children, as: Tag = 'span', className, control }:
       const r = trigger.getBoundingClientRect();
       const { width, height } = bubble.getBoundingClientRect();
       const left = Math.min(Math.max(EDGE, r.left + r.width / 2 - width / 2), window.innerWidth - width - EDGE);
-      const below = r.bottom + GAP + height <= window.innerHeight - EDGE;
+      const fitsBelow = r.bottom + GAP + height <= window.innerHeight - EDGE;
+      const fitsAbove = r.top - GAP - height >= EDGE;
+      const below = side === 'above' ? !fitsAbove && fitsBelow : fitsBelow || !fitsAbove;
       // La flecha, bajo el centro del dato aunque la burbuja se haya corrido para caber en la ventana.
       const arrowX = Math.max(ARROW_INSET, Math.min(r.left + r.width / 2 - left, width - ARROW_INSET));
       setPos({
@@ -93,7 +114,8 @@ export function Tip({ content, children, as: Tag = 'span', className, control }:
       if (e.key === 'Escape') close();
     };
     const onDown = (e: PointerEvent) => {
-      if (!triggerRef.current?.contains(e.target as Node)) close();
+      const target = e.target as Node;
+      if (!triggerRef.current?.contains(target) && !bubbleRef.current?.contains(target)) close();
     };
     document.addEventListener('keydown', onKey);
     document.addEventListener('pointerdown', onDown);
@@ -122,7 +144,20 @@ export function Tip({ content, children, as: Tag = 'span', className, control }:
   // Con el ratón espera un poco: al cruzar por encima de varios datos no van saltando burbujas.
   const hoverTimer = useRef<number | undefined>(undefined);
   const cancelHover = () => window.clearTimeout(hoverTimer.current);
-  useEffect(() => cancelHover, []);
+  // Al salir (del dato o de la burbuja), se cierra tras LEAVE_GRACE salvo que el puntero entre en el otro.
+  const leaveTimer = useRef<number | undefined>(undefined);
+  const cancelLeave = () => window.clearTimeout(leaveTimer.current);
+  const closeSoon = () => {
+    cancelLeave();
+    leaveTimer.current = window.setTimeout(close, LEAVE_GRACE);
+  };
+  useEffect(
+    () => () => {
+      cancelHover();
+      cancelLeave();
+    },
+    [],
+  );
 
   return (
     <>
@@ -139,12 +174,13 @@ export function Tip({ content, children, as: Tag = 'span', className, control }:
         onPointerEnter={(e) => {
           if (e.pointerType !== 'mouse') return;
           cancelHover();
+          cancelLeave();
           hoverTimer.current = window.setTimeout(show, HOVER_DELAY);
         }}
         onPointerLeave={(e) => {
           if (e.pointerType !== 'mouse') return;
           cancelHover();
-          close();
+          closeSoon();
         }}
         onFocus={(e) => {
           // En un control, el clic del ratón también lo enfoca: solo se abre al llegar con el teclado.
@@ -153,14 +189,24 @@ export function Tip({ content, children, as: Tag = 'span', className, control }:
         onBlur={close}
         onClick={(e) => {
           // Con el ratón no hace nada (abre el hover): dentro de un <label>, el clic sigue enfocando su campo.
-          if (control || !byTouch()) return;
+          if (!byTouch()) return;
+          // Un control, al tocarlo, cambia como siempre y además se explica (en el móvil no hay hover); se
+          // cierra al tocar fuera. Sin preventDefault: el toque sigue siendo del control.
+          if (control) {
+            if (tapExplains) show();
+            return;
+          }
           // Al tocar, abre o cierra; dentro de un <label>, sin enfocar el campo (no saca el teclado).
           e.preventDefault();
           if (open) close();
           else show();
         }}
       >
-        {control ? cloneElement(children as ReactElement<{ 'aria-describedby'?: string }>, { 'aria-describedby': id }) : children}
+        {typeof children === 'function'
+          ? children(id)
+          : control
+            ? cloneElement(children as ReactElement<{ 'aria-describedby'?: string }>, { 'aria-describedby': id })
+            : children}
       </Tag>
       {createPortal(
         <span
@@ -170,6 +216,12 @@ export function Tip({ content, children, as: Tag = 'span', className, control }:
           className={`tip${above ? ' tip-above' : ''}${open ? '' : ' is-leaving'}`}
           hidden={!open && !leaving}
           style={pos}
+          onPointerEnter={(e) => {
+            if (e.pointerType === 'mouse') cancelLeave();
+          }}
+          onPointerLeave={(e) => {
+            if (e.pointerType === 'mouse') closeSoon();
+          }}
           onAnimationEnd={(e) => {
             if (e.animationName === 'dupe-pop-out') setLeaving(false);
           }}
