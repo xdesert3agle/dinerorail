@@ -51,6 +51,12 @@
   --border-pop: color-mix(in srgb, var(--accent) 90%, var(--surface));
   --border-pop-w: 2px;
   /*
+   * Lo que tarda en aparecer y en irse lo que reacciona al ratón: las burbujas (.tip y el popover de la galería)
+   * y el tinte de los botones fantasma. Al irse, algo más rápido: lo que se deja ya no interesa.
+   */
+  --fade-in: 180ms;
+  --fade-out: 150ms;
+  /*
    * Escala de espaciado: 4 dentro de un grupo pequeño (etiqueta y campo), 8 entre piezas de un grupo, 12 entre
    * grupos dentro de una tarjeta (y entre campos de una rejilla), 16 entre tarjetas y de relleno, 20 entre
    * bloques de una tarjeta. El 6 queda solo para el paso de filas que se repiten (eventos, paquetes, chips).
@@ -1310,10 +1316,10 @@ p {
 }
 @media (prefers-reduced-motion: no-preference) {
   .dupe-pop {
-    animation: dupe-pop-in 0.18s ease-out;
+    animation: dupe-pop-in var(--fade-in) ease-out;
   }
   .dupe-pop.is-leaving {
-    animation: dupe-pop-out 0.15s ease-in forwards;
+    animation: dupe-pop-out var(--fade-out) ease-in forwards;
   }
 }
 @keyframes dupe-pop-in {
@@ -1831,10 +1837,10 @@ p {
 /* Entra y sale como el popover de la galería; al salir, Tip.tsx la deja a la vista hasta que acaba. */
 @media (prefers-reduced-motion: no-preference) {
   .tip {
-    animation: dupe-pop-in 0.18s ease-out;
+    animation: dupe-pop-in var(--fade-in) ease-out;
   }
   .tip.is-leaving {
-    animation: dupe-pop-out 0.15s ease-in forwards;
+    animation: dupe-pop-out var(--fade-out) ease-in forwards;
   }
 }
 .field-hint {
@@ -1936,8 +1942,26 @@ button:focus-visible {
   padding: 6px 12px;
   cursor: pointer;
 }
+/*
+ * Hover: el fondo se tiñe con un 10 % de tinta, el mismo paso que los fantasma sobre la tarjeta (≈1,2:1 en
+ * claro, 1,35:1 en oscuro). Solo con el borde a --axis no se veía: en Aha casi coincide con --border.
+ */
 .btn:hover:not(:disabled) {
   border-color: var(--axis);
+  background: color-mix(in srgb, var(--text) 10%, var(--surface-2));
+}
+/* El cambio entra y sale como las burbujas (--fade-in al entrar, --fade-out al salir). */
+@media (prefers-reduced-motion: no-preference) {
+  .btn {
+    transition:
+      background-color var(--fade-out) ease-in,
+      border-color var(--fade-out) ease-in,
+      color var(--fade-out) ease-in;
+  }
+  .btn:hover:not(:disabled) {
+    transition-duration: var(--fade-in);
+    transition-timing-function: ease-out;
+  }
 }
 /* Desactivado (p. ej. sincronizar durante la espera): atenuado y sin reaccionar al ratón (sí al cursor). */
 .btn:disabled {
@@ -2144,6 +2168,8 @@ select:focus {
  */
 :root:not([data-skin='sparxie']) .btn.key-date:hover:not([aria-pressed='true']) {
   border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  /* Solo el borde, como los atajos: sin el tinte de fondo de .btn. */
+  background: var(--surface-2);
 }
 .btn.key-date[aria-pressed='true'] {
   cursor: default;
@@ -2215,6 +2241,23 @@ select:focus {
   display: inline-flex;
   align-items: center;
   gap: 3px;
+}
+/* El nombre, algo más separado del icono que el "+" (que va pegado a él: «+icono» es una pieza). */
+.add-pull-text {
+  margin-left: 3px;
+}
+/*
+ * Con el nombre, la cabecera pide ~463px (título en una línea, 181, + 8 + botones, 274; en Sparxie, menos). En
+ * escritorio la tarjeta nunca baja de 525 y a 560px de pantalla tiene 494; por debajo de 29rem (móviles
+ * estrechos) quedan "+" e icono. Lo decide el ancho de la tarjeta, no el de la pantalla.
+ */
+.card-plan {
+  container: plan / inline-size;
+}
+@container plan (max-width: 29rem) {
+  .add-pull-text {
+    display: none;
+  }
 }
 .btn-ghost {
   background: transparent;
@@ -2706,12 +2749,15 @@ tfoot td {
 /*
  * Agarrada: sin el tinte del hover (el recuadro de la fila ya dice «agarrada»); puntos en el acento y mano
  * cerrada. Con :hover también, para ganar al hover de los botones fantasma de cada tema.
+ * Sin transición: el recuadro aparece de golpe al agarrar, y el tinte, fundiéndose, se vería un momento dentro
+ * de él. Al soltar sí vuelve fundido (el asa sigue bajo el puntero).
  */
 .pull-row.is-dragging .drag-handle,
 .pull-row.is-dragging .drag-handle:hover {
   cursor: grabbing;
   color: var(--accent-text);
   background: transparent;
+  transition: none;
 }
 .btn-icon {
   padding: 2px 6px;
@@ -3276,6 +3322,11 @@ tfoot td {
   justify-content: space-between;
   gap: 12px;
   border-top: 1px solid var(--axis);
+  /*
+   * Con los 8px de debajo de la última fila, su línea queda a 12 (--space-3, entre grupos): separa las filas del
+   * pie, no una fila de otra (8). En el pie y no en la última fila, que mediría distinto que las demás.
+   */
+  margin-top: calc(var(--space-3) - 8px);
   padding-top: 8px;
   padding-right: calc(var(--pull-remove) + var(--pull-gap));
 }
@@ -4028,7 +4079,7 @@ tfoot td {
 :where(:root[data-skin='grafito']) .btn {
   border-radius: 6px;
 }
-:where(:root[data-skin='grafito']) .btn:hover {
+:where(:root[data-skin='grafito']) .btn:hover:not(:disabled) {
   background: color-mix(in srgb, var(--text) 9%, transparent);
   border-color: var(--border-strong);
 }
@@ -4039,7 +4090,7 @@ tfoot td {
   background: transparent;
   border-color: transparent;
 }
-:where(:root[data-skin='grafito']) .btn-ghost:hover {
+:where(:root[data-skin='grafito']) .btn-ghost:hover:not(:disabled) {
   background: var(--control);
   border-color: transparent;
 }

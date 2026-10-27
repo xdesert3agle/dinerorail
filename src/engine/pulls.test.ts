@@ -14,7 +14,7 @@ describe('planPulls', () => {
   it('el primer personaje descuenta el pity: 50 de pity y 50/50 perdido → 80 − 50 + 80 = 110', () => {
     const [aha] = planPulls([pull('aha', 'character')], { character: 50, lightCone: 0 }, 200);
     expect(aha.cost).toBe(110);
-    expect(aha.costDetail).toBe('80 − 50 + 80');
+    expect([aha.hardPity, aha.pityDiscount, aha.losesFiftyFifty]).toEqual([80, 50, true]);
     expect(aha.usesPity).toBe(true);
   });
 
@@ -26,6 +26,7 @@ describe('planPulls', () => {
     );
     expect(rows.map((r) => r.cost)).toEqual([110, 160, 80]);
     expect(rows.map((r) => r.usesPity)).toEqual([true, false, false]);
+    expect(rows.map((r) => r.pityDiscount)).toEqual([50, 0, 0]);
   });
 
   it('los conos tienen su propio pity de 70 (140 si pierde)', () => {
@@ -41,7 +42,7 @@ describe('planPulls', () => {
   it('ganar el 50/50 con pity: solo lo que falta para el pity', () => {
     const [row] = planPulls([pull('a', 'character', true)], { character: 30, lightCone: 0 }, 100);
     expect(row.cost).toBe(50);
-    expect(row.costDetail).toBe('80 − 30');
+    expect([row.hardPity, row.pityDiscount, row.losesFiftyFifty]).toEqual([80, 30, false]);
   });
 
   it('acumula, resta de las singles disponibles y marca lo que no llega', () => {
@@ -105,7 +106,7 @@ describe('planPulls', () => {
       { countStarlight: false, hardPity: { character: 90, lightCone: 80 } },
     );
     expect(rows.map((r) => r.cost)).toEqual([90 - 50 + 90, 80]);
-    expect(rows[0].costDetail).toBe('90 − 50 + 90');
+    expect([rows[0].hardPity, rows[0].pityDiscount, rows[0].losesFiftyFifty]).toEqual([90, 50, true]);
   });
 
   it('con el garantizado, la primera fila de ese banner se gana seguro; las siguientes, no', () => {
@@ -117,7 +118,7 @@ describe('planPulls', () => {
     );
     expect(rows.map((r) => r.cost)).toEqual([80 - 50, 160, 140]);
     expect(rows.map((r) => r.guaranteed)).toEqual([true, false, false]);
-    expect(rows[0].costDetail).toBe('80 − 50');
+    expect([rows[0].hardPity, rows[0].pityDiscount, rows[0].losesFiftyFifty]).toEqual([80, 50, false]);
   });
 
   it('la Cosmiluz que sobra en el inventario se junta con la de las tiradas', () => {

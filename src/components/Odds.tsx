@@ -24,20 +24,20 @@ const MODEL_HELP = [
   `Simulación de ${fmtInt(RUNS)} intentos con las probabilidades reales:`,
   describeBanner('Personaje', BANNERS.character),
   describeBanner('Cono', BANNERS.lightCone),
-  'Empieza con el pity y el garantizado actuales. No usa las casillas «50/50 ganado» de la planificación.',
+  'Empieza con el pity y el garantizado actuales. No usa las casillas «50/50 ganado» del plan.',
   'Solo dice 100 % si llega incluso en el peor caso absoluto.',
-  'El % de cada objetivo (contando que salgan también todos los anteriores) va en su fila de la planificación.',
+  'El % de cada objetivo (contando que salgan también todos los anteriores) va en su fila del plan.',
   '',
   'Peor caso: todos los 5★ en el pity duro, todos los 50/50 perdidos y solo el 4★ garantizado:',
   `en el banner de conos, siempre cono (${STARLIGHT_PER_4_STAR.lightCone}); en el de personajes, alternando cono (${STARLIGHT_PER_4_STAR.lightCone}) y personaje (${STARLIGHT_PER_4_STAR.character}).`,
 ].join('\n');
 
-/** Dice en qué se distingue de la planificación, que cuenta con los ajustes del usuario. */
+/** Dice en qué se distingue del plan de tiradas, que cuenta con los ajustes del usuario. */
 const worstCaseHelp = (hardPity: Record<PullKind, number>) =>
   [
     `Tiradas que lo garantizan todo pase lo que pase: todos los 5★ en el pity duro (${BANNERS.character.hardPity} personaje, ${BANNERS.lightCone.hardPity} cono), ` +
       'todos los 50/50 perdidos y solo el 4★ garantizado, del tipo que menos Cosmiluz da.',
-    `La planificación, en cambio, cuenta las tiradas por 5★ configuradas (${hardPity.character} personaje, ${hardPity.lightCone} cono) y las casillas «50/50 ganado».`,
+    `El plan de tiradas, en cambio, cuenta las tiradas por 5★ configuradas (${hardPity.character} personaje, ${hardPity.lightCone} cono) y las casillas «50/50 ganado».`,
   ].join('\n');
 
 export function Odds({ state, view }: Props) {

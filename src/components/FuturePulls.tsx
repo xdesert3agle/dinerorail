@@ -106,6 +106,9 @@ const refundLabel = ({ kind, stars, e6 }: (typeof STARLIGHT_REFUNDS)[number]) =>
 
 const NO_SUGGESTIONS: CatalogEntry[] = [];
 
+/** Los botones de añadir de la cabecera, en este orden. */
+const ADD_KINDS: PullKind[] = ['character', 'lightCone'];
+
 /** Cuánto dura el polvo de una fila quitada y hasta dónde se dispersan sus píxeles (px del desplazamiento). */
 const DUST_MS = 600;
 const DUST_SCALE = 70;
@@ -113,14 +116,18 @@ const DUST_SCALE = 70;
 /**
  * Deja la fila arrastrada entre la primera y la última fila, sin entrar en el pie de la Cosmiluz, que va en la
  * misma lista (con restrictToParentElement bajaba hasta el final de la tarjeta). El tope de abajo es el borde
- * de arriba del pie, tomado como distancia al final de la lista para que no dependa del scroll.
+ * de arriba del pie, tomado como distancia al final de la lista para que no dependa del scroll, más su margen
+ * (el aire sobre su línea): el hueco de la última fila acaba ahí.
  */
 const restrictToRows =
   (foot: RefObject<HTMLDivElement | null>): Modifier =>
   ({ transform, draggingNodeRect, containerNodeRect }) => {
     const list = foot.current?.parentElement;
     if (!draggingNodeRect || !containerNodeRect || !foot.current || !list) return transform;
-    const footH = list.getBoundingClientRect().bottom - foot.current.getBoundingClientRect().top;
+    const footH =
+      list.getBoundingClientRect().bottom -
+      foot.current.getBoundingClientRect().top +
+      parseFloat(getComputedStyle(foot.current).marginTop);
     const min = containerNodeRect.top - draggingNodeRect.top;
     const max = containerNodeRect.bottom - footH - draggingNodeRect.bottom;
     return { ...transform, y: Math.min(Math.max(transform.y, min), max) };
@@ -157,8 +164,8 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
       setPlan(
         (p) => p.filter((x) => x.id !== pull.id),
         pull.name
-          ? `«${pull.name}${dupe === null ? '' : ` E${dupe}`}» quitado de la planificación.`
-          : 'Fila quitada de la planificación.',
+          ? `«${pull.name}${dupe === null ? '' : ` E${dupe}`}» quitado del plan.`
+          : 'Fila quitada del plan.',
       );
     if (reducedMotion()) return commit();
     setLeaving((l) => [...l, pull.id]);
@@ -231,27 +238,24 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
   return (
     <section className="card card-plan">
       <header className="card-header">
-        <h2>Planificación de tiradas</h2>
+        <h2>Plan de tiradas</h2>
         <div className="header-actions">
-          {/* "+" y el icono del tipo; el nombre va en el tooltip y para lectores de pantalla. */}
-          <button
-            type="button"
-            className="btn btn-add-pull"
-            title="Añadir personaje"
-            aria-label="Añadir personaje"
-            onClick={() => add('character')}
-          >
-            +<span className={`glyph ${KIND_GLYPH.character}`} aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            className="btn btn-add-pull"
-            title="Añadir cono de luz"
-            aria-label="Añadir cono de luz"
-            onClick={() => add('lightCone')}
-          >
-            +<span className={`glyph ${KIND_GLYPH.lightCone}`} aria-hidden="true" />
-          </button>
+          {/*
+            "+", el icono del tipo y su nombre. En una tarjeta estrecha (móvil) el nombre se oculta y quedan "+" e
+            icono, que el texto de escritorio ya ha enseñado; el nombre completo va siempre en aria-label.
+          */}
+          {ADD_KINDS.map((kind) => (
+            <button
+              key={kind}
+              type="button"
+              className="btn btn-add-pull"
+              aria-label={`Añadir ${KIND_LABEL[kind].toLowerCase()}`}
+              onClick={() => add(kind)}
+            >
+              +<span className={`glyph ${KIND_GLYPH[kind]}`} aria-hidden="true" />
+              <span className="add-pull-text">{KIND_LABEL[kind]}</span>
+            </button>
+          ))}
         </div>
       </header>
 
@@ -412,42 +416,11 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
                     reinvertir, su fila dice «—» (no aplica), en la columna de las cifras.
                   */}
                   <span className="tip-table tip-table-3" aria-hidden="true">
-                    <span className="tip-table-row">
-                      <span>Tiradas el {fmtDayMonth(result.targetDate)}</span>
-                      <span className="tip-table-sign" />
-                      <span className="with-icon with-icon-tight tip-table-value">
-                        {fmtInt(result.wholeSingles)}
-                        <Icon kind="pass" size={16} decorative />
-                      </span>
-                    </span>
-                    <span className="tip-table-row">
-                      <span>Coste del plan</span>
-                      <span className="tip-table-sign">−</span>
-                      <span className="with-icon with-icon-tight tip-table-value">
-                        {fmtInt(grossTotal)}
-                        <Icon kind="pass" size={16} decorative />
-                      </span>
-                    </span>
-                    <span className="tip-table-row">
-                      <span>Cosmiluz reinvertida</span>
-                      <span className="tip-table-sign">{countStarlight && '+'}</span>
-                      <span className="with-icon with-icon-tight tip-table-value">
-                        {countStarlight ? fmtInt(refunded) : '—'}
-                        {/* Sin icono, el hueco se reserva: el «—» queda en la columna de las cifras. */}
-                        <span className={countStarlight ? 'with-icon' : 'with-icon invisible'}>
-                          <Icon kind="pass" size={16} decorative />
-                        </span>
-                      </span>
-                    </span>
+                    <TipSumRow label={`Tiradas el ${fmtDayMonth(result.targetDate)}`} value={result.wholeSingles} />
+                    <TipSumRow label="Coste del plan" sign="−" value={grossTotal} />
+                    <TipSumRow label="Cosmiluz reinvertida" sign="+" value={countStarlight ? refunded : null} />
                     <span className="tip-table-sum" />
-                    <span className="tip-table-row tip-table-total">
-                      <span>{left < 0 ? 'Faltan' : 'Sobran'}</span>
-                      <span className="tip-table-sign" />
-                      <span className="with-icon with-icon-tight tip-table-value">
-                        {fmtInt(Math.abs(left))}
-                        <Icon kind="pass" size={16} decorative />
-                      </span>
-                    </span>
+                    <TipSumRow label={left < 0 ? 'Faltan' : 'Sobran'} value={Math.abs(left)} total />
                   </span>
                   <span className="sr-only">
                     {`${fmtInt(result.wholeSingles)} tiradas el ${formatDate(result.targetDate)}, menos ${fmtInt(grossTotal)} que cuesta el plan`}
@@ -483,6 +456,25 @@ interface RowProps {
   leaving: boolean;
   onUpdate: (patch: Partial<PlannedPull>) => void;
   onRemove: () => void;
+}
+
+/**
+ * Una línea de una cuenta escrita (.tip-table-3): concepto · signo · cifra con su icono. Sin cifra (null), «—»
+ * (no aplica), sin signo y con el hueco del icono reservado para que quede en la columna de las cifras.
+ */
+function TipSumRow({ label, sign, value, total }: { label: string; sign?: string; value: number | null; total?: boolean }) {
+  return (
+    <span className={total ? 'tip-table-row tip-table-total' : 'tip-table-row'}>
+      <span>{label}</span>
+      <span className="tip-table-sign">{value !== null && sign}</span>
+      <span className="with-icon with-icon-tight tip-table-value">
+        {value === null ? '—' : fmtInt(value)}
+        <span className={value === null ? 'with-icon invisible' : 'with-icon'}>
+          <Icon kind="pass" size={16} decorative />
+        </span>
+      </span>
+    </span>
+  );
 }
 
 function SortablePullRow({
@@ -650,7 +642,35 @@ function SortablePullRow({
       <Tip
         as="div"
         className="pull-cost"
-        content={`${row.costDetail} = ${fmtInt(row.cost)} tiradas${row.usesPity ? ' (descontado el pity actual)' : ''}`}
+        content={
+          <>
+            {/*
+              La cuenta del coste, como la del balance: el pity duro, menos el pity actual (solo en la primera fila
+              de su tipo; en las demás «—», no aplica) y otra vez el pity duro si se pierde el 50/50.
+            */}
+            <span className="tip-table tip-table-3" aria-hidden="true">
+              <TipSumRow label="Pity duro" value={row.hardPity} />
+              <TipSumRow label="Pity actual" sign="−" value={row.usesPity ? row.pityDiscount : null} />
+              <TipSumRow
+                label={row.guaranteed ? 'Garantizado' : row.losesFiftyFifty ? '50/50 perdido' : '50/50 ganado'}
+                sign="+"
+                value={row.losesFiftyFifty ? row.hardPity : 0}
+              />
+              <span className="tip-table-sum" />
+              <TipSumRow label="Coste" value={row.cost} total />
+            </span>
+            <span className="sr-only">
+              {`${fmtInt(row.hardPity)} del pity duro`}
+              {row.usesPity && `, menos ${fmtInt(row.pityDiscount)} del pity actual`}
+              {row.losesFiftyFifty
+                ? `, más ${fmtInt(row.hardPity)} por perder el 50/50`
+                : row.guaranteed
+                  ? ', con el garantizado'
+                  : ', con el 50/50 ganado'}
+              {`: ${fmtInt(row.cost)} tiradas.`}
+            </span>
+          </>
+        }
       >
         <Icon kind="pass" size={26} decorative />
         <strong>{fmtInt(row.cost)}</strong>

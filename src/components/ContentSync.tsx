@@ -8,7 +8,7 @@ const fmtWait = (ms: number) => {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 };
 
-/** Descarga los personajes y conos 5★ que se sugieren en la planificación, con un minuto de espera entre clics. */
+/** Descarga los personajes y conos 5★ que se sugieren en el plan de tiradas, con un minuto de espera entre clics. */
 export function ContentSync({ catalog, syncing, error, lastAttempt, sync }: CatalogSync) {
   const [now, setNow] = useState(() => Date.now());
   const remaining = Math.max(0, lastAttempt + SYNC_COOLDOWN_MS - now);
@@ -37,7 +37,7 @@ export function ContentSync({ catalog, syncing, error, lastAttempt, sync }: Cata
       <p className="muted" role="status">
         {catalog
           ? `Sincronizado el ${fmtMoment(catalog.syncedAt)}. Se actualiza solo los martes a las 10:00.`
-          : 'Descarga los personajes y conos de luz 5★ para sugerirlos en la planificación.'}
+          : 'Descarga los personajes y conos de luz 5★ para sugerirlos en el plan de tiradas.'}
       </p>
       <div className="content-sync-row">
         <button type="button" className="btn" disabled={disabled} aria-busy={syncing} onClick={() => void sync()}>

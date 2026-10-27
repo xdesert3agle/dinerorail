@@ -11,8 +11,12 @@ export interface PlannedPullResult {
   id: string;
   /** Tiradas que hacen falta en el peor caso. */
   cost: number;
-  /** Desglose legible de las tiradas, p. ej. "80 − 50 + 80". */
-  costDetail: string;
+  /** Las piezas del coste: pity duro − pity descontado + pity duro otra vez si se pierde el 50/50. */
+  hardPity: number;
+  /** Pity actual que se descuenta (0 si no es la primera fila de su tipo). */
+  pityDiscount: number;
+  /** Se cuenta el 50/50 perdido: el 5★ cuesta el doble. */
+  losesFiftyFifty: boolean;
   /** Cosmiluz Inextinguible que se obtiene en esta fila (media esperada, con decimales). */
   starlight: number;
   /** Singles que cuesta de verdad la fila, descontando lo que devuelve la Cosmiluz. */
@@ -76,10 +80,6 @@ export function planPulls(
     const wins = isGuaranteed || pull.winsFiftyFifty;
     const cost = base - progress + (wins ? 0 : base);
 
-    const parts = [String(base)];
-    if (progress > 0) parts.push(`− ${progress}`);
-    if (!wins) parts.push(`+ ${base}`);
-
     // 4★ esperados en la fila (media, con decimales); la Cosmiluz se redondea solo al cambiarla por singles.
     const fourStars = cost / PULLS_PER_4_STAR;
     const duringRow = fourStars * STARLIGHT_PER_AVERAGE_4_STAR[pull.kind] + (wins ? 0 : STARLIGHT_PER_5_STAR);
@@ -98,7 +98,9 @@ export function planPulls(
     return {
       id: pull.id,
       cost,
-      costDetail: parts.join(' '),
+      hardPity: base,
+      pityDiscount: progress,
+      losesFiftyFifty: !wins,
       starlight: rowStarlight,
       netCost,
       cumulative,
