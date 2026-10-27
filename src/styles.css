@@ -42,6 +42,15 @@
    */
   --shadow-pop: 0 10px 30px light-dark(color-mix(in srgb, var(--text) 18%, transparent), rgb(0 0 0 / 0.5));
   /*
+   * Borde (y flecha) de las burbujas (.tip y el popover de la galería): el acento mezclado al 90 % con el fondo,
+   * elegido por el usuario. Probados también un gris (tinta al 50 %, 35 % y pura: en oscuro la pura daba un
+   * borde blanco, lo más brillante de la pantalla, y al 35 % se confundía con las tarjetas de detrás) y el
+   * acento del 100 al 40 %.
+   * --border-pop-w: su grosor (las flechas se calculan con él), 2px: 1px se quedaba corto.
+   */
+  --border-pop: color-mix(in srgb, var(--accent) 90%, var(--surface));
+  --border-pop-w: 2px;
+  /*
    * Escala de espaciado: 4 dentro de un grupo pequeño (etiqueta y campo), 8 entre piezas de un grupo, 12 entre
    * grupos dentro de una tarjeta (y entre campos de una rejilla), 16 entre tarjetas y de relleno, 20 entre
    * bloques de una tarjeta. El 6 queda solo para el paso de filas que se repiten (eventos, paquetes, chips).
@@ -1210,8 +1219,8 @@ p {
   padding: 12px 14px;
   background: var(--surface);
   color: var(--text);
-  /* Borde con el acento del tema: con el de siempre se confundía con las tarjetas de detrás. */
-  border: 2px solid var(--accent);
+  /* El borde de las burbujas, como .tip (ver --border-pop). */
+  border: var(--border-pop-w) solid var(--border-pop);
   border-radius: var(--radius);
   box-shadow: var(--shadow-pop);
   font-size: 0.875rem;
@@ -1220,8 +1229,8 @@ p {
   user-select: none;
 }
 /*
- * Flecha de bocadillo hacia la imagen, como la de .tip: dos triángulos sin girar, uno del acento desde el
- * borde interior y encima otro del fondo, 2px más adentro en perpendicular (2√2 en horizontal), que tapa
+ * Flecha de bocadillo hacia la imagen, como la de .tip: dos triángulos sin girar, uno del borde desde el
+ * borde interior y encima otro del fondo, su grosor más adentro en perpendicular (×√2 en horizontal), que tapa
  * ese trozo de borde y acaba en el borde interior. (Con un cuadrado girado, sus esquinas finas se
  * desvaían en la unión con el borde o se metían en el bocadillo.) --arrow-h: lo que sobresale del borde;
  * --arrow-seam: el 1px que el del fondo entra en el bocadillo para tapar el hilo de borde (ver .tip).
@@ -1230,17 +1239,17 @@ p {
 .dupe-pop::before,
 .dupe-pop::after {
   --arrow-h: 11px;
-  --arrow-base: calc(var(--arrow-h) + 2px);
+  --arrow-base: calc(var(--arrow-h) + var(--border-pop-w));
   --arrow-seam: 0px;
   content: '';
   position: absolute;
-  top: calc(var(--arrow-y, 50%) - 2px - var(--arrow-base));
+  top: calc(var(--arrow-y, 50%) - var(--border-pop-w) - var(--arrow-base));
   width: calc(var(--arrow-base) + var(--arrow-seam));
   height: calc(2 * var(--arrow-base));
-  background: var(--accent);
+  background: var(--border-pop);
 }
 .dupe-pop::after {
-  --arrow-base: calc(var(--arrow-h) + 2px - 2.83px);
+  --arrow-base: calc(var(--arrow-h) + var(--border-pop-w) - var(--border-pop-w) * 1.414);
   --arrow-seam: 1px;
   background: var(--surface);
 }
@@ -1659,7 +1668,7 @@ p {
   padding: 8px 10px;
   background: var(--surface);
   color: var(--text);
-  border: 2px solid var(--accent);
+  border: var(--border-pop-w) solid var(--border-pop);
   border-radius: var(--radius);
   box-shadow: var(--shadow-pop);
   font-size: 0.8125rem;
@@ -1757,6 +1766,10 @@ p {
 :where(:root[data-skin='sparxie']) .tip {
   max-width: min(22rem, calc(100vw - 16px));
 }
+/* Sparxie: el borde turquesa de su diseño (su acento no es un color de alarma, como sus interruptores). */
+:root[data-skin='sparxie'] {
+  --border-pop: var(--accent);
+}
 /* Sparxie: la serif de sus títulos de tarjeta, sin estrechar (en la burbuja no le falta sitio). */
 :where(:root[data-skin='sparxie']) .tip-title {
   font-family: var(--font-display);
@@ -1786,15 +1799,15 @@ p {
 .tip::before,
 .tip::after {
   --arrow-h: 7px;
-  --arrow-base: calc(var(--arrow-h) + 2px);
+  --arrow-base: calc(var(--arrow-h) + var(--border-pop-w));
   --arrow-seam: 0px;
   content: '';
   position: absolute;
   top: calc(-1 * var(--arrow-base));
-  left: calc(var(--arrow-x, 50%) - 2px - var(--arrow-base));
+  left: calc(var(--arrow-x, 50%) - var(--border-pop-w) - var(--arrow-base));
   width: calc(2 * var(--arrow-base));
   height: calc(var(--arrow-base) + var(--arrow-seam));
-  background: var(--accent);
+  background: var(--border-pop);
   clip-path: polygon(
     50% 0,
     100% calc(100% - var(--arrow-seam)),
@@ -1804,7 +1817,8 @@ p {
   );
 }
 .tip::after {
-  --arrow-base: calc(var(--arrow-h) + 2px - 2.83px);
+  /* El borde en perpendicular, en vertical (lados a 45°): ×√2. */
+  --arrow-base: calc(var(--arrow-h) + var(--border-pop-w) - var(--border-pop-w) * 1.414);
   --arrow-seam: 1px;
   background: var(--surface);
 }
@@ -2491,8 +2505,17 @@ tfoot td {
  * al entrar a escribir o con nombre, sube arriba a la izquierda en pequeño y el nombre queda debajo.
  * El campo gana relleno por arriba para dejarle sitio y mide lo mismo que la miniatura (3,375rem).
  */
+/*
+ * --badge-room: lo que el Eidolón sale de la miniatura (.eidolon-badge, right: -6px). El campo se aparta eso
+ * más: sin ello la pastilla quedaba a 2px del campo y el anillo de foco (4px por fuera: 2 de grosor + 2 de
+ * separación) se le montaba encima. Así queda a --pull-gap del campo, como la miniatura en las filas sin dupe.
+ */
+.pull-row {
+  --badge-room: 6px;
+}
 .pull-field {
   position: relative;
+  margin-left: var(--badge-room);
 }
 /*
  * Sube y se encoge solo con transform (escala desde su esquina de arriba a la izquierda): de centrada en el
@@ -3281,9 +3304,11 @@ tfoot td {
   .pull-row .pull-field {
     grid-column: 3 / -1;
   }
+  /* Bajo el nombre, alineada con su borde (que se aparta --badge-room de la miniatura). */
   .pull-row .pull-win {
     grid-column: 3;
     justify-self: start;
+    margin-left: var(--badge-room);
   }
 }
 @media (max-width: 560px) {
@@ -3302,6 +3327,7 @@ tfoot td {
 @media (max-width: 430px) {
   .pull-row .pull-win {
     grid-column: 2 / 4;
+    margin-left: 0;
   }
 }
 
