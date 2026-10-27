@@ -199,7 +199,7 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
   };
   const position = (id: string | number) => plan.findIndex((x) => x.id === id) + 1;
   const announcements: Announcements = {
-    onDragStart: ({ active }) => `Has cogido ${nameOf(active.id)}, en la posición ${position(active.id)}.`,
+    onDragStart: ({ active }) => `Se ha cogido ${nameOf(active.id)}, en la posición ${position(active.id)}.`,
     onDragOver: ({ active, over }) =>
       over ? `${nameOf(active.id)} se movería a la posición ${position(over.id)}.` : `${nameOf(active.id)} está fuera de la lista.`,
     onDragEnd: ({ active, over }) =>
@@ -235,7 +235,7 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
       </header>
 
       {plan.length === 0 ? (
-        <p className="muted">Añade, en orden, los personajes y conos de luz que quieras sacar.</p>
+        <p className="muted">Aún no hay nada planificado. Los personajes y conos de luz se añaden en el orden en que se quieren sacar.</p>
       ) : (
         <div className="pull-list">
           <DndContext
@@ -250,7 +250,7 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
               announcements,
               screenReaderInstructions: {
                 draggable:
-                  'Para mover una tirada, pulsa espacio o intro, usa las flechas arriba y abajo y vuelve a pulsar espacio o intro para soltarla. Escape cancela.',
+                  'Para mover una tirada, pulsa espacio o intro para cogerla, muévela con las flechas arriba y abajo y vuelve a pulsar espacio o intro para soltarla. Pulsa escape para cancelar.',
               },
             }}
           >
@@ -285,6 +285,13 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
               tip={
                 <>
                   {/*
+                    Título de carta, como los de las tarjetas: corto (la letra de naipe solo tiene mayúsculas), y
+                    la frase sigue debajo en texto normal. El punto, para que los lectores no lo junten con la regla.
+                  */}
+                  <span className="tip-title">
+                    Cosmiluz<span className="sr-only">. </span>
+                  </span>
+                  {/*
                     La conversión, primero: es la leyenda de todo lo que sigue (como el tipo de cambio sobre una lista de
                     precios) y explica en qué unidad va la píldora «+22» del interruptor. Entre los dos bloques de datos
                     quedaba encajonada.
@@ -296,7 +303,9 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
                     <Icon kind="pass" size={16} decorative />
                   </span>
                   <span className="sr-only">{`${STARLIGHT_PER_PASS} Cosmiluz = 1 tirada. `}</span>
-                  Cosmiluz que devuelven las tiradas del plan
+                  Por objeto obtenido
+                  {/* Rótulo sin puntuación a la vista; los lectores, que no ven el salto de línea, hacen la pausa. */}
+                  <span className="sr-only">: </span>
                   {/*
                     La tabla de equivalencias con el icono en lugar de la palabra, como una unidad («5★ = 40🌟»):
                     la frase de arriba ya lo presenta. Igual que la ayuda de Cosmiluz de Recursos actuales.
@@ -327,9 +336,10 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
                   </span>
                   {/*
                     Probabilidades, una línea por fila y en columnas como la lista de arriba: la base del juego y,
-                    entre paréntesis, la consolidada (contando el garantizado o el pity), que lo dice el título.
+                    entre paréntesis, la consolidada (contando el garantizado o el pity), que lo dice su rótulo.
                   */}
-                  Por tirada (contando el garantizado)
+                  Probabilidad por tirada (con garantizado)
+                  <span className="sr-only">: </span>
                   <span className="tip-table tip-table-3 tip-lines-last">
                     {ODDS_ROWS.map((row) => (
                       <span key={row.label} className="tip-table-row">
@@ -508,7 +518,7 @@ function SortablePullRow({
         type="button"
         ref={setActivatorNodeRef}
         className="btn btn-ghost btn-icon drag-handle"
-        title="Arrastra para cambiar el orden"
+        title="Arrastrar para cambiar el orden"
         {...attributes}
         {...listeners}
         aria-label={`Mover ${label}`}
@@ -599,8 +609,8 @@ function SortablePullRow({
         className="check pull-win"
         title={
           row.guaranteed
-            ? 'Tienes el garantizado: se gana seguro'
-            : 'Márcala si cuentas con ganar el 50/50; si no, se cuenta perdido (el doble de tiradas)'
+            ? 'Con el garantizado, se gana seguro'
+            : 'Marcada, el 50/50 se cuenta ganado; sin marcar, perdido (el doble de tiradas)'
         }
       >
         <input
@@ -619,12 +629,12 @@ function SortablePullRow({
       <Tip
         as="div"
         className="pull-cost"
-        content={`${row.costDetail} = ${fmtInt(row.cost)} tiradas${row.usesPity ? ' (descuenta tu pity actual)' : ''}`}
+        content={`${row.costDetail} = ${fmtInt(row.cost)} tiradas${row.usesPity ? ' (descontado el pity actual)' : ''}`}
       >
         <Icon kind="pass" size={26} decorative />
         <strong>{fmtInt(row.cost)}</strong>
         {/* El borde rojo del nombre no llega a los lectores de pantalla: lo dicen aquí. */}
-        {!row.affordable && <span className="sr-only">, no llega con lo que tendrás</span>}
+        {!row.affordable && <span className="sr-only">, sin tiradas suficientes</span>}
       </Tip>
 
       <button type="button" className="btn btn-ghost btn-remove" aria-label={`Quitar ${label}`} onClick={onRemove}>

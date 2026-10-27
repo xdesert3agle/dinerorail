@@ -116,7 +116,7 @@ export function DateField({ value, onChange, min, id, 'aria-label': ariaLabel, m
         aria-describedby={hintId}
       />
       <span id={hintId} className="sr-only">
-        Abre un calendario: elige el día con las flechas y pulsa intro.
+        Se abre un calendario: elige el día con las flechas y pulsa intro.
       </span>
       <svg
         className="date-field-icon"

@@ -52,23 +52,23 @@ export function describeSchedule(s: Schedule): string {
     case 'cycle':
       return `Cada ${s.periodDays} días`;
     case 'perPatch':
-      if (s.offsetDays === 0) return 'Al inicio de cada parche';
+      if (s.offsetDays === 0) return 'Al inicio de cada versión';
       return s.offsetDays < 0
-        ? `${-s.offsetDays} días antes de cada parche`
-        : `${s.offsetDays} días después del inicio de cada parche`;
+        ? `${-s.offsetDays} días antes de cada versión`
+        : `${s.offsetDays} días después del inicio de cada versión`;
   }
 }
 
 export function pendingLabel(s: Schedule): string | null {
   switch (s.type) {
     case 'daily':
-      return 'Aún no lo he cobrado hoy';
+      return 'Pendiente de cobrar hoy';
     case 'weekly':
-      return 'Aún no la he cobrado esta semana';
+      return 'Pendiente de cobrar esta semana';
     case 'monthly':
-      return 'Aún no lo he cobrado este mes';
+      return 'Pendiente de cobrar este mes';
     case 'cycle':
-      return 'Aún no he cobrado el ciclo actual';
+      return 'Ciclo actual pendiente de cobrar';
     case 'perPatch':
       return null;
   }

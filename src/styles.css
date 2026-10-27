@@ -1730,6 +1730,41 @@ p {
   justify-self: end;
   font-variant-numeric: var(--num-variant);
 }
+/*
+ * Título de una burbuja con tablas, en la voz de los títulos de tarjeta (mayúsculas espaciadas; en aha, la letra
+ * de naipe). Corto: una o dos palabras, la explicación va debajo en texto normal.
+ */
+.tip-title {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+/* Sin negrita: la fuente solo tiene un peso. 16px: a 13px, la letra de naipe (ancha) se apelmaza. */
+:root[data-skin='aha'] .tip-title {
+  color: var(--card-title);
+  font-family: 'Card Characters', system-ui, sans-serif;
+  font-weight: 400;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+}
+/*
+ * Sparxie: burbujas algo más anchas, porque su Courier es monoespaciada y más ancha que la letra de los otros
+ * temas: con 20rem, «Probabilidad por tirada (con garantizado)» se partía en dos líneas.
+ */
+:where(:root[data-skin='sparxie']) .tip {
+  max-width: min(22rem, calc(100vw - 16px));
+}
+/* Sparxie: la serif de sus títulos de tarjeta, sin estrechar (en la burbuja no le falta sitio). */
+:where(:root[data-skin='sparxie']) .tip-title {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: 0;
+}
 /* La regla que abre la burbuja (la conversión a tiradas): una línea propia, con el aire de un bloque debajo. */
 .tip-rule {
   display: flex;

@@ -99,7 +99,7 @@ export function useCatalog(): CatalogSync {
       setCatalog(next);
       write(CATALOG_KEY, next);
     } catch {
-      setError('No se ha podido descargar el contenido. Inténtalo de nuevo en un rato.');
+      setError('No se ha podido descargar el contenido. Se puede volver a intentar en un rato.');
     } finally {
       setSyncing(false);
     }

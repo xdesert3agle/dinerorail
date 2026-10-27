@@ -82,7 +82,7 @@ export function defaultSources(today = todayISO()): Source[] {
     },
     {
       id: 'maintenance',
-      name: 'Compensación mantenimiento',
+      name: 'Compensación por mantenimiento',
       category: 'parche',
       enabled: true,
       schedule: { type: 'perPatch', offsetDays: 0 },
@@ -92,7 +92,7 @@ export function defaultSources(today = todayISO()): Source[] {
     {
       id: 'livestream-codes',
       name: 'Códigos del directo',
-      description: 'El directo es ~12 días antes del parche.',
+      description: 'El directo es unos 12 días antes de la versión.',
       category: 'parche',
       enabled: true,
       schedule: { type: 'perPatch', offsetDays: -12 },
@@ -102,7 +102,7 @@ export function defaultSources(today = todayISO()): Source[] {
     {
       id: 'story-exploration',
       name: 'Misiones nuevas y exploración',
-      description: 'Historia, mapas nuevos, cofres y logros. Varía mucho según el parche.',
+      description: 'Historia, mapas nuevos, cofres y logros. Varía mucho según la versión.',
       category: 'parche',
       enabled: false,
       schedule: { type: 'perPatch', offsetDays: 0 },
@@ -112,7 +112,7 @@ export function defaultSources(today = todayISO()): Source[] {
     {
       id: 'character-trials',
       name: 'Pruebas de personajes',
-      description: '20 Jades por prueba, unas 8 por parche.',
+      description: '20 Jades por prueba, unas 8 por versión.',
       category: 'parche',
       enabled: false,
       schedule: { type: 'perPatch', offsetDays: 0 },
@@ -122,7 +122,7 @@ export function defaultSources(today = todayISO()): Source[] {
     {
       id: 'nameless-glory',
       name: 'Honor Anónimo',
-      description: 'Pase de batalla de pago: 680 Jades + 4 Pases Especiales por parche.',
+      description: 'Pase de batalla de pago: 680 Jades + 4 Pases Especiales por versión.',
       category: 'parche',
       enabled: false,
       schedule: { type: 'perPatch', offsetDays: 0 },
@@ -132,7 +132,7 @@ export function defaultSources(today = todayISO()): Source[] {
     {
       id: 'gift-of-odyssey',
       name: 'Regalo de Odisea',
-      description: 'Evento de inicio de sesión de 7 días. No sale en todos los parches.',
+      description: 'Evento de inicio de sesión de 7 días. No sale en todas las versiones.',
       category: 'parche',
       enabled: false,
       schedule: { type: 'perPatch', offsetDays: 0 },
@@ -142,7 +142,7 @@ export function defaultSources(today = todayISO()): Source[] {
     {
       id: 'embers-shop',
       name: 'Tienda de Ascuas',
-      description: 'Hasta 5 Pases Especiales al mes a cambio de Ascuas, si tienes suficientes.',
+      description: 'Hasta 5 Pases Especiales al mes a cambio de Ascuas, si hay suficientes.',
       category: 'mensual',
       enabled: false,
       schedule: { type: 'monthly', day: 1 },

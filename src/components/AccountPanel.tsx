@@ -105,7 +105,7 @@ export function AccountPanel({ state, catalog, onChange }: Props) {
           <p className="muted">
             {importedAt
               ? `Importado el ${fmtMoment(importedAt)}.`
-              : 'Rellena la lista de una vez con tus personajes y sus Eidolones. Sustituye lo marcado a mano.'}
+              : 'Rellena la lista de una vez con los personajes de la cuenta y sus Eidolones. Sustituye lo marcado a mano.'}
           </p>
           {/* El botón y su resultado juntos: vacío, el aviso no suma el hueco de la tarjeta bajo el botón. */}
           <div className="account-action">
@@ -144,8 +144,8 @@ export function AccountPanel({ state, catalog, onChange }: Props) {
           {!entries && (
             <p className="warning">
               {characters.length > 0
-                ? 'Sin el contenido sincronizado solo se ven los importados, y no se distinguen los 4★. Sincronízalo en Configuración.'
-                : 'Sincroniza el contenido en Configuración para marcar tus personajes, o importa tu perfil.'}
+                ? 'Sin el contenido sincronizado solo se ven los importados, y no se distinguen los 4★. Se sincroniza en Configuración.'
+                : 'Para marcar personajes hay que sincronizar el contenido (en Configuración) o importar el perfil.'}
             </p>
           )}
           {all.length > 0 && (
@@ -189,14 +189,14 @@ export function AccountPanel({ state, catalog, onChange }: Props) {
                   </div>
                 )}
                 <Toggle checked={ownedOnly} onChange={setOwnedOnly}>
-                  Ver sólo obtenidos
+                  Ver solo obtenidos
                 </Toggle>
               </div>
             </div>
           )}
           {all.length > 0 && shown.length === 0 && (
             <p className="muted">
-              {ownedOnly && !query.trim() && paths.size === 0 ? 'Aún no tienes ninguno marcado.' : 'No se ha encontrado ningún personaje.'}
+              {ownedOnly && !query.trim() && paths.size === 0 ? 'Aún no hay ninguno marcado.' : 'No se ha encontrado ningún personaje.'}
             </p>
           )}
           {/* Por vías, en el orden del juego; sin vías (sin catálogo todavía), la lista sin agrupar. */}

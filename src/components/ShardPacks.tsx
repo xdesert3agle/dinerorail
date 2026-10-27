@@ -186,7 +186,7 @@ export function ShardPacks({ state, onChange }: Props) {
       <Toggle
         checked={counted}
         onChange={(includePacks) => onChange(withSettings({ includePacks }))}
-        tip="Apagado, los paquetes no suman en nada y se ve si llegas sin pagar (las cantidades se quedan)"
+        tip="Apagado, los paquetes no suman nada y se ve si basta sin pagar (las cantidades se quedan)"
       >
         Usar paquetes en el plan
       </Toggle>

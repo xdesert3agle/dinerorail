@@ -24,12 +24,12 @@ const MODEL_HELP = [
   `Simulación de ${fmtInt(RUNS)} intentos con las probabilidades reales:`,
   describeBanner('Personaje', BANNERS.character),
   describeBanner('Cono', BANNERS.lightCone),
-  'Empieza en tu pity actual y con tu garantizado. No usa las casillas «50/50 ganado» de la planificación.',
+  'Empieza con el pity y el garantizado actuales. No usa las casillas «50/50 ganado» de la planificación.',
   'Solo dice 100 % si llega incluso en el peor caso absoluto.',
-  'El % de cada objetivo, junto con todos los anteriores, va en su fila de la planificación.',
+  'El % de cada objetivo (contando que salgan también todos los anteriores) va en su fila de la planificación.',
   '',
   'Peor caso: todos los 5★ en el pity duro, todos los 50/50 perdidos y solo el 4★ garantizado:',
-  `en conos, siempre cono (${STARLIGHT_PER_4_STAR.lightCone}); en personaje, alternando cono (${STARLIGHT_PER_4_STAR.lightCone}) y personaje (${STARLIGHT_PER_4_STAR.character}).`,
+  `en el banner de conos, siempre cono (${STARLIGHT_PER_4_STAR.lightCone}); en el de personajes, alternando cono (${STARLIGHT_PER_4_STAR.lightCone}) y personaje (${STARLIGHT_PER_4_STAR.character}).`,
 ].join('\n');
 
 /** Dice en qué se distingue de la planificación, que cuenta con los ajustes del usuario. */
@@ -37,7 +37,7 @@ const worstCaseHelp = (hardPity: Record<PullKind, number>) =>
   [
     `Tiradas que lo garantizan todo pase lo que pase: todos los 5★ en el pity duro (${BANNERS.character.hardPity} personaje, ${BANNERS.lightCone.hardPity} cono), ` +
       'todos los 50/50 perdidos y solo el 4★ garantizado, del tipo que menos Cosmiluz da.',
-    `La planificación, en cambio, cuenta tus tiradas por 5★ (${hardPity.character} personaje, ${hardPity.lightCone} cono) y tus casillas «50/50 ganado».`,
+    `La planificación, en cambio, cuenta las tiradas por 5★ configuradas (${hardPity.character} personaje, ${hardPity.lightCone} cono) y las casillas «50/50 ganado».`,
   ].join('\n');
 
 export function Odds({ state, view }: Props) {
@@ -61,7 +61,7 @@ export function Odds({ state, view }: Props) {
       <dl className="odds-stats">
         <div>
           <dt>
-            <Tip className="tip-term" content="Probabilidad de conseguir todas las tiradas planificadas con las tiradas de ese día">
+            <Tip className="tip-term" content="Probabilidad de conseguir todos los objetivos del plan con las tiradas de la fecha objetivo">
               Conseguirlo todo
             </Tip>
           </dt>
@@ -69,7 +69,7 @@ export function Odds({ state, view }: Props) {
         </div>
         <div>
           <dt>
-            <Tip className="tip-term" content="Cuántas tiradas planificadas conseguirías de media, en orden">
+            <Tip className="tip-term" content="Cuántos objetivos del plan se consiguen de media, en orden">
               Objetivos esperados
             </Tip>
           </dt>

@@ -48,9 +48,9 @@ export function PatchTable({ state, today, onChange }: Props) {
   return (
     <section className="card card-events">
       <header className="card-header">
-        <h2>Actualizaciones y eventos</h2>
+        <h2>Versiones y eventos</h2>
         <button type="button" className="btn" onClick={addPatch}>
-          + Actualización
+          + Versión
         </button>
       </header>
 
@@ -78,12 +78,12 @@ export function PatchTable({ state, today, onChange }: Props) {
               <button
                 type="button"
                 className="btn btn-ghost btn-remove"
-                aria-label={`Eliminar la actualización ${p.version}`}
-                title="Eliminar actualización"
+                aria-label={`Eliminar la versión ${p.version}`}
+                title="Eliminar versión"
                 onClick={() =>
                   onChange(
                     (s) => ({ ...s, patches: s.patches.filter((x) => x.id !== p.id) }),
-                    `Actualización ${p.version} eliminada.`,
+                    `Versión ${p.version} eliminada.`,
                   )
                 }
               >
@@ -116,7 +116,7 @@ export function PatchTable({ state, today, onChange }: Props) {
                     value={ev.name}
                     title={ev.name}
                     placeholder="Nombre del evento…"
-                    aria-label={`Nombre del evento (actualización ${p.version})`}
+                    aria-label={`Nombre del evento (versión ${p.version})`}
                     onChange={(e) => updateEvent(p.id, ev.id, { name: e.target.value })}
                   />
                   <DateField
@@ -171,7 +171,7 @@ export function PatchTable({ state, today, onChange }: Props) {
             <button
               type="button"
               className="btn btn-ghost btn-add"
-              aria-label={`Añadir evento a la actualización ${p.version}`}
+              aria-label={`Añadir evento a la versión ${p.version}`}
               onClick={() => addEvent(p.id)}
             >
               + Evento
@@ -181,7 +181,7 @@ export function PatchTable({ state, today, onChange }: Props) {
       ))}
 
       {patches.length === 0 && (
-        <p className="warning">Sin parches no se cuentan ni los eventos ni las fuentes «por parche».</p>
+        <p className="warning">Sin versiones no se cuentan ni los eventos ni las fuentes «por versión».</p>
       )}
     </section>
   );

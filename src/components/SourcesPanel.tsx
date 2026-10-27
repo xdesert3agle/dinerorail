@@ -23,7 +23,7 @@ const GROUPS: { category: SourceCategory; title: string }[] = [
   { category: 'diario', title: 'Diarias' },
   { category: 'semanal', title: 'Semanales' },
   { category: 'endgame', title: 'Endgame' },
-  { category: 'parche', title: 'Por parche' },
+  { category: 'parche', title: 'Por versión' },
   { category: 'mensual', title: 'Mensuales' },
   { category: 'otro', title: 'Otras' },
 ];
@@ -33,7 +33,7 @@ const SCHEDULE_TYPES: { type: Schedule['type']; label: string }[] = [
   { type: 'weekly', label: 'Cada semana' },
   { type: 'monthly', label: 'Cada mes' },
   { type: 'cycle', label: 'Cada N días' },
-  { type: 'perPatch', label: 'Por parche' },
+  { type: 'perPatch', label: 'Por versión' },
 ];
 
 function defaultSchedule(type: Schedule['type'], today: string): Schedule {
@@ -308,7 +308,9 @@ function SourceEditor({ source, today, focusName, onUpdate, onDelete }: EditorPr
       <div className="source-edit-footer">
         {pending ? (
           <Toggle checked={source.pendingNow} onChange={(pendingNow) => onUpdate({ pendingNow })}>
-            {pending} (se suma hoy)
+            {/* En las diarias, el paréntesis repetiría el «hoy» de la etiqueta. */}
+            {pending}
+            {source.schedule.type !== 'daily' && ' (se suma hoy)'}
           </Toggle>
         ) : (
           <span />

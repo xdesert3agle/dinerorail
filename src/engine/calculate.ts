@@ -124,7 +124,7 @@ export function calculate(state: AppState, today: ISODate): Result {
   const income = zero();
   const totals = new Map<string, SourceTotal>();
   const names = new Map(state.sources.map((s) => [s.id, s.name]));
-  names.set(PATCH_EVENTS_ID, 'Eventos de la actualización');
+  names.set(PATCH_EVENTS_ID, 'Eventos de la versión');
   names.set(SHARD_PACKS_ID, 'Paquetes de Esquirlas Oníricas');
 
   for (const e of events) {

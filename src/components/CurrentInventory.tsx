@@ -102,7 +102,7 @@ export function CurrentInventory({ state, result, onChange }: Props) {
             <Toggle
               checked={state.guaranteed[kind]}
               onChange={(v) => setGuaranteed(kind, v)}
-              tip="Perdiste el último 50/50: el próximo 5★ será el destacado seguro"
+              tip="Último 50/50 perdido: el próximo 5★ será el destacado seguro"
             >
               {/* «Siguiente»: solo el próximo 5★ de ese banner es seguro. */}
               {guaranteedLabel}
