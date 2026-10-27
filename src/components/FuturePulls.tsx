@@ -8,9 +8,10 @@ import {
   type Announcements,
   type DragEndEvent,
   type DragOverEvent,
+  type Modifier,
   type UniqueIdentifier,
 } from '@dnd-kit/core';
-import { restrictToParentElement, restrictToVerticalAxis } from '@dnd-kit/modifiers';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import {
   arrayMove,
   SortableContext,
@@ -19,7 +20,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import type { Result } from '../engine/calculate';
 import type { Catalog, CatalogEntry } from '../engine/catalog';
 import {
@@ -109,6 +110,22 @@ const NO_SUGGESTIONS: CatalogEntry[] = [];
 const DUST_MS = 600;
 const DUST_SCALE = 70;
 
+/**
+ * Deja la fila arrastrada entre la primera y la última fila, sin entrar en el pie de la Cosmiluz, que va en la
+ * misma lista (con restrictToParentElement bajaba hasta el final de la tarjeta). El tope de abajo es el borde
+ * de arriba del pie, tomado como distancia al final de la lista para que no dependa del scroll.
+ */
+const restrictToRows =
+  (foot: RefObject<HTMLDivElement | null>): Modifier =>
+  ({ transform, draggingNodeRect, containerNodeRect }) => {
+    const list = foot.current?.parentElement;
+    if (!draggingNodeRect || !containerNodeRect || !foot.current || !list) return transform;
+    const footH = list.getBoundingClientRect().bottom - foot.current.getBoundingClientRect().top;
+    const min = containerNodeRect.top - draggingNodeRect.top;
+    const max = containerNodeRect.bottom - footH - draggingNodeRect.bottom;
+    return { ...transform, y: Math.min(Math.max(transform.y, min), max) };
+  };
+
 /** Cómo encaja una fila desplazada en su nuevo hueco al reordenar: rápida y con un rebote leve al llegar. */
 const SNAP_TRANSITION = { duration: 180, easing: 'cubic-bezier(0.3, 1.35, 0.5, 1)' };
 
@@ -176,6 +193,10 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
   // Al cruzar a otro puesto, un toque corto en el móvil (Android; iOS no deja vibrar desde la web): el «clic»
   // de cambiar de hueco, como los selectores del sistema.
   const lastOver = useRef<UniqueIdentifier | null>(null);
+
+  // En vertical y sin salir de las filas (ver restrictToRows).
+  const footRef = useRef<HTMLDivElement>(null);
+  const modifiers = useMemo(() => [restrictToVerticalAxis, restrictToRows(footRef)], []);
   const onDragOver = ({ over }: DragOverEvent) => {
     if (!over || over.id === lastOver.current) return;
     lastOver.current = over.id;
@@ -241,7 +262,7 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
-            modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+            modifiers={modifiers}
             onDragStart={({ active }) => (lastOver.current = active.id)}
             onDragOver={onDragOver}
             onDragEnd={onDragEnd}
@@ -278,7 +299,7 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
             y el balance a la derecha, alineado con los costes. La cuenta se sigue a la vista: costes − Cosmiluz
             frente a las tiradas del Resumen.
           */}
-          <div className="pull-summary">
+          <div className="pull-summary" ref={footRef}>
             <Toggle
               checked={countStarlight}
               onChange={(countStarlight) => onChange(withSettings({ countStarlight }))}

@@ -2443,10 +2443,16 @@ tfoot td {
   padding: 8px 0;
   border-top: 1px solid var(--grid);
 }
-/* La primera fila no lleva línea ni aire propio: bajo la cabecera ya separa el gap de la tarjeta. */
+/*
+ * La primera fila no muestra línea ni aire propio (bajo la cabecera ya separa el gap de la tarjeta), pero los
+ * conserva, con la línea transparente, y la lista sube lo que ocupan: todas las filas miden lo mismo. Con la
+ * primera más baja, al arrastrarla hacia abajo las demás subían 9px de menos y saltaban al soltar.
+ */
+.pull-list {
+  margin-top: -9px;
+}
 .pull-row:first-child {
-  padding-top: 0;
-  border-top: none;
+  border-top-color: transparent;
 }
 .pull-row input[type='text'] {
   padding: calc(6px - var(--input-nudge)) 8px calc(6px + var(--input-nudge));
@@ -2670,9 +2676,6 @@ tfoot td {
   box-shadow:
     0 8px 24px light-dark(color-mix(in srgb, var(--text) 35%, transparent), rgb(0 0 0 / 0.6)),
     0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
-}
-.pull-row.is-dragging:first-child::before {
-  top: -8px;
 }
 /*
  * Fila quitada: se deshace en polvo (el filtro de ruido de FuturePulls dispersa sus píxeles) mientras se apaga y
