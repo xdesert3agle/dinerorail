@@ -33,26 +33,16 @@ import {
 } from '../engine/dupes';
 import { formatDate } from '../engine/dates';
 import { planPulls, type PlannedPullResult } from '../engine/pulls';
-import {
-  BANNERS,
-  fiveStarRate,
-  FOUR_STAR_BASE_RATE,
-  FOUR_STAR_RATE,
-  STARLIGHT_PER_4_STAR,
-  STARLIGHT_PER_5_STAR,
-  STARLIGHT_PER_5_STAR_E6,
-  STARLIGHT_PER_PASS,
-} from '../engine/rules';
 import type { AppState, PlannedPull, PullKind } from '../engine/types';
 import { newId } from '../engine/util';
 import { withSettings, type ChangeState } from '../state/store';
 import { fmtDayMonth, fmtInt } from './format';
 import { Icon } from './Icon';
-import { Rarity } from './Rarity';
 import { KIND_GLYPH, KIND_LABEL } from './kinds';
 import { reducedMotion } from './motion';
-import { Toggle } from './Toggle';
+import { Toggle, ToggleTerm } from './Toggle';
 import { NameCombobox } from './NameCombobox';
+import { StarlightDefinition } from './glossary';
 import { Tip } from './Tip';
 import { RemoveGlyph } from './RemoveGlyph';
 
@@ -68,41 +58,6 @@ interface Props {
   onChange: ChangeState;
 }
 
-
-const pct = new Intl.NumberFormat('es-ES', { style: 'percent', maximumFractionDigits: 1 });
-/** Con dos decimales: la de 5★ de conos es 1,87 % (con uno quedaría 1,9 %, que no es la oficial). */
-const pct2 = new Intl.NumberFormat('es-ES', { style: 'percent', maximumFractionDigits: 2 });
-/** Cosmiluz que devuelve cada cosa al salir, para la ayuda del pie (de las constantes de rules.ts). */
-const STARLIGHT_REFUNDS: { kind: PullKind; stars: 4 | 5; e6?: boolean; amount: number }[] = [
-  // Por rareza: los 4★ juntos y luego los 5★, cada personaje con su cono.
-  { kind: 'character', stars: 4, amount: STARLIGHT_PER_4_STAR.character },
-  { kind: 'lightCone', stars: 4, amount: STARLIGHT_PER_4_STAR.lightCone },
-  { kind: 'character', stars: 5, amount: STARLIGHT_PER_5_STAR },
-  { kind: 'character', stars: 5, e6: true, amount: STARLIGHT_PER_5_STAR_E6 },
-  { kind: 'lightCone', stars: 5, amount: STARLIGHT_PER_5_STAR },
-];
-/** «Personaje» o «Cono», escrito siempre: sin nada, el personaje se daba por supuesto. */
-const REFUND_KIND: Record<PullKind, string> = { character: 'Personaje', lightCone: 'Cono de luz' };
-/** Probabilidad de cada rareza por tirada: la base y la consolidada. El 4★ es igual en los dos banners. */
-const ODDS_ROWS: { label: string; stars: 4 | 5; base: string; total: string }[] = [
-  // «Cualquier»: la del 4★ cuenta cualquier 4★ (personaje o cono de luz) y es igual en los dos banners.
-  { label: 'Cualquier', stars: 4, base: pct.format(FOUR_STAR_BASE_RATE), total: pct.format(FOUR_STAR_RATE) },
-  {
-    label: 'Personaje',
-    stars: 5,
-    base: pct.format(BANNERS.character.base),
-    total: pct2.format(fiveStarRate('character')),
-  },
-  {
-    label: 'Cono de luz',
-    stars: 5,
-    base: pct.format(BANNERS.lightCone.base),
-    total: pct2.format(fiveStarRate('lightCone')),
-  },
-];
-/** «Cono 4★», «Personaje 5★ E6»: el texto de cada fila, para la clave y los lectores de pantalla. */
-const refundLabel = ({ kind, stars, e6 }: (typeof STARLIGHT_REFUNDS)[number]) =>
-  `${REFUND_KIND[kind]} ${stars}★${e6 ? ' (E6)' : ''}`;
 
 const NO_SUGGESTIONS: CatalogEntry[] = [];
 
@@ -307,78 +262,7 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
             <Toggle
               checked={countStarlight}
               onChange={(countStarlight) => onChange(withSettings({ countStarlight }))}
-              tip={
-                <>
-                  {/*
-                    Título de carta, como los de las tarjetas: corto (la letra de naipe solo tiene mayúsculas), y
-                    la frase sigue debajo en texto normal. El punto, para que los lectores no lo junten con la regla.
-                  */}
-                  <span className="tip-title">
-                    Cosmiluz<span className="sr-only">. </span>
-                  </span>
-                  {/*
-                    La conversión, primero: es la leyenda de todo lo que sigue (como el tipo de cambio sobre una lista de
-                    precios) y explica en qué unidad va la píldora «+22» del interruptor. Entre los dos bloques de datos
-                    quedaba encajonada.
-                  */}
-                  <span className="with-icon with-icon-tight tip-rule" aria-hidden="true">
-                    {STARLIGHT_PER_PASS}
-                    <Icon kind="starlight" size={16} decorative />
-                    {' = 1'}
-                    <Icon kind="pass" size={16} decorative />
-                  </span>
-                  <span className="sr-only">{`${STARLIGHT_PER_PASS} Cosmiluz = 1 tirada. `}</span>
-                  Por objeto obtenido
-                  {/* Rótulo sin puntuación a la vista; los lectores, que no ven el salto de línea, hacen la pausa. */}
-                  <span className="sr-only">: </span>
-                  {/*
-                    La tabla de equivalencias con el icono en lugar de la palabra, como una unidad («5★ = 40🌟»):
-                    la frase de arriba ya lo presenta. Igual que la ayuda de Cosmiluz de Recursos actuales.
-                  */}
-                  <span className="tip-lines" aria-hidden="true">
-                    {/* En columnas: qué sale · la Cosmiluz, alineada a la derecha para que las cifras cuadren. */}
-                    <span className="tip-table">
-                      {STARLIGHT_REFUNDS.map((r) => (
-                        <span key={refundLabel(r)} className="tip-table-row">
-                          {/* «(E6)» en tinta: es una condición de la fila, no parte de la rareza. */}
-                          <span>
-                            <span className={`rarity-${r.stars}`}>
-                              {`${REFUND_KIND[r.kind]} `}
-                              <Rarity stars={r.stars} />
-                            </span>
-                            {r.e6 && ' (E6)'}
-                          </span>
-                          <span className="with-icon with-icon-tight tip-table-value">
-                            {r.amount}
-                            <Icon kind="starlight" size={16} decorative />
-                          </span>
-                        </span>
-                      ))}
-                    </span>
-                  </span>
-                  <span className="sr-only">
-                    {STARLIGHT_REFUNDS.map((r) => `${refundLabel(r)} = ${r.amount} Cosmiluz. `).join('')}
-                  </span>
-                  {/*
-                    Probabilidades, una línea por fila y en columnas como la lista de arriba: la base del juego y,
-                    entre paréntesis, la consolidada (contando el garantizado o el pity), que lo dice su rótulo.
-                  */}
-                  Probabilidad por tirada (con garantizado)
-                  <span className="sr-only">: </span>
-                  <span className="tip-table tip-table-3 tip-lines-last">
-                    {ODDS_ROWS.map((row) => (
-                      <span key={row.label} className="tip-table-row">
-                        <span className={`rarity-${row.stars}`}>
-                          {row.label && `${row.label} `}
-                          <Rarity stars={row.stars} />
-                        </span>
-                        <span className="tip-table-value">{row.base}</span>
-                        <span className="tip-table-value">({row.total})</span>
-                      </span>
-                    ))}
-                  </span>
-                </>
-              }
+              tip={<StarlightDefinition />}
             >
               <span className="refund-label">
                 {/*
@@ -388,7 +272,7 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
                 <span>
                   Reinvertir{' '}
                   <span className="refund-word">
-                    Cosmiluz
+                    <ToggleTerm>Cosmiluz</ToggleTerm>
                     <Icon kind="starlight" size={20} decorative />
                   </span>{' '}
                   de las tiradas

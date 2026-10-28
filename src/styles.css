@@ -900,7 +900,9 @@ p {
 }
 /*
  * En una columna (por debajo de 1180px) las tarjetas se intercalan en el orden de uso: el resultado, lo que
- * se tiene, el plan y su previsión, y después lo que se rellena menos (eventos, paquetes) y el desglose.
+ * se tiene (se actualiza en cada visita), el plan y su previsión (si se llega), y después lo que se toca menos:
+ * la fecha (alta en el móvil: entre recursos y plan obligaba a pasarla en cada visita), junto a los eventos,
+ * que también van por versiones; los paquetes y el desglose.
  * Las columnas desaparecen (display: contents) y cada tarjeta lleva su orden; el hueco sigue siendo el de .layout.
  */
 @media (max-width: 1179px) {
@@ -911,16 +913,16 @@ p {
   .card-summary {
     order: 1;
   }
-  .card-target {
+  .card-inventory {
     order: 2;
   }
-  .card-inventory {
+  .card-plan {
     order: 3;
   }
-  .card-plan {
+  .card-odds {
     order: 4;
   }
-  .card-odds {
+  .card-target {
     order: 5;
   }
   .card-events {
@@ -2413,14 +2415,10 @@ select:focus {
 }
 /*
  * Interruptor con etiqueta: solo tan ancho como su texto, no toda la fila (en una rejilla, la etiqueta se
- * estiraba y un clic en el hueco de su derecha lo cambiaba). Con explicación, lo envuelve el Tip.
+ * estiraba y un clic en el hueco de su derecha lo cambiaba). Su explicación la abre un término de la etiqueta.
  */
-.toggle,
-.toggle-tip {
+.toggle {
   justify-self: start;
-}
-.toggle-tip {
-  display: flex;
 }
 /* El input ocupa todo el interruptor, no los 16px de .check. */
 .toggle .switch {
@@ -3306,6 +3304,11 @@ tfoot td {
   .check::after {
     height: max(100%, 36px);
   }
+  /* El término con explicación de la etiqueta (ToggleTerm), por encima de esa zona: si no, el toque cambiaba el interruptor. */
+  .check .tip-term {
+    position: relative;
+    z-index: 1;
+  }
 }
 /* El pie se alinea con los costes dejando a la derecha el hueco de la X. */
 .pull-list {
@@ -3761,7 +3764,7 @@ tfoot td {
  * El interruptor del pie, a la derecha, bajo el total de Esquirlas que decide: a la izquierda y con más aire se
  * leía como un pegote suelto bajo la tabla.
  */
-.card-packs > :is(.toggle, .toggle-tip) {
+.card-packs > .toggle {
   justify-self: end;
 }
 /* Tienda (Configuración): la etiqueta con su explicación y, debajo, España | Japón. */

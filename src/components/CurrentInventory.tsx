@@ -1,12 +1,13 @@
 import type { Result } from '../engine/calculate';
 import { clampPity } from '../engine/pulls';
-import { STARLIGHT_PER_PASS } from '../engine/rules';
 import type { AppState, Inventory, PullKind } from '../engine/types';
 import { withSettings } from '../state/store';
 import { fmtInt, wholeSingles } from './format';
+import { StarlightDefinition } from './glossary';
 import { Icon } from './Icon';
 import { NumberField } from './NumberField';
-import { Toggle } from './Toggle';
+import { TipTitle } from './Tip';
+import { Toggle, ToggleTerm } from './Toggle';
 
 interface Props {
   state: AppState;
@@ -15,8 +16,9 @@ interface Props {
 }
 
 const PITY_FIELDS: { kind: PullKind; label: string; guaranteedLabel: string }[] = [
-  { kind: 'character', label: 'Pity de personaje', guaranteedLabel: 'Siguiente personaje garantizado' },
-  { kind: 'lightCone', label: 'Pity de cono de luz', guaranteedLabel: 'Siguiente cono de luz garantizado' },
+  // «… garantizado»: la palabra es el término con explicación (ToggleTerm).
+  { kind: 'character', label: 'Pity de personaje', guaranteedLabel: 'Siguiente personaje' },
+  { kind: 'lightCone', label: 'Pity de cono de luz', guaranteedLabel: 'Siguiente cono de luz' },
 ];
 
 export function CurrentInventory({ state, result, onChange }: Props) {
@@ -53,19 +55,8 @@ export function CurrentInventory({ state, result, onChange }: Props) {
           <NumberField
             icon="starlight"
             label="Cosmiluz Inextinguible"
-            info={
-              <>
-                {/* Con los iconos del juego; en palabras para los lectores de pantalla. */}
-                {/* Iconos pegados a su cifra; el «=» con su aire (espacios fijos: en flex se recortan). */}
-                <span className="with-icon with-icon-tight" aria-hidden="true">
-                  {STARLIGHT_PER_PASS}
-                  <Icon kind="starlight" size={18} decorative />
-                  {' = 1'}
-                  <Icon kind="pass" size={18} decorative />
-                </span>
-                <span className="sr-only">{`${STARLIGHT_PER_PASS} Cosmiluz = 1 tirada`}</span>
-              </>
-            }
+            // La misma definición que el interruptor del plan (un término, una definición: ver glossary.tsx).
+            info={<StarlightDefinition />}
             value={inv.starlight}
             min={0}
             onChange={(starlight) => setInv({ starlight: Math.max(0, Math.floor(starlight)) })}
@@ -75,11 +66,28 @@ export function CurrentInventory({ state, result, onChange }: Props) {
         <Toggle
           checked={state.settings.includeShards}
           onChange={(includeShards) => onChange(withSettings({ includeShards }))}
-          tip="Cada Esquirla Onírica cuenta como 1 Jade"
+          tip={
+            <>
+              <TipTitle>Esquirlas Oníricas</TipTitle>
+              {/*
+                La equivalencia con nombre e icono, cada icono pegado a su palabra (como en el texto del interruptor).
+                Los espacios del «=», fijos: en flex se recortan.
+              */}
+              <span className="with-icon with-icon-tight">
+                1 Esquirla Onírica
+                <Icon kind="shard" size={18} decorative />
+                {' = 1 Jade Estelar'}
+                <Icon kind="jade" size={18} decorative />
+              </span>
+            </>
+          }
         >
           {/* Cada icono pegado a su palabra; el espacio antes de «en», fijo (en flex se recortaría). */}
           <span className="with-icon with-icon-tight shards-as-jades">
-            Convertir Esquirlas
+            {/* En un solo trozo, para que el espacio entre las dos palabras no se recorte (flex). */}
+            <span>
+              Convertir <ToggleTerm>Esquirlas</ToggleTerm>
+            </span>
             <Icon kind="shard" size={16} decorative />
             {' en Jades'}
             <Icon kind="jade" size={16} decorative />
@@ -88,7 +96,7 @@ export function CurrentInventory({ state, result, onChange }: Props) {
       </div>
 
       <div className="grid-2 group-gap pity-grid">
-        {PITY_FIELDS.map(({ kind, label, guaranteedLabel }) => (
+        {PITY_FIELDS.map(({ kind, label, guaranteedLabel }, i) => (
           <div key={kind} className="pity-field">
             <NumberField
               label={label}
@@ -102,10 +110,20 @@ export function CurrentInventory({ state, result, onChange }: Props) {
             <Toggle
               checked={state.guaranteed[kind]}
               onChange={(v) => setGuaranteed(kind, v)}
-              tip="Último 50/50 perdido: el próximo 5★ será el destacado seguro"
+              // «Garantizado» se explica una vez por tarjeta (glosario): en el primero, el de personaje.
+              tip={
+                i === 0 && (
+                  <>
+                    <TipTitle>Garantizado</TipTitle>
+                    Último 50/50 perdido: el próximo 5★ será el destacado seguro
+                  </>
+                )
+              }
             >
-              {/* «Siguiente»: solo el próximo 5★ de ese banner es seguro. */}
-              {guaranteedLabel}
+              {/* «Siguiente»: solo el próximo 5★ de ese banner es seguro. En un trozo: la etiqueta es flex. */}
+              <span>
+                {guaranteedLabel} <ToggleTerm>garantizado</ToggleTerm>
+              </span>
             </Toggle>
           </div>
         ))}

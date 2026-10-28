@@ -40,6 +40,11 @@ interface Props {
    * Un interruptor no la abre: su etiqueta ya dice qué hace, y la burbuja tapaba lo que cambia.
    */
   tapExplains?: boolean;
+  /**
+   * Id de la burbuja, si lo pone quien la usa: un interruptor lo lleva también en su input, como descripción,
+   * aunque el disparador sea el término de su etiqueta (ToggleTerm).
+   */
+  id?: string;
 }
 
 /** Margen con los bordes de la ventana y separación con el dato (deja sitio a la flecha). */
@@ -63,8 +68,18 @@ const LEAVE_GRACE = 150;
  * Para los lectores de pantalla el texto es la descripción del dato (aria-describedby), siempre presente.
  * La burbuja va en un portal, fija bajo el dato (o encima si no cabe), para que ninguna tarjeta la recorte.
  */
-export function Tip({ content, children, as: Tag = 'span', className, control, side = 'below', tapExplains = true }: Props) {
-  const id = useId();
+export function Tip({
+  content,
+  children,
+  as: Tag = 'span',
+  className,
+  control,
+  side = 'below',
+  tapExplains = true,
+  id: givenId,
+}: Props) {
+  const ownId = useId();
+  const id = givenId ?? ownId;
   const triggerRef = useRef<HTMLElement | null>(null);
   const bubbleRef = useRef<HTMLSpanElement | null>(null);
   const [open, setOpen] = useState(false);
@@ -231,5 +246,19 @@ export function Tip({ content, children, as: Tag = 'span', className, control, s
         document.body,
       )}
     </>
+  );
+}
+
+/**
+ * Título de una explicación, como una entrada de glosario: el término en la letra de los títulos de tarjeta
+ * (corto: la de naipe solo tiene mayúsculas) y la explicación debajo, en texto normal. El punto, solo para los
+ * lectores, para que no lo junten con lo que sigue.
+ */
+export function TipTitle({ children }: { children: ReactNode }) {
+  return (
+    <span className="tip-title">
+      {children}
+      <span className="sr-only">. </span>
+    </span>
   );
 }

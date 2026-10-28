@@ -5,8 +5,8 @@ import { withSettings } from '../state/store';
 import { fmtInt, wholeSingles, YEN_PRICES_TIP } from './format';
 import { Icon } from './Icon';
 import { NumberField } from './NumberField';
-import { Tip } from './Tip';
-import { Toggle } from './Toggle';
+import { Tip, TipTitle } from './Tip';
+import { Toggle, ToggleTerm } from './Toggle';
 
 interface Props {
   state: AppState;
@@ -186,9 +186,17 @@ export function ShardPacks({ state, onChange }: Props) {
       <Toggle
         checked={counted}
         onChange={(includePacks) => onChange(withSettings({ includePacks }))}
-        tip="Apagado, los paquetes no suman nada y se ve si basta sin pagar (las cantidades se quedan)"
+        tip={
+          <>
+            <TipTitle>Paquetes</TipTitle>
+            Apagado, no suman nada y se ve si basta sin pagar (las cantidades se quedan)
+          </>
+        }
       >
-        Usar paquetes en el plan
+        {/* En un trozo: la etiqueta es flex, y el término con explicación partiría la frase con huecos. */}
+        <span>
+          Usar <ToggleTerm>paquetes</ToggleTerm> en el plan
+        </span>
       </Toggle>
     </section>
   );

@@ -261,8 +261,9 @@ export default function App() {
         {tab === 'main' ? (
           <div className="layout" role="tabpanel" id="panel-main" aria-labelledby="tab-main">
             <div className="col-inputs">
-              <TargetDate state={state} today={today} onChange={change} />
+              {/* Primero lo que se actualiza en cada visita (los recursos); la fecha se cambia pocas veces. */}
               <CurrentInventory state={state} result={result} onChange={change} />
+              <TargetDate state={state} today={today} onChange={change} />
               <PatchTable state={state} today={today} onChange={change} />
               <ShardPacks state={state} onChange={change} />
             </div>
