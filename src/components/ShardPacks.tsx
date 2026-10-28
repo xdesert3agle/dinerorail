@@ -1,8 +1,8 @@
 import { emptyPurchase, MAX_PACK_COUNT, packPrice, packShards, packsTotal, SHARD_PACKS } from '../engine/packs';
-import { JADES_PER_PULL } from '../engine/rules';
+import { splitJades } from '../engine/rules';
 import type { AppState, ShardPackPurchase } from '../engine/types';
-import { withSettings } from '../state/store';
-import { fmtInt, wholeSingles, YEN_PRICES_TIP } from './format';
+import { withSettings, type ChangeState } from '../state/store';
+import { fmtInt, YEN_PRICES_TIP } from './format';
 import { Icon } from './Icon';
 import { NumberField } from './NumberField';
 import { Tip, TipTitle } from './Tip';
@@ -10,7 +10,7 @@ import { Toggle, ToggleTerm } from './Toggle';
 
 interface Props {
   state: AppState;
-  onChange: (update: (s: AppState) => AppState) => void;
+  onChange: ChangeState;
 }
 
 const euros = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', useGrouping: 'always' });
@@ -19,8 +19,7 @@ export function ShardPacks({ state, onChange }: Props) {
   const inYen = state.settings.packsInYen;
   const total = packsTotal(state.shardPacks, inYen);
   // Las Esquirlas se cambian 1:1 por Jades: en la cabecera, solo las tiradas enteras; lo que sobra, en la explicación.
-  const packSingles = wholeSingles(total.shards / JADES_PER_PULL);
-  const spareJades = total.shards - packSingles * JADES_PER_PULL;
+  const { singles: packSingles, spare: spareJades } = splitJades(total.shards);
   // Por qué no suman, si no suman: solo depende de «Usar paquetes en el plan» (aquí); «Convertir Esquirlas en Jades»
   // (Recursos actuales) es solo para las del inventario.
   const counted = state.settings.includePacks;
@@ -58,14 +57,16 @@ export function ShardPacks({ state, onChange }: Props) {
       </header>
 
       {/*
-        Tabla para los lectores de pantalla (cada cifra con su columna); en pantalla, una rejilla. Con «Sumar los
-        paquetes al total» apagado (.is-off), todos los totales de Esquirlas se apagan, no solo el de la fila Total.
+        Tabla para los lectores de pantalla (cada cifra con su columna); en pantalla, una rejilla. Con «Usar
+        paquetes en el plan» apagado (.is-off), todos los totales de Esquirlas se apagan, no solo el de la fila Total.
       */}
       <div className={`pack-list${counted ? '' : ' is-off'}`} role="table" aria-label="Paquetes de Esquirlas Oníricas">
         <div className="pack-row pack-header" role="row">
           {/* Cada título al inicio de su columna (sobre el icono o el borde del campo), como en los eventos. */}
           <span role="columnheader">Paquete</span>
-          <span role="columnheader">Precio</span>
+          <span role="columnheader" className="pack-price-head">
+            Precio
+          </span>
           <span role="columnheader">Por compra</span>
           <span role="columnheader">Cantidad</span>
           {/* A la vista: sin título, el «×2» no se entendía sin abrir su ayuda. */}
@@ -100,7 +101,7 @@ export function ShardPacks({ state, onChange }: Props) {
                   por compra
                 </span>
               </span>
-              <span role="cell">
+              <span role="cell" className="pack-count">
                 <NumberField
                   compact
                   hideLabel
@@ -108,12 +109,10 @@ export function ShardPacks({ state, onChange }: Props) {
                   value={purchase.count}
                   min={0}
                   max={MAX_PACK_COUNT}
-                  onChange={(count) =>
-                    update(pack.id, { count: Math.min(MAX_PACK_COUNT, Math.max(0, Math.floor(count))) })
-                  }
+                  onChange={(count) => update(pack.id, { count })}
                 />
               </span>
-              <span role="cell">
+              <span role="cell" className="pack-first">
                 {/* Con la cifra real: el ×2 dobla la base del paquete, no lo que da cada compra (Por compra). */}
                 <Tip control content={`Primera compra: ${fmtInt(pack.base * 2)} en vez de ${fmtInt(perPack)}`}>
                   {(describedBy) => (
@@ -140,8 +139,8 @@ export function ShardPacks({ state, onChange }: Props) {
           );
         })}
         {/*
-          Fila de total: lo que cuestan bajo Precio y las Esquirlas que dan bajo Total. Con «Sumar los paquetes al
-          total» apagado, las Esquirlas se apagan como el total de la cabecera (el precio no: es lo que costarían).
+          Fila de total: lo que cuestan bajo Precio y las Esquirlas que dan bajo Total. Con «Usar paquetes en el
+          plan» apagado, las Esquirlas se apagan como el total de la cabecera (el precio no: es lo que costarían).
           Tras «Total», siempre de qué tienda son los precios (se elige en Configuración): con España también,
           para que se sepa que hay otra. Las dos palabras ocupan el mismo hueco (.pack-store), así que cambiar de
           tienda no mueve las columnas.

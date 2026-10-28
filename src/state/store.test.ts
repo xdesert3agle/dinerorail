@@ -83,7 +83,7 @@ describe('normalizeState', () => {
     expect(normalizeState(old).settings.skin).toBe('aha');
   });
 
-  it('pasa al tema por defecto a quien tenga guardado un tema oculto', () => {
+  it('pasa al tema por defecto a quien tenga guardado un tema que ya no existe', () => {
     const old = JSON.parse(JSON.stringify(defaultState())) as Record<string, any>;
     for (const hidden of ['kafka', 'grafito']) {
       old.settings.skin = hidden;
@@ -91,7 +91,16 @@ describe('normalizeState', () => {
     }
   });
 
-  it('rechaza archivos que no son copias de seguridad', () => {
+  it('las cantidades guardadas, enteras y no negativas (inventario y eventos)', () => {
+    const old = JSON.parse(JSON.stringify(defaultState())) as Record<string, any>;
+    old.inventory = { jades: -50, specialPasses: 3.7, shards: 'x', starlight: 41.9 };
+    old.patches[0].events[0].jades = -10;
+    const state = normalizeState(old);
+    expect(state.inventory).toEqual({ jades: 0, specialPasses: 3, shards: 0, starlight: 41 });
+    expect(state.patches[0].events[0].jades).toBe(0);
+  });
+
+  it('rechaza lo que no es un estado guardado', () => {
     expect(() => normalizeState({ foo: 1 })).toThrow();
   });
 
@@ -118,6 +127,42 @@ describe('normalizeState', () => {
         { id: '1005', name: 'Kafka', eidolon: 6 },
       ],
     });
+  });
+
+  it('tiradas por 5★: enteras y desde 1, o las de por defecto; el pity se queda por debajo de ellas', () => {
+    const old = JSON.parse(JSON.stringify(defaultState())) as Record<string, any>;
+    old.settings.hardPity = { character: 90.7, lightCone: 0 };
+    old.pity = { character: 120, lightCone: -3 };
+    const state = normalizeState(old);
+    expect(state.settings.hardPity).toEqual({ character: 90, lightCone: 70 });
+    expect(state.pity).toEqual({ character: 89, lightCone: 0 });
+
+    delete old.settings.hardPity;
+    expect(normalizeState(old).settings.hardPity).toEqual({ character: 80, lightCone: 70 });
+  });
+
+  it('paquetes: solo los conocidos, con cantidad entera y la 1.ª compra marcada si falta', () => {
+    const old = JSON.parse(JSON.stringify(defaultState())) as Record<string, any>;
+    old.shardPacks = {
+      'pack-9999': { count: 2.6, firstBonus: false },
+      'pack-1499': { count: -1 },
+      'pack-inventado': { count: 3, firstBonus: true },
+      'pack-4999': 'roto',
+    };
+    expect(normalizeState(old).shardPacks).toEqual({
+      'pack-9999': { count: 2, firstBonus: false },
+      'pack-1499': { count: 0, firstBonus: true },
+    });
+  });
+
+  it('los interruptores de la tienda: los guardados si son booleanos; si no, los de por defecto', () => {
+    const old = JSON.parse(JSON.stringify(defaultState())) as Record<string, any>;
+    old.settings.packsInYen = true;
+    old.settings.includePacks = false;
+    expect(normalizeState(old).settings).toMatchObject({ packsInYen: true, includePacks: false });
+    old.settings.packsInYen = 'sí';
+    delete old.settings.includePacks;
+    expect(normalizeState(old).settings).toMatchObject({ packsInYen: false, includePacks: true });
   });
 
   it('quita el dupe escrito delante del nombre (ahora se calcula aparte)', () => {

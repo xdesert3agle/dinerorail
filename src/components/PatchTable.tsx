@@ -1,10 +1,11 @@
 import { toSingles } from '../engine/calculate';
 import { addDays } from '../engine/dates';
-import { defaultEventDate, PATCH_LENGTH_DAYS } from '../engine/defaults';
+import { defaultEventDate } from '../engine/defaults';
+import { PATCH_LENGTH_DAYS } from '../engine/rules';
 import { nextVersion } from '../engine/sources';
 import type { AppState, Patch, PatchEvent } from '../engine/types';
 import { newId } from '../engine/util';
-import type { ChangeState } from '../state/store';
+import { namedNotice, type ChangeState } from '../state/store';
 import { fmtSingles } from './format';
 import { DateField } from './DateField';
 import { NumberField } from './NumberField';
@@ -109,7 +110,7 @@ export function PatchTable({ state, today, onChange }: Props) {
               // Etiquetas con el evento y la versión: la cabecera de columnas no llega a los lectores de pantalla.
               const evName = ev.name || 'evento sin nombre';
               return (
-                <div key={ev.id} className={`event-row ${status ? 'is-ignored' : ''}`} title={status}>
+                <div key={ev.id} className={`event-row ${status ? 'is-ignored' : ''}`}>
                   <input
                     type="text"
                     {...PLAIN_TEXT_INPUT}
@@ -127,7 +128,7 @@ export function PatchTable({ state, today, onChange }: Props) {
                   <NumberField
                     compact
                     hideLabel
-                    className="no-spin"
+                    className="no-spin event-jades"
                     icon="jade"
                     label={`Jades de ${evName}`}
                     value={ev.jades}
@@ -138,6 +139,7 @@ export function PatchTable({ state, today, onChange }: Props) {
                   <NumberField
                     compact
                     hideLabel
+                    className="event-passes"
                     icon="pass"
                     label={`Pases Especiales de ${evName}`}
                     value={ev.specialPasses}
@@ -158,7 +160,7 @@ export function PatchTable({ state, today, onChange }: Props) {
                             x.id === p.id ? { ...x, events: x.events.filter((e) => e.id !== ev.id) } : x,
                           ),
                         }),
-                        ev.name ? `Evento «${ev.name}» eliminado.` : 'Evento eliminado.',
+                        ev.name ? namedNotice('Evento ', ev.name, ' eliminado.') : 'Evento eliminado.',
                       )
                     }
                   >

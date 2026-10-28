@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FocusEvent } from 'react';
 import type { AppState } from '../engine/types';
+import { noticeText, type Notice } from '../state/store';
 import { reducedMotion } from './motion';
 import { RemoveGlyph } from './RemoveGlyph';
 
@@ -10,7 +11,7 @@ export const TOAST_MS = 5000;
 export interface ToastMessage {
   /** Distinto en cada aviso: reinicia la cuenta atrás aunque el texto se repita. */
   id: number;
-  text: string;
+  text: Notice;
   undo?: AppState;
 }
 
@@ -21,22 +22,20 @@ interface Props {
 }
 
 /**
- * El texto va siempre en una línea. Si no cabe, se recorta con "…" solo el nombre entre «», y lo de
- * alrededor ("Evento", "eliminado.") se ve entero, igual que el dupe al final del nombre («Kafka E2»).
- * El lector de pantalla lee el texto completo.
+ * El texto va siempre en una línea. Si no cabe, se recorta con "…" solo el nombre (Notice), y lo de alrededor
+ * ("Evento «", "» eliminado.", el dupe de «Kafka E2») se ve entero. El lector de pantalla lee el texto completo.
  */
-function ToastText({ text }: { text: string }) {
-  const match = /^(.*«)(.+?)((?: E\d)?».*)$/.exec(text);
-  if (!match) return <span className="toast-text">{text}</span>;
+function ToastText({ text }: { text: Notice }) {
+  if (typeof text === 'string') return <span className="toast-text">{text}</span>;
   return (
     <span className="toast-text">
-      <span className="sr-only">{text}</span>
+      <span className="sr-only">{noticeText(text)}</span>
       <span className="toast-fixed" aria-hidden="true">
-        {match[1]}
+        {text.before}
       </span>
-      <ToastName name={match[2]} />
+      <ToastName name={text.name} />
       <span className="toast-fixed" aria-hidden="true">
-        {match[3]}
+        {text.after}
       </span>
     </span>
   );
@@ -45,7 +44,9 @@ function ToastText({ text }: { text: string }) {
 /**
  * El nombre, recortado a mano en vez de con text-overflow: así el "…" nunca queda detrás de un espacio
  * ("Permansor …  E1"). Busca el trozo más largo que cabe midiendo el propio span: sin recortar mide lo que
- * deja libre el resto del aviso, y con un texto que cabe, lo que ocupa ese texto.
+ * deja libre el resto del aviso, y con un texto que cabe, lo que ocupa ese texto. Escribe en el nodo solo para
+ * medir y acaba guardando en el estado lo mismo que dejó escrito, así React no ve un texto distinto del suyo.
+ * Cada aviso monta el suyo (el toast va con key por id), así que no hay que volver a medir si cambia el nombre.
  */
 function ToastName({ name }: { name: string }) {
   const ref = useRef<HTMLSpanElement>(null);

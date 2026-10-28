@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { reducedMotion } from './motion';
 
 interface Props {
   /**
@@ -35,11 +36,6 @@ interface Props {
    * selector, con sus opciones justo debajo). Si no cabe, al otro lado.
    */
   side?: 'below' | 'above';
-  /**
-   * Con `control`, si el toque también la abre (por defecto sí: el ×2 de los paquetes se explica al tocarlo).
-   * Un interruptor no la abre: su etiqueta ya dice qué hace, y la burbuja tapaba lo que cambia.
-   */
-  tapExplains?: boolean;
   /**
    * Id de la burbuja, si lo pone quien la usa: un interruptor lo lleva también en su input, como descripción,
    * aunque el disparador sea el término de su etiqueta (ToggleTerm).
@@ -75,7 +71,6 @@ export function Tip({
   className,
   control,
   side = 'below',
-  tapExplains = true,
   id: givenId,
 }: Props) {
   const ownId = useId();
@@ -114,14 +109,17 @@ export function Tip({
       setAbove(!below);
     };
     place();
+    // También si cambia de tamaño mientras está abierta (su contenido se recalcula: la cuenta del balance).
+    const resize = new ResizeObserver(place);
+    if (bubbleRef.current) resize.observe(bubbleRef.current);
     window.addEventListener('scroll', place, true);
     window.addEventListener('resize', place);
     return () => {
+      resize.disconnect();
       window.removeEventListener('scroll', place, true);
       window.removeEventListener('resize', place);
     };
-    // Se recoloca si cambia el texto; con iconos (un elemento nuevo en cada render) se quedaría en bucle.
-  }, [open, typeof content === 'string' ? content : null]);
+  }, [open, side]);
 
   useEffect(() => {
     if (!open) return;
@@ -154,7 +152,7 @@ export function Tip({
   const close = () => {
     if (!openRef.current) return;
     setOpen(false);
-    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) setLeaving(true);
+    if (!reducedMotion()) setLeaving(true);
   };
   // Con el ratón espera un poco: al cruzar por encima de varios datos no van saltando burbujas.
   const hoverTimer = useRef<number | undefined>(undefined);
@@ -208,7 +206,7 @@ export function Tip({
           // Un control, al tocarlo, cambia como siempre y además se explica (en el móvil no hay hover); se
           // cierra al tocar fuera. Sin preventDefault: el toque sigue siendo del control.
           if (control) {
-            if (tapExplains) show();
+            show();
             return;
           }
           // Al tocar, abre o cierra; dentro de un <label>, sin enfocar el campo (no saca el teclado).

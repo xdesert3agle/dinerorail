@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import type { SourceTotal } from '../engine/calculate';
 import { formatDate, fromDayNum, toDayNum, WEEKDAYS } from '../engine/dates';
-import { occurrences } from '../engine/sources';
+import { PATCH_LENGTH_DAYS } from '../engine/rules';
+import { canBePending, occurrences } from '../engine/sources';
 import type { AppState, Reward, Schedule, Source, SourceCategory } from '../engine/types';
 import { newId } from '../engine/util';
-import type { ChangeState } from '../state/store';
+import { namedNotice, type ChangeState } from '../state/store';
 import { describeSchedule, fmtInt, fmtSingles, pendingLabel } from './format';
 import { Icon } from './Icon';
 import { DateField } from './DateField';
@@ -45,7 +46,7 @@ function defaultSchedule(type: Schedule['type'], today: string): Schedule {
     case 'monthly':
       return { type, day: 1 };
     case 'cycle':
-      return { type, anchor: today, periodDays: 42 };
+      return { type, anchor: today, periodDays: PATCH_LENGTH_DAYS };
     case 'perPatch':
       return { type, offsetDays: 0 };
   }
@@ -149,7 +150,7 @@ export function SourcesPanel({ state, today, totals, onChange }: Props) {
                       <div className="source-meta">
                         <RewardInline reward={src.reward} /> · {describeSchedule(src.schedule)}
                         {next && <> · próximo {formatDate(next)}</>}
-                        {src.pendingNow && src.schedule.type !== 'perPatch' && <> · pendiente hoy</>}
+                        {src.pendingNow && canBePending(src.schedule) && <> · pendiente hoy</>}
                       </div>
                     </div>
                     <div className="source-contrib">
@@ -181,7 +182,7 @@ export function SourcesPanel({ state, today, totals, onChange }: Props) {
                       onDelete={() =>
                         onChange(
                           (s) => ({ ...s, sources: s.sources.filter((x) => x.id !== src.id) }),
-                          `Fuente «${src.name}» eliminada.`,
+                          namedNotice('Fuente ', src.name, ' eliminada.'),
                         )
                       }
                     />

@@ -4,7 +4,7 @@ import { isValidISO } from '../engine/dates';
 import { defaultEventDate, defaultState } from '../engine/defaults';
 import { SHARD_PACKS } from '../engine/packs';
 import { clampPity } from '../engine/pulls';
-import { DEFAULT_HARD_PITY } from '../engine/rules';
+import { DEFAULT_HARD_PITY, PATCH_LENGTH_DAYS } from '../engine/rules';
 import type {
   Account,
   AppState,
@@ -27,13 +27,14 @@ import { isObj, newId } from '../engine/util';
 const STORAGE_KEY = 'hsr-jades:v1';
 
 const num = (v: unknown, fallback = 0) => (typeof v === 'number' && Number.isFinite(v) ? v : fallback);
+/** Una cantidad (Jades, Pases, Esquirlas…): entera y no negativa. */
+const count = (v: unknown) => Math.max(0, Math.floor(num(v)));
 const str = (v: unknown, fallback = '') => (typeof v === 'string' ? v : fallback);
 const date = (v: unknown, fallback: string) => (isValidISO(v) ? v : fallback);
 
 const CATEGORIES: SourceCategory[] = ['diario', 'semanal', 'endgame', 'parche', 'mensual', 'otro'];
-const SKINS: Skin[] = ['kafka', 'aha', 'grafito', 'sparxie'];
-/** Temas que siguen en el código pero no salen en el selector: quien los tenga guardados pasa al de por defecto. */
-export const HIDDEN_SKINS: Skin[] = ['kafka', 'grafito'];
+/** Los temas que hay. Uno que ya no existe (Kafka, Grafito, quitados) pasa al de por defecto. */
+export const SKINS: Skin[] = ['aha', 'sparxie'];
 /** Temas que han cambiado de nombre: el antiguo apunta al actual. */
 const RENAMED_SKINS: Record<string, Skin> = { retro: 'sparxie' };
 const THEMES: ThemeMode[] = ['system', 'light', 'dark'];
@@ -41,7 +42,7 @@ const THEMES: ThemeMode[] = ['system', 'light', 'dark'];
 function normalizeSkin(v: unknown, fallback: Skin): Skin {
   if (typeof v !== 'string') return fallback;
   const skin = RENAMED_SKINS[v] ?? v;
-  return SKINS.includes(skin as Skin) && !HIDDEN_SKINS.includes(skin as Skin) ? (skin as Skin) : fallback;
+  return SKINS.includes(skin as Skin) ? (skin as Skin) : fallback;
 }
 
 /** Solo se guardan los paquetes conocidos, con cantidades enteras no negativas. */
@@ -52,7 +53,7 @@ function normalizeShardPacks(v: unknown): Record<string, ShardPackPurchase> {
     const p = o[pack.id];
     if (!isObj(p)) continue;
     out[pack.id] = {
-      count: Math.max(0, Math.floor(num(p.count))),
+      count: count(p.count),
       firstBonus: typeof p.firstBonus === 'boolean' ? p.firstBonus : true,
     };
   }
@@ -61,7 +62,7 @@ function normalizeShardPacks(v: unknown): Record<string, ShardPackPurchase> {
 
 function normalizeReward(v: unknown): Reward {
   const o = isObj(v) ? v : {};
-  return { jades: num(o.jades), specialPasses: num(o.specialPasses) };
+  return { jades: count(o.jades), specialPasses: count(o.specialPasses) };
 }
 
 function normalizeSchedule(v: unknown): Schedule | null {
@@ -74,7 +75,7 @@ function normalizeSchedule(v: unknown): Schedule | null {
     case 'monthly':
       return { type: 'monthly', day: Math.min(31, Math.max(1, num(v.day, 1))) };
     case 'cycle':
-      return isValidISO(v.anchor) ? { type: 'cycle', anchor: v.anchor, periodDays: Math.max(1, num(v.periodDays, 42)) } : null;
+      return isValidISO(v.anchor) ? { type: 'cycle', anchor: v.anchor, periodDays: Math.max(1, num(v.periodDays, PATCH_LENGTH_DAYS)) } : null;
     case 'perPatch':
       return { type: 'perPatch', offsetDays: num(v.offsetDays) };
     default:
@@ -105,8 +106,8 @@ function normalizeEvent(v: unknown, patchStart: string): PatchEvent | null {
     id: str(v.id, newId('event')),
     name: str(v.name),
     date: date(v.date, patchStart),
-    jades: num(v.jades),
-    specialPasses: num(v.specialPasses),
+    jades: count(v.jades),
+    specialPasses: count(v.specialPasses),
   };
 }
 
@@ -119,8 +120,8 @@ function normalizePatch(v: unknown, defaults: Patch[]): Patch | null {
   }
 
   // Migración: antes cada parche tenía un único total de eventos (eventJades/eventSpecialPasses).
-  const jades = num(v.eventJades);
-  const specialPasses = num(v.eventSpecialPasses);
+  const jades = count(v.eventJades);
+  const specialPasses = count(v.eventSpecialPasses);
   // Si era el valor por defecto antiguo de la 4.6, se sustituye por el nuevo desglose.
   const def = defaults.find((p) => p.version === base.version && p.start === base.start);
   if (def && jades === 2060 && specialPasses === 0) return { ...base, events: def.events };
@@ -204,10 +205,10 @@ export function normalizeState(raw: unknown): AppState {
   return {
     version: 1,
     inventory: {
-      jades: num(inv.jades),
-      specialPasses: num(inv.specialPasses),
-      shards: num(inv.shards),
-      starlight: Math.max(0, Math.floor(num(inv.starlight))),
+      jades: count(inv.jades),
+      specialPasses: count(inv.specialPasses),
+      shards: count(inv.shards),
+      starlight: count(inv.starlight),
     },
     pity: {
       character: clampPity('character', num(pity.character), hardPity),
@@ -251,10 +252,26 @@ function load(): AppState {
 }
 
 /**
- * Cambia el estado, como el setState de React. Los borrados pasan además el texto del aviso (`undo`): el
- * aviso de arriba lo muestra con un botón para volver al estado de antes.
+ * Texto de un aviso. Con un nombre dentro («Evento «Ascuas» eliminado.»), el nombre va aparte: es lo único que
+ * el aviso recorta si no cabe en su línea; lo de alrededor se ve entero.
  */
-export type ChangeState = (update: (s: AppState) => AppState, undo?: string) => void;
+export type Notice = string | { before: string; name: string; after: string };
+
+/** Un aviso que nombra lo quitado: `Evento «nombre» eliminado.`, con el nombre recortable. */
+export const namedNotice = (before: string, name: string, after: string): Notice => ({
+  before: `${before}«`,
+  name,
+  after: `»${after}`,
+});
+
+/** El texto entero de un aviso, para los lectores de pantalla. */
+export const noticeText = (n: Notice) => (typeof n === 'string' ? n : n.before + n.name + n.after);
+
+/**
+ * Cambia el estado, como el setState de React. Los borrados pasan además el texto del aviso (`undo`): el
+ * aviso (el toast de abajo a la izquierda) lo muestra con un botón para volver al estado de antes.
+ */
+export type ChangeState = (update: (s: AppState) => AppState, undo?: Notice) => void;
 
 /** Actualización que cambia solo algunos ajustes: `onChange(withSettings({ includeShards }))`. */
 export const withSettings =

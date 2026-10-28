@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { calculate, PATCH_EVENTS_ID } from './calculate';
 import { addDays, toDayNum, weekdayOf } from './dates';
 import { defaultState } from './defaults';
-import { nextVersion, occurrences } from './sources';
+import { canBePending, nextVersion, occurrences } from './sources';
+import { splitJades } from './rules';
 import type { AppState, Source } from './types';
 
 /** Estado con solo las fuentes indicadas activas y sin parches. */
@@ -48,6 +49,12 @@ describe('occurrences', () => {
 
   it('monthly: día 1', () => {
     expect(occurrences({ type: 'monthly', day: 1 }, from, toDayNum('2026-12-15'), []).length).toBe(3);
+  });
+
+  it('por versión, en orden aunque las versiones no lo estén y con el desfase (negativo, antes del inicio)', () => {
+    const starts = ['2027-01-20', '2026-12-09'].map(toDayNum);
+    const days = occurrences({ type: 'perPatch', offsetDays: -10 }, from, toDayNum('2027-03-01'), starts);
+    expect(days).toEqual(['2026-11-29', '2027-01-10'].map(toDayNum));
   });
 });
 
@@ -182,5 +189,17 @@ describe('patches', () => {
   it('nextVersion', () => {
     expect(nextVersion('4.6')).toBe('4.7');
     expect(nextVersion('4.9')).toBe('4.10');
+  });
+});
+
+describe('reglas sueltas', () => {
+  it('splitJades: tiradas enteras y lo que sobra', () => {
+    expect(splitJades(1000)).toEqual({ singles: 6, spare: 40 });
+    expect(splitJades(159)).toEqual({ singles: 0, spare: 159 });
+  });
+
+  it('canBePending: todas menos las de por versión', () => {
+    expect(canBePending({ type: 'daily' })).toBe(true);
+    expect(canBePending({ type: 'perPatch', offsetDays: 0 })).toBe(false);
   });
 });

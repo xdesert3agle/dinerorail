@@ -1,7 +1,8 @@
 import { BANNERS, STARLIGHT_PER_4_STAR, type BannerModel } from '../engine/rules';
 import type { AppState, PullKind } from '../engine/types';
-import { fmtInt, fmtSingles } from './format';
+import { fmtInt, fmtRate, fmtSingles } from './format';
 import { Icon } from './Icon';
+import { KIND_LABEL } from './kinds';
 import { Tip } from './Tip';
 import { RUNS, type PlanOddsView } from './usePlanOdds';
 
@@ -12,18 +13,17 @@ interface Props {
 }
 
 // Los textos de ayuda salen de las reglas (rules.ts), para que no se desfasen si cambian.
-const rate = new Intl.NumberFormat('es-ES', { style: 'percent', maximumFractionDigits: 1 });
 
 /** "Personaje: 0,6 %, sube desde la tirada 74, seguro en la 90; 50/50". */
 const describeBanner = (label: string, b: BannerModel) => {
   const featured = Math.round(b.featuredChance * 100);
-  return `${label}: ${rate.format(b.base)}, sube desde la tirada ${b.softPityFrom}, seguro en la ${b.hardPity}; ${featured}/${100 - featured}`;
+  return `${label}: ${fmtRate(b.base)}, sube desde la tirada ${b.softPityFrom}, seguro en la ${b.hardPity}; ${featured}/${100 - featured}`;
 };
 
 const MODEL_HELP = [
   `Simulación de ${fmtInt(RUNS)} intentos con las probabilidades reales:`,
-  describeBanner('Personaje', BANNERS.character),
-  describeBanner('Cono', BANNERS.lightCone),
+  describeBanner(KIND_LABEL.character, BANNERS.character),
+  describeBanner(KIND_LABEL.lightCone, BANNERS.lightCone),
   'Empieza con el pity y el garantizado actuales. No usa las casillas «50/50 ganado» del plan.',
   'Solo dice 100 % si llega incluso en el peor caso absoluto.',
   'El % de cada objetivo (contando que salgan también todos los anteriores) va en su fila del plan.',

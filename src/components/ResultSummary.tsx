@@ -6,14 +6,10 @@ import type { Skin } from '../engine/types';
 import { Icon } from './Icon';
 import { Masks } from './Masks';
 import { Tip } from './Tip';
-import { Threads } from './Threads';
-import { Wireframe } from './Wireframe';
 
 /** Decoración de fondo de la tarjeta principal en cada tema (Sparxie no lleva: su estilo ya es el marco). */
 const DECORATION: Record<Skin, ComponentType | null> = {
-  kafka: Threads,
   aha: Masks,
-  grafito: Wireframe,
   sparxie: null,
 };
 
@@ -44,7 +40,7 @@ export function ResultSummary({ result, skin }: { result: Result; skin: Skin }) 
     <section className="card hero card-summary">
       <header className="card-header">
         <h2>Resumen</h2>
-        {/* La fecha objetivo, a la vista: de ella sale la cifra (la fecha se cambia en Recursos actuales). */}
+        {/* La fecha objetivo, a la vista: de ella sale la cifra (se cambia en la tarjeta de la fecha objetivo). */}
         <Tip className="hero-date" content={`Fecha objetivo: ${formatDate(result.targetDate)}`}>
           {dateLabel(result)}
         </Tip>
@@ -114,10 +110,15 @@ export function Breakdown({ result }: { result: Result }) {
           </thead>
           <tbody>
             {result.bySource.map((t) => (
-              <tr key={t.sourceId} title={`${fmtInt(t.reward.jades)} Jades · ${fmtInt(t.reward.specialPasses)} P. Especiales`}>
+              <tr key={t.sourceId}>
                 <td>{t.name}</td>
                 <td className="num">{fmtInt(t.count)}</td>
-                <td className="num">{fmtSingles(t.singles)}</td>
+                {/* De dónde salen esas tiradas: una explicación del dato (Tip, también en táctil), no un title. */}
+                <td className="num">
+                  <Tip content={`${fmtInt(t.reward.jades)} Jades · ${fmtInt(t.reward.specialPasses)} Pases Especiales`}>
+                    {fmtSingles(t.singles)}
+                  </Tip>
+                </td>
                 <td className="bar-col" aria-hidden="true">
                   <div className="bar" style={{ width: `${(t.singles / max) * 100}%` }} />
                 </td>

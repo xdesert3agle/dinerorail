@@ -60,7 +60,7 @@ export interface Inventory {
 }
 
 /** Tema visual de la app. */
-export type Skin = 'kafka' | 'aha' | 'grafito' | 'sparxie';
+export type Skin = 'aha' | 'sparxie';
 
 /** Modo claro u oscuro: "system" sigue al del sistema. */
 export type ThemeMode = 'system' | 'light' | 'dark';
@@ -83,7 +83,7 @@ export interface Settings {
    * en nada, pero las cantidades se quedan: sirve para ver si se llega sin pagar.
    */
   includePacks: boolean;
-  /** Tiradas que se cuentan para sacar un 5★ en cada banner (peor caso de Tiradas futuras). */
+  /** Tiradas que se cuentan para sacar un 5★ en cada banner (peor caso del plan de tiradas). */
   hardPity: Record<PullKind, number>;
 }
 

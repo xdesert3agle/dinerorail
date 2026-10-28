@@ -1,6 +1,6 @@
 import { ownedCopies } from './account';
 import type { Catalog, CatalogEntry } from './catalog';
-import { MAX_EIDOLON } from './rules';
+import { MAX_EIDOLON, MAX_SUPERIMPOSITION } from './rules';
 import type { OwnedCharacter, PlannedPull } from './types';
 
 /** Dupes que se muestran a la izquierda, como mucho. */
@@ -48,17 +48,14 @@ export interface RowCopy {
 const key = (name: string) => name.trim().toLowerCase();
 
 /**
- * Personaje del catálogo de un nombre. Vale con que el nombre empiece por el del personaje; si encajan
- * varios, el más largo: "Silver Wolf LV.999" es Silver Wolf LV.999, no Silver Wolf.
+ * Personaje o cono del catálogo de un nombre: el mismo, sin contar mayúsculas ni espacios de los bordes. Los
+ * nombres del plan salen del catálogo (el desplegable solo acepta uno de la lista); un texto libre de antes de
+ * tener catálogo («Kafkaa») no se da por bueno.
  */
 export function resolve(name: string, entries: CatalogEntry[]): CatalogEntry | null {
   const k = key(name);
   if (!k) return null;
-  let best: CatalogEntry | null = null;
-  for (const e of entries) {
-    if (k.startsWith(key(e.name)) && (!best || e.name.length > best.name.length)) best = e;
-  }
-  return best;
+  return entries.find((e) => key(e.name) === k) ?? null;
 }
 
 /**
@@ -114,3 +111,10 @@ export function planLightCones(plan: PlannedPull[], catalog: Catalog | null): st
   }
   return ids;
 }
+
+/**
+ * Superposición de cada cono del plan (planLightCones): cada copia del mismo cono la sube, hasta
+ * MAX_SUPERIMPOSITION. La cuenta no guarda los conos que ya se tienen, así que la primera es S1.
+ */
+export const superimpositions = (ids: string[]): number[] =>
+  ids.map((id, i) => Math.min(ids.slice(0, i + 1).filter((x) => x === id).length, MAX_SUPERIMPOSITION));

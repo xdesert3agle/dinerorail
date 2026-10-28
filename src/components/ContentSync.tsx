@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
+import { WEEKLY_SYNC } from '../engine/catalog';
+import { WEEKDAYS } from '../engine/dates';
 import { SYNC_COOLDOWN_MS, type CatalogSync } from '../state/catalog';
 import { fmtMoment } from './format';
+
+/** «martes a las 10:00», de WEEKLY_SYNC (getDay: 0 es domingo; WEEKDAYS empieza en lunes). */
+const WEEKLY_TEXT = `${WEEKDAYS[(WEEKLY_SYNC.weekday + 6) % 7]} a las ${String(WEEKLY_SYNC.hour).padStart(2, '0')}:00`;
 
 /** Segundos que quedan, como "0:42". */
 const fmtWait = (ms: number) => {
@@ -36,7 +41,7 @@ export function ContentSync({ catalog, syncing, error, lastAttempt, sync }: Cata
       {/* role="status": al terminar de sincronizar se anuncia la fecha nueva. */}
       <p className="muted" role="status">
         {catalog
-          ? `Sincronizado el ${fmtMoment(catalog.syncedAt)}. Se actualiza solo los martes a las 10:00.`
+          ? `Sincronizado el ${fmtMoment(catalog.syncedAt)}. Se actualiza solo los ${WEEKLY_TEXT}.`
           : 'Descarga los personajes y conos de luz 5★ para sugerirlos en el plan de tiradas.'}
       </p>
       <div className="content-sync-row">
@@ -50,7 +55,10 @@ export function ContentSync({ catalog, syncing, error, lastAttempt, sync }: Cata
         <span className={`content-sync-wait${disabled ? '' : ' invisible'}`}>
           <span className={`spinner${syncing ? '' : ' invisible'}`} aria-hidden="true" />
           {syncing && <span className="sr-only">Sincronizando…</span>}
-          <span title="Tiempo hasta poder sincronizar de nuevo">{fmtWait(cooling ? remaining : SYNC_COOLDOWN_MS)}</span>
+          <span>
+            <span className="sr-only">Tiempo hasta poder sincronizar de nuevo: </span>
+            {fmtWait(cooling ? remaining : SYNC_COOLDOWN_MS)}
+          </span>
         </span>
       </div>
       {error && (

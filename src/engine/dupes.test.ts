@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Catalog } from './catalog';
-import { dupeOf, planCopies, planDupes, planLightCones } from './dupes';
+import { dupeOf, planCopies, planDupes, planLightCones, superimpositions } from './dupes';
 import type { OwnedCharacter, PlannedPull, PullKind } from './types';
 
 const catalog: Catalog = {
@@ -105,6 +105,8 @@ describe('conos del plan', () => {
       pull('Kafka'),
       pull('Cono inventado', 'lightCone'),
       pull('along the passing shore', 'lightCone'),
+      pull('Patience Is All You Need', 'lightCone'),
+      // Un nombre que solo empieza como uno del catálogo no es ese cono.
       pull('Patience Is All You Need S2', 'lightCone'),
     ];
     expect(planLightCones(plan, catalog)).toEqual(['23006', '23024', '23006']);
@@ -114,5 +116,12 @@ describe('conos del plan', () => {
     const plan = Array.from({ length: 8 }, () => pull('Patience Is All You Need', 'lightCone'));
     expect(planLightCones(plan, catalog)).toHaveLength(6);
     expect(planLightCones(plan, null)).toEqual([]);
+  });
+});
+
+describe('superposición de los conos', () => {
+  it('cada copia del mismo cono la sube, hasta S5', () => {
+    expect(superimpositions(['a', 'b', 'a', 'a'])).toEqual([1, 1, 2, 3]);
+    expect(superimpositions(Array(7).fill('a'))).toEqual([1, 2, 3, 4, 5, 5, 5]);
   });
 });

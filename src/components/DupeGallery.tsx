@@ -1,7 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
 import { formatDesc, type Effect } from '../engine/details';
-import { dupeImageUrl, lightConeImageUrl, type Dupe } from '../engine/dupes';
-import { MAX_SUPERIMPOSITION } from '../engine/rules';
+import { dupeImageUrl, lightConeImageUrl, superimpositions, type Dupe } from '../engine/dupes';
 import { prefetchDetails, useDetails, type DetailsRef } from '../state/details';
 import { reducedMotion } from './motion';
 
@@ -282,11 +281,11 @@ export function DupeGallery({ dupes, lightCones }: Props) {
     ref: { kind: 'character', id: d.characterId },
     level: d.eidolon,
   }));
-  // Cada copia de un cono en el plan sube su superposición (la cuenta no guarda los conos que ya se tienen).
+  const levels = superimpositions(lightCones);
   const right: Item[] = lightCones.map((id, i) => ({
     src: lightConeImageUrl(id),
     ref: { kind: 'lightCone', id },
-    level: Math.min(lightCones.slice(0, i + 1).filter((x) => x === id).length, MAX_SUPERIMPOSITION),
+    level: levels[i],
   }));
 
   // Los detalles se descargan de fondo en cuanto la imagen sale en la galería, para que el popover ya

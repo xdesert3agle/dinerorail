@@ -1,5 +1,6 @@
 import { WEEKDAYS } from '../engine/dates';
 import { JPY_PER_EUR } from '../engine/packs';
+import { canBePending } from '../engine/sources';
 import type { Schedule } from '../engine/types';
 
 // useGrouping 'always': en es-ES los números de 4 cifras no llevan punto por defecto (6560 pero 12.960).
@@ -10,6 +11,10 @@ const dec1 = nf(1);
 const dec2 = nf(2);
 
 export const fmtInt = (n: number) => int.format(n);
+const pct1 = new Intl.NumberFormat('es-ES', { style: 'percent', maximumFractionDigits: 1 });
+const pct2 = new Intl.NumberFormat('es-ES', { style: 'percent', maximumFractionDigits: 2 });
+/** Una probabilidad de las reglas («0,6 %»), con hasta 1 decimal o 2 (la de 5★ de conos es 1,87 %, no 1,9 %). */
+export const fmtRate = (p: number, digits: 1 | 2 = 1) => (digits === 1 ? pct1 : pct2).format(p);
 
 /** El cambio fijo de los precios de Japón, «174,25 ¥/€». */
 export const YEN_RATE = `${new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2 }).format(JPY_PER_EUR)} ¥/€`;
@@ -59,7 +64,9 @@ export function describeSchedule(s: Schedule): string {
   }
 }
 
+/** Texto de la casilla «pendiente»; null si la fuente no puede tenerlo (canBePending). */
 export function pendingLabel(s: Schedule): string | null {
+  if (!canBePending(s)) return null;
   switch (s.type) {
     case 'daily':
       return 'Pendiente de cobrar hoy';
@@ -69,7 +76,7 @@ export function pendingLabel(s: Schedule): string | null {
       return 'Pendiente de cobrar este mes';
     case 'cycle':
       return 'Ciclo actual pendiente de cobrar';
-    case 'perPatch':
+    default:
       return null;
   }
 }

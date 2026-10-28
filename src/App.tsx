@@ -20,14 +20,12 @@ import { todayISO } from './engine/dates';
 import { planCopies, planDupes, planLightCones } from './engine/dupes';
 import type { Skin, ThemeMode } from './engine/types';
 import { useCatalog } from './state/catalog';
-import { HIDDEN_SKINS, useAppState, withSettings, type ChangeState } from './state/store';
+import { SKINS, useAppState, withSettings, type ChangeState } from './state/store';
 
-const SKINS: { id: Skin; label: string; title: string }[] = [
-  { id: 'kafka', label: 'Kafka', title: 'Tema Kafka: magenta y telaraña' },
-  { id: 'aha', label: 'Aha', title: 'Tema Aha: rojo y máscaras de la Exultación' },
-  { id: 'grafito', label: 'Grafito', title: 'Tema Grafito: gris grafito, verde esmeralda y líneas finas' },
-  { id: 'sparxie', label: 'Sparxie', title: 'Tema Sparxie: escritorio de 1987, ventanas crema sobre rosa' },
-];
+const SKIN_OPTIONS: Record<Skin, { label: string; title: string }> = {
+  aha: { label: 'Aha', title: 'Tema Aha: rojo y máscaras de la Exultación' },
+  sparxie: { label: 'Sparxie', title: 'Tema Sparxie: escritorio de 1987, ventanas crema sobre rosa' },
+};
 
 /** Modos que se eligen a mano; "system" no tiene botón: es el punto de partida hasta que se pulsa uno. */
 type ManualTheme = Exclude<ThemeMode, 'system'>;
@@ -87,7 +85,6 @@ const TABS: { id: Tab; label: string; hash: string }[] = [
   { id: 'settings', label: 'Configuración', hash: '#configuracion' },
 ];
 // La pestaña vive en el hash de la URL: sobrevive a recargas y el botón Atrás vuelve a la anterior.
-// "#fuentes" es el nombre antiguo de la pestaña de configuración.
 const tabFromHash = (): Tab => {
   const hash = window.location.hash;
   return TABS.find((t) => t.hash && t.hash === hash)?.id ?? 'main';
@@ -105,9 +102,13 @@ export default function App() {
   const mainRef = useRef<HTMLElement>(null);
   const tabRefs = useRef<Partial<Record<Tab, HTMLButtonElement | null>>>({});
 
-  // Los borrados guardan el estado de antes para poder deshacerlos desde el aviso.
+  // Los borrados guardan el estado de antes para poder deshacerlos desde el aviso. El de ahora, no el del render
+  // en que se creó `change`: la fila que se deshace en polvo lo llama 600 ms después, y con el de entonces
+  // deshacer devolvía también lo quitado en medio.
+  const latest = useRef(state);
+  latest.current = state;
   const change: ChangeState = (update, undo) => {
-    if (undo) notify({ text: undo, undo: state });
+    if (undo) notify({ text: undo, undo: latest.current });
     setState(update);
   };
   const undoLast = () => {
@@ -201,17 +202,17 @@ export default function App() {
         </h1>
         <div className="header-actions">
           <div className="skin-switch" role="group" aria-label="Tema">
-            {SKINS.filter((s) => !HIDDEN_SKINS.includes(s.id)).map((s) => (
+            {SKINS.map((id) => (
               <button
-                key={s.id}
+                key={id}
                 type="button"
                 className="skin-option"
-                aria-pressed={skin === s.id}
-                title={s.title}
-                onClick={() => setState(withSettings({ skin: s.id }))}
+                aria-pressed={skin === id}
+                title={SKIN_OPTIONS[id].title}
+                onClick={() => setState(withSettings({ skin: id }))}
               >
-                <span className={`swatch swatch-${s.id}`} aria-hidden="true" />
-                {s.label}
+                <span className={`swatch swatch-${id}`} aria-hidden="true" />
+                {SKIN_OPTIONS[id].label}
               </button>
             ))}
           </div>

@@ -2,7 +2,7 @@
  * Decoración del tema Aha (Exultación) para el fondo de la tarjeta principal:
  * un foco rojo (SVG) detrás de la ilustración del personaje. El motivo de naipes va en el fondo de la página.
  *
- * El foco usa el mismo lienzo que la telaraña de Kafka (720×300, anclado arriba a la derecha).
+ * Lienzo de 720×300, anclado arriba a la derecha.
  */
 import nihilux from '../assets/aha/nihilux.webp';
 

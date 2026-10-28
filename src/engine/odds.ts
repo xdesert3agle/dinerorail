@@ -1,6 +1,7 @@
 import {
   BANNERS,
   fiveStarChance,
+  FOUR_STAR_PITY,
   FOUR_STAR_RATE,
   STARLIGHT_PER_4_STAR,
   STARLIGHT_PER_5_STAR,
@@ -183,7 +184,7 @@ export function guaranteedNeeded(
 
   // Apunta la Cosmiluz de los 4★ garantizados hasta la tirada `upTo` (incluida), en el banner `kind`.
   const creditFourStars = (upTo: number, kind: PullKind) => {
-    for (; fourStars < Math.floor(upTo / 10); fourStars++) {
+    for (; fourStars < Math.floor(upTo / FOUR_STAR_PITY); fourStars++) {
       if (kind === 'lightCone') {
         starlight += STARLIGHT_PER_4_STAR.lightCone;
       } else {
@@ -235,3 +236,15 @@ export function planOdds(sim: PlanSimulation, budget: number): PlanOdds {
     p90Needed: last ? percentile(last, 0.9) : 0,
   };
 }
+
+/** La probabilidad de un objetivo para enseñarla: la simulada, salvo en los dos casos en que se sabe seguro. */
+export interface ShownChance {
+  p: number;
+  /** Llega aunque todo salga en el pity duro (guaranteedNeeded): el único caso en que se dice 100 %. */
+  certain: boolean;
+  /** Ni siquiera hay una tirada por objetivo: el único caso en que se dice 0 %. */
+  impossible: boolean;
+}
+
+export const shownChances = (chances: number[], sure: number[], budget: number): ShownChance[] =>
+  chances.map((p, i) => ({ p, certain: budget >= sure[i], impossible: budget < i + 1 }));

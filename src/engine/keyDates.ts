@@ -1,4 +1,5 @@
 import { addDays } from './dates';
+import { PATCH_LENGTH_DAYS } from './rules';
 import type { ISODate } from './types';
 
 /** Fecha destacada: un día al que apetece apuntar la fecha objetivo (la salida de un personaje, un parche…). */
@@ -14,12 +15,11 @@ export interface KeyDate {
   estimated?: boolean;
 }
 
-/** Lo que dura una versión: las fechas que no se conocen se estiman sumándolo a la última conocida. */
-export const PATCH_WEEKS = 6;
 /** La segunda parte de una versión (cambio de banners) empieza 3 semanas después de su inicio. */
 export const PHASE_2_WEEKS = 3;
 const LAST_KNOWN = '2027-04-28'; // 5.2
-const estimate = (versionsAfter: number) => addDays(LAST_KNOWN, PATCH_WEEKS * 7 * versionsAfter);
+// Las fechas que no se conocen: la última conocida más una versión entera por cada una que falta.
+const estimate = (versionsAfter: number) => addDays(LAST_KNOWN, PATCH_LENGTH_DAYS * versionsAfter);
 const phase2 = (start: ISODate) => addDays(start, PHASE_2_WEEKS * 7);
 
 /**
@@ -80,5 +80,5 @@ export const phaseText = (d: KeyDate) => (d.phase ? `${d.phase}.ª parte` : '');
 /** «4.7 · 1.ª parte» (ordinal abreviado según la RAE, con punto), «4.7» o nada, según lo que se sepa del parche. */
 export function patchText(d: KeyDate): string {
   if (!d.patch) return '';
-  return d.phase ? `${d.patch} · ${d.phase}.ª parte` : d.patch;
+  return d.phase ? `${d.patch} · ${phaseText(d)}` : d.patch;
 }

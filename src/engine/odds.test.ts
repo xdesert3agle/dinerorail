@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { guaranteedNeeded, planOdds, simulatePlan } from './odds';
+import { guaranteedNeeded, planOdds, shownChances, simulatePlan } from './odds';
 import { fiveStarChance, fiveStarRate } from './rules';
 import type { PlannedPull, PullKind } from './types';
 
@@ -79,5 +79,17 @@ describe('probabilidades', () => {
     const plan = [pull('a', 'character'), pull('b', 'lightCone')];
     const sim = simulatePlan(plan, { character: 0, lightCone: 0 }, {}, 3000);
     expect(guaranteedNeeded(plan, { character: 0, lightCone: 0 }).at(-1)).toBeGreaterThanOrEqual(planOdds(sim, 0).p90Needed);
+  });
+});
+
+describe('shownChances', () => {
+  it('100 % solo si llega en el peor caso; 0 % solo sin una tirada por objetivo', () => {
+    const shown = shownChances([0.999, 0.5, 0.2], [100, 250, 400], 250);
+    expect(shown.map((c) => [c.certain, c.impossible])).toEqual([
+      [true, false],
+      [true, false],
+      [false, false],
+    ]);
+    expect(shownChances([0.001, 0.001], [100, 200], 1).map((c) => c.impossible)).toEqual([false, true]);
   });
 });

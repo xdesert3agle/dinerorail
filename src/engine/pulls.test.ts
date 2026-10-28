@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { planPulls } from './pulls';
+import { planBalance, planPulls } from './pulls';
 import { PULLS_PER_4_STAR, STARLIGHT_PER_AVERAGE_4_STAR } from './rules';
 import type { PlannedPull } from './types';
 
@@ -133,5 +133,15 @@ describe('planPulls', () => {
   it('el pity se limita al rango válido', () => {
     const [row] = planPulls([pull('a', 'character', true)], { character: 200, lightCone: 0 }, 0);
     expect(row.cost).toBe(1);
+  });
+});
+
+describe('planBalance', () => {
+  it('coste de las filas, lo que devuelve la Cosmiluz y lo que sobra o falta', () => {
+    const plan = [pull('a', 'character'), pull('b', 'lightCone')];
+    const rows = planPulls(plan, { character: 0, lightCone: 0 }, 200);
+    // 160 + 140 de coste; la Cosmiluz devuelve 34 (ver el test de la acumulación): netas 266.
+    expect(planBalance(rows, 200)).toEqual({ gross: 300, refunded: 34, left: -66 });
+    expect(planBalance([], 50)).toEqual({ gross: 0, refunded: 0, left: 50 });
   });
 });

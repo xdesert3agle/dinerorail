@@ -1,7 +1,7 @@
 import type { Result } from '../engine/calculate';
 import { clampPity } from '../engine/pulls';
 import type { AppState, Inventory, PullKind } from '../engine/types';
-import { withSettings } from '../state/store';
+import { withSettings, type ChangeState } from '../state/store';
 import { fmtInt, wholeSingles } from './format';
 import { StarlightDefinition } from './glossary';
 import { Icon } from './Icon';
@@ -12,7 +12,7 @@ import { Toggle, ToggleTerm } from './Toggle';
 interface Props {
   state: AppState;
   result: Result;
-  onChange: (update: (s: AppState) => AppState) => void;
+  onChange: ChangeState;
 }
 
 const PITY_FIELDS: { kind: PullKind; label: string; guaranteedLabel: string }[] = [
@@ -100,7 +100,9 @@ export function CurrentInventory({ state, result, onChange }: Props) {
           <div key={kind} className="pity-field">
             <NumberField
               label={label}
-              value={state.pity[kind]}
+              // Recortado al pity duro de ahora: si se baja en Configuración, el guardado no se toca (por si se
+              // vuelve a subir) y el cálculo ya lo recorta; aquí se ve el que cuenta.
+              value={clampPity(kind, state.pity[kind], hardPity)}
               min={0}
               max={hardPity[kind] - 1}
               onChange={(v) =>

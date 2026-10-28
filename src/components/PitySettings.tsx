@@ -1,11 +1,11 @@
 import { DEFAULT_HARD_PITY } from '../engine/rules';
 import type { AppState, PullKind } from '../engine/types';
-import { withSettings } from '../state/store';
+import { withSettings, type ChangeState } from '../state/store';
 import { NumberField } from './NumberField';
 
 interface Props {
   state: AppState;
-  onChange: (update: (s: AppState) => AppState) => void;
+  onChange: ChangeState;
 }
 
 const FIELDS: { kind: PullKind; label: string }[] = [
@@ -13,14 +13,14 @@ const FIELDS: { kind: PullKind; label: string }[] = [
   { kind: 'lightCone', label: 'Tiradas para un cono de luz 5★' },
 ];
 
-/** Cuántas tiradas se cuentan por cada 5★ en el peor caso de Tiradas futuras. */
+/** Cuántas tiradas se cuentan por cada 5★ en el peor caso del plan de tiradas. */
 export function PitySettings({ state, onChange }: Props) {
   const setHardPity = (kind: PullKind, value: number) =>
     onChange((s) => {
       // Vacío o 0: vuelve al valor por defecto.
       const v = Math.floor(value);
       // El pity actual no se recorta aquí: mientras se escribe "80" se pasa por "8" y se perdería.
-      // Tiradas futuras ya lo limita al calcular.
+      // El plan ya lo limita al calcular.
       return withSettings({ hardPity: { ...s.settings.hardPity, [kind]: v >= 1 ? v : DEFAULT_HARD_PITY[kind] } })(s);
     });
 

@@ -9,7 +9,9 @@ import {
   STARLIGHT_PER_5_STAR_E6,
   STARLIGHT_PER_PASS,
 } from '../engine/rules';
+import { fmtRate } from './format';
 import { Icon } from './Icon';
+import { KIND_LABEL } from './kinds';
 import { Rarity } from './Rarity';
 import { TipTitle } from './Tip';
 
@@ -18,9 +20,6 @@ import { TipTitle } from './Tip';
  * (una vez por tarjeta), dice lo mismo, y si cambia una regla del juego se cambia aquí.
  */
 
-const pct = new Intl.NumberFormat('es-ES', { style: 'percent', maximumFractionDigits: 1 });
-/** Con dos decimales: la de 5★ de conos es 1,87 % (con uno quedaría 1,9 %, que no es la oficial). */
-const pct2 = new Intl.NumberFormat('es-ES', { style: 'percent', maximumFractionDigits: 2 });
 /** Cosmiluz que devuelve cada cosa al salir (de las constantes de rules.ts). */
 const STARLIGHT_REFUNDS: { kind: PullKind; stars: 4 | 5; e6?: boolean; amount: number }[] = [
   // Por rareza: los 4★ juntos y luego los 5★, cada personaje con su cono.
@@ -30,28 +29,26 @@ const STARLIGHT_REFUNDS: { kind: PullKind; stars: 4 | 5; e6?: boolean; amount: n
   { kind: 'character', stars: 5, e6: true, amount: STARLIGHT_PER_5_STAR_E6 },
   { kind: 'lightCone', stars: 5, amount: STARLIGHT_PER_5_STAR },
 ];
-/** «Personaje» o «Cono», escrito siempre: sin nada, el personaje se daba por supuesto. */
-const REFUND_KIND: Record<PullKind, string> = { character: 'Personaje', lightCone: 'Cono de luz' };
 /** Probabilidad de cada rareza por tirada: la base y la consolidada. El 4★ es igual en los dos banners. */
 const ODDS_ROWS: { label: string; stars: 4 | 5; base: string; total: string }[] = [
   // «Cualquier»: la del 4★ cuenta cualquier 4★ (personaje o cono de luz) y es igual en los dos banners.
-  { label: 'Cualquier', stars: 4, base: pct.format(FOUR_STAR_BASE_RATE), total: pct.format(FOUR_STAR_RATE) },
+  { label: 'Cualquier', stars: 4, base: fmtRate(FOUR_STAR_BASE_RATE), total: fmtRate(FOUR_STAR_RATE) },
   {
     label: 'Personaje',
     stars: 5,
-    base: pct.format(BANNERS.character.base),
-    total: pct2.format(fiveStarRate('character')),
+    base: fmtRate(BANNERS.character.base),
+    total: fmtRate(fiveStarRate('character'), 2),
   },
   {
     label: 'Cono de luz',
     stars: 5,
-    base: pct.format(BANNERS.lightCone.base),
-    total: pct2.format(fiveStarRate('lightCone')),
+    base: fmtRate(BANNERS.lightCone.base),
+    total: fmtRate(fiveStarRate('lightCone'), 2),
   },
 ];
 /** «Cono 4★», «Personaje 5★ E6»: el texto de cada fila, para la clave y los lectores de pantalla. */
 const refundLabel = ({ kind, stars, e6 }: (typeof STARLIGHT_REFUNDS)[number]) =>
-  `${REFUND_KIND[kind]} ${stars}★${e6 ? ' (E6)' : ''}`;
+  `${KIND_LABEL[kind]} ${stars}★${e6 ? ' (E6)' : ''}`;
 
 /**
  * Cosmiluz: su cambio en tiradas, lo que devuelve cada objeto y las probabilidades por tirada. La del campo de
@@ -93,7 +90,7 @@ export function StarlightDefinition() {
             {/* «(E6)» en tinta: es una condición de la fila, no parte de la rareza. */}
             <span>
               <span className={`rarity-${r.stars}`}>
-                {`${REFUND_KIND[r.kind]} `}
+                {`${KIND_LABEL[r.kind]} `}
                 <Rarity stars={r.stars} />
               </span>
               {r.e6 && ' (E6)'}
@@ -119,7 +116,7 @@ export function StarlightDefinition() {
       {ODDS_ROWS.map((row) => (
         <span key={row.label} className="tip-table-row">
           <span className={`rarity-${row.stars}`}>
-            {row.label && `${row.label} `}
+            {`${row.label} `}
             <Rarity stars={row.stars} />
           </span>
           <span className="tip-table-value">{row.base}</span>

@@ -1,7 +1,7 @@
 import { fromDayNum, toDayNum } from './dates';
 import { packsTotal } from './packs';
-import { JADES_PER_PULL, STARLIGHT_PER_PASS } from './rules';
-import { occurrences } from './sources';
+import { JADES_PER_PULL, splitJades, STARLIGHT_PER_PASS } from './rules';
+import { canBePending, occurrences } from './sources';
 import type { AppState, ISODate, IncomeEvent, Reward } from './types';
 
 export const PATCH_EVENTS_ID = 'patch-events';
@@ -77,7 +77,7 @@ export function buildEvents(state: AppState, today: ISODate): IncomeEvent[] {
 
   for (const source of state.sources) {
     if (!source.enabled) continue;
-    if (source.pendingNow && source.schedule.type !== 'perPatch' && to >= todayNum) {
+    if (source.pendingNow && canBePending(source.schedule) && to >= todayNum) {
       events.push({ date: today, sourceId: source.id, reward: source.reward });
     }
     for (const day of occurrences(source.schedule, from, to, patchStarts)) {
@@ -156,8 +156,8 @@ export function calculate(state: AppState, today: ISODate): Result {
     starlightPasses,
     starlightLeftover,
     singles: toSingles(final),
-    wholeSingles: Math.floor(jades / JADES_PER_PULL) + final.specialPasses,
-    leftoverJades: jades % JADES_PER_PULL,
+    wholeSingles: splitJades(jades).singles + final.specialPasses,
+    leftoverJades: splitJades(jades).spare,
     bySource: [...totals.values()].sort((a, b) => b.singles - a.singles),
   };
 }

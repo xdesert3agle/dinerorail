@@ -26,7 +26,7 @@ const PLACES: [number, number, number][] = [
 const THICKNESS: Point = [1.3, 2];
 /** Caja del dibujo de cada cristal, centrada en él (algo más que el cristal girado). */
 const BOX: Point = [22, 28];
-/** Ancho de todo el grupo (el del CSS, .eidolon-shards). */
+/** Ancho de todo el grupo (el del CSS, --shards-w en .account-list). */
 const WIDTH = 135;
 
 const toPoints = (points: Point[]) => points.map((p) => p.map((n) => n.toFixed(2)).join(',')).join(' ');

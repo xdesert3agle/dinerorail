@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { Result } from '../engine/calculate';
-import { guaranteedNeeded, planOdds, simulatePlan, type PlanOdds } from '../engine/odds';
+import { guaranteedNeeded, planOdds, shownChances, simulatePlan, type PlanOdds, type ShownChance } from '../engine/odds';
 import type { AppState } from '../engine/types';
 
 /** Intentos de la simulación. */
@@ -15,16 +15,16 @@ export interface PlanOddsView {
 }
 
 /**
- * Porcentaje legible, sin decimales. Solo dice 100 % si llega aunque todo salga en el pity duro,
- * y 0 % si ni siquiera hay una single por objetivo; si no, como mucho ">99 %" y como poco "<1 %".
+ * Porcentaje legible, sin decimales. 100 % y 0 % solo en los casos seguros (shownChances); si no, como mucho
+ * ">99 %" y como poco "<1 %".
  */
-function fmtPct(p: number, certain: boolean, impossible: boolean): string {
+function fmtPct({ p, certain, impossible }: ShownChance): string {
   // Espacio de no separación antes del %: no se queda solo en otra línea.
-  if (certain) return '100 %';
-  if (impossible) return '0 %';
-  if (p > 0.99) return '>99 %';
-  if (p < 0.01) return '<1 %';
-  return `${Math.round(p * 100)} %`;
+  if (certain) return '100 %';
+  if (impossible) return '0 %';
+  if (p > 0.99) return '>99 %';
+  if (p < 0.01) return '<1 %';
+  return `${Math.round(p * 100)} %`;
 }
 
 /**
@@ -38,17 +38,17 @@ export function usePlanOdds(state: AppState, result: Result): PlanOddsView | nul
   const budget = result.wholeSingles;
   const initialStarlight = result.starlightLeftover;
 
-  // Solo importan el tipo y el orden de cada objetivo: cambiar un nombre no repite la simulación.
+  // Solo importan el tipo y el orden de cada objetivo: cambiar un nombre no repite la simulación. Por eso las
+  // dependencias llevan `kinds` (el texto) y no `plan`, aunque la simulación lea `plan`.
   const kinds = plan.map((p) => p.kind).join(',');
   const sim = useMemo(
     () => simulatePlan(plan, pity, { countStarlight, guaranteed, initialStarlight }, RUNS),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [kinds, pity.character, pity.lightCone, guaranteed.character, guaranteed.lightCone, countStarlight, initialStarlight],
   );
 
   if (plan.length === 0) return null;
   const odds = planOdds(sim, budget);
   const sure = guaranteedNeeded(plan, pity, { countStarlight, guaranteed, initialStarlight });
-  const pct = plan.map((_, i) => fmtPct(odds.chances[i], budget >= sure[i], budget < i + 1));
+  const pct = shownChances(odds.chances, sure, budget).map(fmtPct);
   return { odds, sure, pct };
 }

@@ -1,9 +1,6 @@
 import { addDays, todayISO } from './dates';
-import { DEFAULT_HARD_PITY } from './rules';
+import { DEFAULT_HARD_PITY, PATCH_LENGTH_DAYS } from './rules';
 import type { AppState, Reward, Source } from './types';
-
-/** Duración habitual de un parche: se usa para proponer la fecha de inicio de un parche nuevo. */
-export const PATCH_LENGTH_DAYS = 42;
 
 const reward = (jades: number, specialPasses = 0): Reward => ({ jades, specialPasses });
 
@@ -189,7 +186,7 @@ export function defaultState(today = todayISO()): AppState {
     plannedPulls: [],
     account: { characters: [], importedAt: null },
     shardPacks: {},
-    targetDate: addDays(today, 42),
+    targetDate: addDays(today, PATCH_LENGTH_DAYS),
     sources: defaultSources(today),
     patches: [
       {

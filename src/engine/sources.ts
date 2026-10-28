@@ -30,7 +30,8 @@ export function occurrences(schedule: Schedule, from: number, to: number, patchS
       break;
     }
     case 'perPatch':
-      for (const start of patchStarts) {
+      // En orden aunque las versiones no lo estén (su inicio se puede editar): el primero es el próximo cobro.
+      for (const start of [...patchStarts].sort((a, b) => a - b)) {
         const d = start + schedule.offsetDays;
         if (d >= from && d <= to) days.push(d);
       }
@@ -38,6 +39,12 @@ export function occurrences(schedule: Schedule, from: number, to: number, patchS
   }
   return days;
 }
+
+/**
+ * Si una fuente puede quedar pendiente de cobrar hoy (`pendingNow`). Las de por versión no: se cobran al
+ * empezar cada versión, que es un día concreto, no un periodo en curso.
+ */
+export const canBePending = (schedule: Schedule) => schedule.type !== 'perPatch';
 
 /** "4.6" → "4.7". Si no se puede interpretar, añade un sufijo. */
 export function nextVersion(version: string): string {

@@ -4,7 +4,7 @@ import { fold, type Catalog } from '../engine/catalog';
 import { characterPortraitUrl, pathIconUrl } from '../engine/dupes';
 import { PATHS, type PathId } from '../engine/rules';
 import type { AppState, OwnedCharacter } from '../engine/types';
-import type { ChangeState } from '../state/store';
+import { namedNotice, type Notice, type ChangeState } from '../state/store';
 import { EidolonShards } from './EidolonShards';
 import { fmtInt, fmtMoment } from './format';
 import { PLAIN_TEXT_INPUT } from './inputs';
@@ -63,7 +63,7 @@ export function AccountPanel({ state, catalog, onChange }: Props) {
   );
 
   // Los dupes del plan salen de la cuenta al pintarlos: no hay que tocar el plan al cambiarla.
-  const setCharacters = (update: (c: OwnedCharacter[]) => OwnedCharacter[], imported?: number, undo?: string) =>
+  const setCharacters = (update: (c: OwnedCharacter[]) => OwnedCharacter[], imported?: number, undo?: Notice) =>
     onChange(
       (s) => ({
         ...s,
@@ -77,7 +77,7 @@ export function AccountPanel({ state, catalog, onChange }: Props) {
     setCharacters(
       (list) => withEidolon(list, c, eidolon),
       undefined,
-      eidolon === null && c.eidolon !== null ? `«${c.name}» eliminado de la cuenta.` : undefined,
+      eidolon === null && c.eidolon !== null ? namedNotice('', c.name, ' eliminado de la cuenta.') : undefined,
     );
 
   // Sin backend: el archivo se lee aquí mismo, en el navegador, y no se envía a ningún sitio.
@@ -179,11 +179,7 @@ export function AccountPanel({ state, catalog, onChange }: Props) {
                         aria-label={p.name}
                         onClick={() => togglePath(p.id)}
                       >
-                        <span
-                          className="path-icon"
-                          aria-hidden="true"
-                          style={{ '--path-icon': `url(${pathIconUrl(p.icon)})` } as CSSProperties}
-                        />
+                        <PathIcon icon={p.icon} />
                       </button>
                     ))}
                   </div>
@@ -207,11 +203,7 @@ export function AccountPanel({ state, catalog, onChange }: Props) {
                   <section key={path?.id ?? 'none'} className="account-group">
                     <h3 className="account-path">
                       {path && (
-                        <span
-                          className="path-icon"
-                          aria-hidden="true"
-                          style={{ '--path-icon': `url(${pathIconUrl(path.icon)})` } as CSSProperties}
-                        />
+                        <PathIcon icon={path.icon} />
                       )}
                       {path?.name ?? 'Otras'}
                       <span className="account-path-count">{ownedOf(path?.id)}</span>
@@ -263,5 +255,12 @@ function AccountRow({ character: c, onSet }: { character: RosterEntry; onSet: (e
       </button>
       <EidolonShards name={c.name} eidolon={c.eidolon} onChange={onSet} />
     </li>
+  );
+}
+
+/** Icono de una vía (PNG blanco de StarRailRes usado como máscara, para que tome el color del texto). */
+function PathIcon({ icon }: { icon: string }) {
+  return (
+    <span className="path-icon" aria-hidden="true" style={{ '--path-icon': `url(${pathIconUrl(icon)})` } as CSSProperties} />
   );
 }

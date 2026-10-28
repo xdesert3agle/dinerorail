@@ -1,12 +1,12 @@
 import { useId } from 'react';
 import type { AppState } from '../engine/types';
-import { withSettings } from '../state/store';
+import { withSettings, type ChangeState } from '../state/store';
 import { YEN_RATE } from './format';
 import { Tip } from './Tip';
 
 interface Props {
   state: AppState;
-  onChange: (update: (s: AppState) => AppState) => void;
+  onChange: ChangeState;
 }
 
 const STORES = [

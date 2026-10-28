@@ -27,7 +27,6 @@ interface Props {
   onChange: (value: number) => void;
   min?: number;
   max?: number;
-  step?: number;
   hint?: string;
   compact?: boolean;
   /** Oculta la etiqueta visualmente (sigue disponible para lectores de pantalla). */
@@ -40,8 +39,9 @@ interface Props {
 }
 
 /**
- * Campo numérico que deja el input vacío mientras se escribe sin forzar un 0. Al salir del campo vuelve a
- * mostrar el valor de verdad: si el padre lo ha recortado (un Eidolón 9 que queda en 6), se ve el 6.
+ * Campo numérico de enteros (todos los de la app son cantidades) que deja el input vacío mientras se escribe sin
+ * forzar un 0. Lo que entrega ya va recortado a min/max y sin decimales; al salir del campo vuelve a mostrar el
+ * valor de verdad (escrito 120 con máximo 99, se ve el 99).
  * La ayuda de la etiqueta y la pista van también como descripción del campo (aria-describedby), no en su nombre.
  */
 export function NumberField({
@@ -50,7 +50,6 @@ export function NumberField({
   onChange,
   min,
   max,
-  step = 1,
   hint,
   compact,
   hideLabel,
@@ -58,6 +57,8 @@ export function NumberField({
   className,
   info,
 }: Props) {
+  // Entero y dentro del rango: el padre ya no tiene que recortar lo que llega.
+  const accept = (n: number) => Math.min(max ?? Infinity, Math.max(min ?? -Infinity, Math.trunc(n)));
   const id = useId();
   const [text, setText] = useState(String(value));
   const [focused, setFocused] = useState(false);
@@ -147,17 +148,17 @@ export function NumberField({
           value={text}
           min={min}
           max={max}
-          step={step}
           onChange={(e) => {
             setText(e.target.value);
             const n = Number(e.target.value);
-            if (e.target.value !== '' && Number.isFinite(n)) onChange(n);
+            if (e.target.value !== '' && Number.isFinite(n)) onChange(accept(n));
           }}
           onBlur={() => {
             setFocused(false);
             if (text === '' || !Number.isFinite(Number(text))) {
-              setText('0');
-              onChange(0);
+              const zero = accept(0);
+              setText(String(zero));
+              onChange(zero);
             } else {
               setText(String(value));
             }

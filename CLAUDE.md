@@ -4,7 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A Honkai: Star Rail calculator that projects Stellar Jades and pulls ("singles") up to a target date, plans pulls for future banners, and estimates their odds. It is a client-only React 19 + Vite + TypeScript app with no backend. The UI text and code comments are in Spanish, and new UI strings and comments should be too.
+Dinero Rail is a calculator for Honkai: Star Rail. It projects Stellar Jades and pulls ("singles") up to a target date, plans pulls for future banners, and estimates their odds. It is a client-only React 19 + Vite + TypeScript app with no backend.
+
+The UI text and code comments are in Spanish, and new ones should be too.
+
+Alternatives the user already tried and rejected are in [docs/decisiones.md](docs/decisiones.md). Check there before proposing a design change.
 
 ## Commands
 
@@ -16,100 +20,258 @@ npx vitest run src/engine/odds.test.ts      # one file
 npx vitest run -t "nombre del test"          # one test by name
 ```
 
-There is no linter. `tsc -b` is strict, with `noUnusedLocals` and `noUnusedParameters`, so unused imports or variables fail the build. The `vite.config.ts` sets `base: './'`, so the build works from any subfolder or from `file://`.
+- **No linter.** `tsc -b` is strict, with `noUnusedLocals` and `noUnusedParameters`, so an unused import or variable fails the build.
+- **Relative base.** `vite.config.ts` sets `base: './'`, so the build works from any subfolder or from `file://`.
+- **No `sed -i` on `src/` while the dev server runs.** On Windows it breaks Vite's watcher; edit files in place instead.
 
-## Architecture
+## Module map
 
-- **`src/engine/`**: pure, framework-free logic. All tests live here, next to the code.
-  - **`rules.ts`** holds every game rule: `JADES_PER_PULL`, `DEFAULT_HARD_PITY`, the Starlight and 4★ constants, and the banner model (`BANNERS`, `fiveStarChance`). Put new game constants there, and build UI help text from them instead of copying the numbers. `PATHS` is the hand-kept table of the 9 Paths in game order: internal code (nanoka's `baseType`, e.g. `Warlock`), Spanish name («Nihilidad») and StarRailRes icon name; the user validated it (2026-10-25). Memory is «Reminiscencia», not «Recuerdo».
-  - **`util.ts`** has `isObj` (JSON validation) and `newId(prefix)` for new rows.
-- **`src/state/store.ts`**: the state hook. `withSettings(patch)` is the updater for changing settings: `onChange(withSettings({ includeShards }))`.
-- **`src/components/`**: presentational pieces that receive `state` and an `onChange(updater)`. `components/kinds.ts` has the label and glyph class for each `PullKind`.
-- **`App.tsx`**: owns the state and runs `calculate(state, today)` once in a `useMemo`. It passes the `Result` down.
+### `src/engine/`
+
+Pure, framework-free logic. All tests live here, next to the code; business logic belongs here, not in components.
+
+- **`rules.ts`:** every game rule.
+  - Constants: `JADES_PER_PULL`, `DEFAULT_HARD_PITY`, `FOUR_STAR_PITY`, `PATCH_LENGTH_DAYS` (42), plus the Starlight constants.
+  - Banner model: `BANNERS` and `fiveStarChance`.
+  - Helpers: `splitJades` (whole pulls and spare Jades).
+  - `PATHS`: the 9 Paths in game order. Each has its internal code (nanoka `baseType`), Spanish name and icon. Memory is «Reminiscencia».
+  - Put new game constants here, and build help texts from them.
+- **`calculate.ts`:** `calculate(state, today)` returns the `Result`. `sources.ts` provides the schedule occurrences and `canBePending`; `packs.ts` covers shard packs.
+- **`pulls.ts`:**
+  - `planPulls`: cost per row;
+  - `planBalance`: gross cost, refund and what is left;
+  - `clampPity`.
+- **`odds.ts`:**
+  - `simulatePlan` and `planOdds`: Monte Carlo;
+  - `guaranteedNeeded`: the worst case;
+  - `shownChances`: rules for showing a %.
+- **`dupes.ts`:**
+  - `planCopies` / `planDupes`: which copy each row is;
+  - `superimpositions`: light cones;
+  - `resolve`: exact catalog lookup;
+  - image URLs.
+- **`account.ts`:** profile import (`parseProfile`), the roster and its Path grouping, Eidolons.
+- **`catalog.ts`:** syncing the 5★ catalog (nanoka plus yatta names), `fold`/`searchCatalog`, and the weekly-sync logic (`WEEKLY_SYNC`, `lastWeeklySync`, `nextWeeklySync`, `syncDue`).
+- **`details.ts`:** Eidolon and light cone texts (yatta, falling back to nanoka) and `formatDesc`.
+- **`keyDates.ts`:** `KEY_DATES` (hand-maintained), `byVersion`, `patchText`/`phaseText`.
+- **Basics:** `dates.ts`, `types.ts`, `util.ts` (`isObj`, `newId`), and `defaults.ts` (`defaultState`, built-in sources).
+
+### `src/state/`
+
+- **`store.ts`:** `useAppState`, `normalizeState` and `withSettings(patch)`.
+  - `ChangeState`: the `onChange(update, undo?)` signature.
+  - `Notice`: the undo text, or `namedNotice(before, name, after)` so the toast can cut only the name.
+  - `SKINS`.
+- **`catalog.ts` / `details.ts`:** hooks and localStorage caches for the catalog and the details.
+
+### `src/components/`
+
+- **Cards:**
+  - `CurrentInventory`, `TargetDate`, `FuturePulls` (with `PullRow` and `PlanFooter`);
+  - `Odds`, `ResultSummary`, `ShardPacks`, `PatchTable`;
+  - `SourcesPanel`, `AccountPanel` (with `EidolonShards`);
+  - `ContentSync`, `StoreSettings`, `PitySettings`;
+  - `DupeGallery`.
+- **Shared controls:**
+  - `NumberField`, `DateField`, `NameCombobox`;
+  - `Toggle`/`ToggleTerm`;
+  - `Tip`/`TipTitle`, `TipSumRow`;
+  - `RemoveGlyph`, `Icon`, `Rarity`, `Toast`.
+- **Helpers:**
+  - `glossary.tsx`: shared definitions;
+  - `format.ts`: es-ES formatting such as `fmtSingles`, `fmtRate` and `fmtCountdown`;
+  - `kinds.ts`: `KIND_LABEL` and `KIND_GLYPH`;
+  - `motion.ts`: `reducedMotion`;
+  - `inputs.ts`: `PLAIN_TEXT_INPUT`;
+  - `usePlanOdds.ts`.
+- **`App.tsx`:** owns the state. It runs `calculate`, `usePlanOdds` and `planCopies` once each, passes the results down, and keeps the undo toast.
+
+## Domain rules
 
 ### Units: Jades inside, singles outside
 
-Everything is computed in Jades (1 single = 160 Jades, `JADES_PER_PULL`). Special Passes count as 1 single each. Oneiric Shards convert 1:1 to Jades: the inventory ones when `settings.includeShards` is on, the pack ones whenever packs are counted. Every total shown to the user is in singles, but the UI word is always **«tiradas»** (visible text, help texts and screen-reader text); "singles" stays only in code names and comments. Use `fmtSingles` from `components/format.ts` (and `wholeSingles` for header totals, which show only whole pulls), which format es-ES with `useGrouping: 'always'` (that option needs `ES2023.Intl` in tsconfig).
+- **Internal unit:** everything is computed in Jades (1 single = 160, `JADES_PER_PULL`). Special Passes are 1 single each.
+- **Oneiric Shards** convert 1:1 to Jades:
+  - inventory shards only when `settings.includeShards` is on;
+  - pack shards whenever packs are counted.
+- **What the user sees:** totals are in singles, but the UI word is always **«tiradas»**, including help and screen-reader text. "singles" stays in code only.
+- **Formatting:** use `fmtSingles`, and `wholeSingles` for header totals (whole pulls only). The formatters use `useGrouping: 'always'`, which needs `ES2023.Intl`.
 
-### Glossary: game versions
+### Vocabulary
 
-- **Game version** (4.7, 5.0…): the UI always says **«versión»** («Versiones y eventos», «+ Versión», «Por versión», «4.7 · 1.ª parte»). The code says `Patch` (`PatchTable`, `perPatch`, `PATCH_EVENTS_ID`), the English community term, and the source category is `'parche'` (an internal id, never shown; Spanish like `'diario'`, `'semanal'`, `'mensual'`). The user may say «actualización», «parche» or «versión» for the same thing. Keep `Patch` in code: renaming it to `Version` would collide with the next point.
-- **Not the same as:** the weekly content sync («Sincronizar contenido», «Se actualiza solo los martes»: an «actualización» of the catalog, not of the game), or the schema versions (`AppState.version`, `DETAILS_VERSION`, the catalog's nanoka `version`). Inside a `Patch`, `version` is its number («4.7»).
+- **Game version (4.7, 5.0…):** the UI always says **«versión»**, for example «4.7 · 1.ª parte».
+  - The code says `Patch` (`PatchTable`, `perPatch`), and the source category id is `'parche'`.
+  - Keep `Patch` in code: `version` already names schema versions (`AppState.version`, `DETAILS_VERSION`, the catalog's nanoka `version`) and a patch's number.
+  - The weekly «Sincronizar contenido» updates the catalog, not the game.
+- **The planner card** is «Plan de tiradas», and texts say «el plan».
+- **Voice:** neutral, never «tú». Infinitive for actions, nominal phrases for states, impersonal for explanations.
 
-### Income projection (`calculate.ts`, `sources.ts`)
+### Income (`calculate.ts`, `sources.ts`)
 
-`buildEvents` turns the enabled sources into a dated list of `IncomeEvent`s. The period runs from **tomorrow through the target date**, plus today when a source has `pendingNow`. That one list feeds the total and the per-source breakdown (`bySource`).
-
-- **Source schedules** are `daily | weekly | monthly | cycle(anchor, periodDays) | perPatch(offsetDays)`. `perPatch` only fires at patch starts from the user's patch table. Future patches are never extrapolated.
-- **Patch events** are dated rows inside each patch.
-- **Shard packs** (`packs.ts`) count as an income event today. Prices are in EUR, or in JPY at the fixed rate `JPY_PER_EUR` (`settings.packsInYen`: chosen once in Configuración's «Tienda» card, `StoreSettings.tsx`, as «España | Japón» with the theme selector's segmented control; the packs card always says which after «Total», «España» or «Japón», as a `tip-term` that says where to change it, `.pack-store` with `.swap` so switching stores moves no column; with España too, so a friend learns there is another store). «Por compra» is always what each purchase gives, `base + bonus`: the first purchase's ×2 shows only in the row's Total, so the row checks out by multiplying; the card uses two weights, 400 for each pack's data and 700 for results (row totals with purchases and the whole Total row, set explicitly: `<strong>` inside the Total row gave an unloaded 900), and row totals at the row's size while the sum is one step up (row 16 < sum 18 < header 20; at 18 the row totals looked as big as the sum, mostly in Card Characters; on phones all are 14); the ×2 column has a visible «1.ª compra» header (the boxes start checked) and its tip gives each pack's real figure («Primera compra: 12.960 en vez de 8.080»: the ×2 doubles the base, not «Por compra»). Quantities go up to `MAX_PACK_COUNT` (99, what the 4rem column holds). On phones (≤720px) the column header is screen-reader only (its titles fell on the wrong line): line 1 is name · price · «8.080 por compra» (`.pack-per`, shown only there), line 2 quantity · ×2 · total; at ≤350px «por compra» drops under its figure (measured: it fits at 360, overflowed 19px at 320). The first purchase gets ×2. Each shard switch governs only its own card (the user disliked one switch overriding the other, 2026-10-25): `settings.includePacks` («Usar paquetes en el plan», the card's only switch, at its foot, right-aligned under the shards total it decides (left-aligned it read as stuck on below the table; «en el plan» and not «al total», since the Total row right above is not what it changes); the user wanted the hero clean; off, it dims the header total and every shards total, each row's and the Total row's, `.pack-list.is-off`, not the prices) alone decides the packs, whose shards always convert to Jades when counted (bought to pull); off, it leaves them out entirely without clearing the quantities, to see whether you reach the target without paying. `settings.includeShards` («Convertir Esquirlas en Jades», Recursos actuales) only affects the inventory shards. `Result.shardsHeld` is inventory + pack shards; `Result.shards` is the part counted as Jades. The Resumen shows `shards` (what adds to the total), or `shardsHeld` dimmed when none counts.
-- **Key dates (`engine/keyDates.ts`):** `KEY_DATES` is a fixed, hand-maintained list (no state) shown under the target date ("Fechas destacadas") as calendar leaves (month band + day, then name with its patch and half, «4.7 · 1.ª parte» (RAE ordinal, with the period) from `patch`/`phase` via `patchText`, then weekday and countdown; the leaf is white paper in light and `--text`-colored paper in dark, via `light-dark()`); clicking one sets `targetDate`, the matching one is pressed, past ones disappear. The target date's calendar also marks them (`DateField`'s `marks`: a dot under the day and its name as the cell title). Dates that are not published are added with `estimated: true` («estimada» replaces the weekday in the leaf, «estimada (en 228 días)»): from 5.3 on they are computed as 6 weeks per version after 5.2 (`PATCH_WEEKS`). `version()` builds each version: its first character is the 1.ª parte (start date) and a second one, if any, the 2.ª parte, 3 weeks later (`PHASE_2_WEEKS`), always estimated. They are shown one row per version (`byVersion`): the version on the left and its two parts in equal columns under a single header row «Versión · 1.ª parte · 2.ª parte» (no title above it: the user found a separate «Fechas destacadas» label unbalanced; that title only shows in the narrow layout), so the leaves only carry name, date and countdown (a `role="table"` for screen readers). A version without a known 2.ª parte shows a non-selectable placeholder there (`key-date-placeholder`: dashed border, no fill, muted «Sin anunciar», vertically centered; not a button), unless its 1.ª parte already passed. When the card is narrow (container query, < 36rem: phones and the 1180–1300px two-column range) the header hides, the version goes above its leaves, one per line, and each leaf shows its part (placeholders hide there). Only the next 3 versions show; «Ver N versiones más» expands the rest, and they expand by themselves when the target date is in a hidden one.
-- **Undying Starlight** in the inventory converts to Special Passes at 20 = 1. The remainder (`starlightLeftover`) is carried into pull planning. `currentSingles` (the "Recursos actuales" header) counts all Starlight, including that remainder.
+- **`buildEvents`** lists dated `IncomeEvent`s from tomorrow through the target date. Today is included too when a source has `pendingNow`, which `canBePending` forbids for per-patch sources. One list feeds both the total and `bySource`.
+- **Schedules:** `daily | weekly | monthly | cycle(anchor, periodDays) | perPatch(offsetDays)`.
+  - `perPatch` fires only at patch starts in the user's patch table, which is sorted first.
+  - Future patches are never extrapolated.
+- **Patch events:** dated rows inside each patch.
+- **Shard packs** count today.
+  - **Prices:** in EUR, or in JPY at `JPY_PER_EUR` (`settings.packsInYen`, the «Tienda» card in Configuración).
+  - **«Por compra»:** always `base + bonus`. The first purchase's ×2 shows only in the row total.
+  - **Switches:** each one rules only its own card.
+    - `settings.includePacks` («Usar paquetes en el plan») turns packs on or off without clearing the quantities.
+    - `settings.includeShards` affects only the inventory shards.
+  - **Result fields:** `Result.shardsHeld` is inventory plus pack shards; `Result.shards` is the part counted.
+- **Undying Starlight:** converts to passes at 20 = 1.
+  - The remainder (`starlightLeftover`) carries into planning.
+  - The «Recursos actuales» header counts all of it.
+- **Key dates:**
+  - `KEY_DATES` is fixed. Unpublished dates are `estimated` at `PATCH_LENGTH_DAYS` per version after the last known one, and the 2.ª parte is `PHASE_2_WEEKS` after the 1.ª.
+  - Clicking a leaf sets `targetDate`, and past dates disappear.
+  - Only the next 3 versions show; «Ver N versiones más» opens the rest, and they open by themselves when the target date is hidden.
 
 ### Pull planning (`pulls.ts`): deterministic worst case
 
-`planPulls` walks the planned banners in order.
-
-- **Cost per target:** each 5★ costs the configured hard pity (`settings.hardPity`, default 80 for characters and 70 for light cones).
-- **Losing the 50/50:** doubles the cost.
-- **First row of each kind:** subtracts the current pity. If `guaranteed[kind]` is set, it wins automatically.
-- **Starlight refund (`countStarlight`):** 40 per 5★, plus the expected 4★ refund at 13 % per pull with a per-banner average. Starlight is only floored when it is converted to passes, and it carries over between rows. A target's own 5★ refund never pays for its own row.
+- **Cost per target:** the configured hard pity (`settings.hardPity`; 80 for characters and 70 for light cones by default).
+- **Losing the 50/50:** doubles that.
+- **First row of each kind:** subtracts the current pity, and wins if `guaranteed[kind]` is set.
+- **Rows report their pieces:** `hardPity`, `pityDiscount` and `losesFiftyFifty`. The cost tip builds its sum from them.
+- **Starlight refund (`countStarlight`):** 40 per 5★, plus the expected 4★ refund (13 % per pull, with a per-banner average).
+  - It carries over between rows and is floored only when converted to passes.
+  - A target's own 5★ refund never pays for its own row.
 
 ### Odds (`odds.ts`): Monte Carlo
 
-- **Rates** (`BANNERS` in `rules.ts`):
-  - Characters: 0.6 % base, soft pity from 74, hard pity at 90, 50/50.
-  - Light cones: 0.8 % base, soft pity from 66, hard pity at 80, 75/25.
+- **Rates:**
+  - characters: 0.6 % base, soft pity from 74, hard at 90, 50/50;
+  - light cones: 0.8 % base, soft pity from 66, hard at 80, 75/25.
 
-  Tests check these against the official consolidated rates.
-- **Simulation:** `simulatePlan` runs 10,000 seeded runs (mulberry32). It samples each 5★ in one draw from a precomputed CDF, so it is cheap enough to re-run on every keystroke; keep it that way.
-- **`guaranteedNeeded`:** the absolute worst case behind the "100 % seguro" stat.
-- **`planOdds`:** turns a simulation plus a budget into probabilities.
-- **`usePlanOdds` (`components/usePlanOdds.ts`):** `App.tsx` runs the simulation once through it. The planner shows each target's % (together with the previous ones) at the top right of its name box (no tooltip: the user removed it), and "Previsión de suerte" shows only the summary stats.
+  Tests check them against the official consolidated rates.
+- **Simulation:** `simulatePlan` runs 10,000 seeded runs, each 5★ drawn once from a precomputed CDF. It is cheap enough to run on every keystroke; keep it that way.
+- **Stats:**
+  - `guaranteedNeeded` is the «Peor caso» stat;
+  - `shownChances` decides when to show 100 % (only in the worst case) or 0 %.
+- **Where the % shows:** each row's % (with the rows before it) sits in its name box. «Previsión de suerte» shows only the summary stats.
 
-### State and persistence (`store.ts`)
+### Dupes (`dupes.ts`)
 
-- **Storage:** `AppState` (`version: 1`) is stored in localStorage under `hsr-jades:v1`. There is no export or import of the whole state (removed on purpose).
-- **Normalization:** every load goes through `normalizeState`. It validates each field, fills defaults and contains the **migrations** for older saved shapes.
-- **When you add a field to `AppState`:** add it to `defaultState` (`engine/defaults.ts`) and to `normalizeState`, plus a store test if it needs migration.
-- **Built-in sources:** their name and description always come from the current defaults. New built-in sources are appended automatically to old saves.
-- **Account (`engine/account.ts`, `components/AccountPanel.tsx`, tab "Cuenta"):** the characters already owned, with their Eidolon, in `AppState.account`. They are imported from the game profile (`profile.json` from Reliquary Archiver), read in the browser with `parseProfile`; light cones, Trailblazers (ids 8000+) and the rest of the file are ignored. With the catalog, only 5★ are kept (`fiveStarOnly`); without it, rarity is unknown and all are kept until it arrives. The «Personajes» card lists every 5★ of the catalog in alphabetical order (`roster`; without the catalog, only the owned ones) to mark them by hand: portrait + name is one button that marks or unmarks owning it (`aria-pressed`, no hover `title`; unowned ones are only greyed out: the user tried a slash, a censor bar over the eyes and an X on top, and kept just the grey; the character glyph behind the portrait is only a fallback and hides once the image loads; unmarking one has undo; owned ones show their Eidolon as a small «E2» pill (12px with line-height 1.5, 4px side padding and a 2px ring, the proportions of the mock the user picked) on the portrait's bottom-right corner, `.eidolon-badge` (shared with the planner) inside an `.avatar` wrapper, in `--text` with a `--surface` ring, chosen by the user over a pill after the name, grey text or a number after the shards), and six broken-glass shards set the Eidolon (`EidolonShards.tsx`: each shard has its own irregular shape, place and tilt, and a 3D edge that always falls down-right; filled in `--text` up to the Eidolon, outlined otherwise, dim when the character is not owned and lighter at E0; clicking the highest filled one lowers it by one; `withEidolon`; on hover, only with a mouse, it previews the result: the hovered shard and all before it light up, and filled ones after it fade). The user chose them over circles, a numbered bar, stars and the game's Eidolon flower icon (2026-10-25). A search field, «Ver solo obtenidos» and a Path filter narrow it (the filter is the theme selector's segmented control, `.skin-switch`/`.skin-option`: «Todas» plus one icon-only button per Path with its name as `aria-label` (no `title`: the user does not want hover tooltips there; the game icons are familiar and the group headers below show each icon with its name); several can be pressed, none pressed means all; local state, not saved). Layout: the search field alone on top at 20rem (the main tool in a long list; squeezed into one row with the filters it shrank to ~165px), and below it the filters together, Paths then «Ver solo obtenidos»; in a narrow card (container query, < 30rem) the Path filter drops its pill background so its buttons can wrap like tags. The list is grouped by Path (`byPath`, game order, empty groups hidden, unknown Paths last as «Otras»; flat when no entry has a Path), each group with a header: the Path icon from StarRailRes (`pathIconUrl`, white PNG used as a CSS mask), its name and «owned de total» for that Path, counted over the whole list so it does not change while searching. Layout (all tuned by the user): rows have a fixed width (`--account-row-w`: portrait (`--account-portrait`, 48px: on the 8px grid and above the 44px touch target, unlike the planner's 54px thumbnail, which matches its name field) + name up to `--account-name-w`, 8rem, 8.75rem in Sparxie, where long names wrap to two balanced lines + the 135px of shards), so the shards sit right after the name and line up; columns are exactly one row wide and spread with `space-between` (first flush with the search field, last ending under the Path count, the spare space in the middle); with room for only one column (container query on the card, < 44rem) the row fills the width and the shards go to the right edge. Groups are 28px apart (more than the 20px of the income sources groups: many rows per group), the Path icon is 2.625em (2em in Sparxie). Importing a profile («Importar perfil», with a `Tip` saying it accepts Reliquary Archiver's `profile.json`) replaces everything marked, with undo.
-- **Dupes (`engine/dupes.ts`):** a planned row's name is only the catalog name; its dupe is never stored. `planCopies` derives, per row, which copy of the character it is from the plan order plus the owned copies (Eidolon + 1), which come first: with Kafka at E1, the first Kafka in the plan is her E2. `App.tsx` computes it once and passes it down. The planner shows it like the Cuenta tab: an `.eidolon-badge` («E2») on the corner of the row's thumbnail, with no tooltip (the user removed it); the badge sticks out 6px as in Cuenta, so the name field (and the 50/50 under it at ≤720px) sits `--badge-room` (6px) further from the thumbnail, or its focus ring (4px outside it) overlapped the badge (the user rejected tucking the badge in: it covered the face); `planDupes` feeds the dupe gallery, whose popover keeps its accent `.dupe-badge` («E2», «S3»). Removing, reordering or editing the account updates every dupe with no extra code.
-- **Content catalog (`engine/catalog.ts`, `state/catalog.ts`):** the 5★ characters and light cones: the list (ids, rarity, release order, beta content, and each entry's Path from `baseType` when it is in `PATHS`) from nanoka.cc at the version in its manifest (`hsr.latest`, `MANIFEST_URL`; `FALLBACK_VERSION` if it fails), and the Spanish names from yatta.moe by id (`YATTA_NAMES_URLS`, `parseYattaNames`); what yatta lacks (beta content) keeps its English name until yatta publishes it. Five requests per sync. No compatibility with plans saved with the old English names (the user accepted losing them). The catalog stores its nanoka `version`, which the gallery details use for their nanoka fallback; a cached catalog without `version` is the old English format, and one whose characters have no `path` predates the Paths; both are re-synced on load (`syncDue`). Synced with the "Sincronizar contenido" button in Configuración (1 min cooldown, also persisted), and synced automatically once a week: on Tuesdays at 10:00 local time (`WEEKLY_SYNC`, `weeklySyncDue`), checked on load, at that time if the app is open and when the tab becomes visible again (no server: nothing happens while it is closed). `nextWeeklySync` adds calendar days, not 7 × 24 h, so the DST week keeps 10:00. It is a cache outside `AppState`, under `hsr-jades:catalog:v1`. Both name searches (the planner's `searchCatalog` and the Cuenta list) compare through `fold`: lowercase, no accents, and any run of non-letter/digit signs as one space, so «dan heng imbibitor» finds «Dan Heng - Imbibitor Lunae» and «aeon aha» finds «Aeon ★ Aha». In the planner, `NameCombobox` only accepts names picked from it: typing just filters, and leaving without a pick restores the previous name. Without a catalog (not downloaded yet) it falls back to free text.
-- **Dupe gallery popover (`engine/details.ts`, `state/details.ts`):** hovering an image in the side gallery shows what that Eidolon does, or the light cone's effect at its superimposition (S counts the cone's copies in the plan, up to `MAX_SUPERIMPOSITION`; owned cones are not tracked). The text comes in Spanish from the yatta.moe API (`YATTA_URL`, without its `vh` parameter, which only matters for beta content); what yatta does not have (beta content, which yatta itself takes from nanoka) falls back to nanoka.cc in English (`DETAILS_SOURCES`, `detailsUrl`). `formatDesc` fills the `#1[i]%` placeholders with the params, with a decimal comma for Spanish. The details are prefetched in the background once an item appears in the gallery (only while the gallery is visible, ≥1480px). The useful part of yatta's results is cached in localStorage under `hsr-jades:details:v1`, reset when `DETAILS_VERSION` changes; nanoka fallbacks stay in memory only. What yatta lacks is remembered for 24 h under `hsr-jades:details-misses:v1`, so a reload goes straight to nanoka instead of repeating a failing request; after that, yatta is tried again in case it now has the item in Spanish. The gallery and planner `<img>` use `crossOrigin="anonymous"`, because the gallery shadow's CSS mask always fetches in CORS mode; matching modes download each image once. nanoka's `enhanced` ranks are ignored.
+- **What is stored:** a row stores only the catalog name, never the dupe.
+- **`planCopies`:** derives each row's copy from the plan order, after the owned copies (Eidolon + 1).
+- **Display:**
+  - the planner shows it as an `.eidolon-badge` on the thumbnail, the same as in Cuenta;
+  - the dupe gallery (side margins, ≥1480px) uses `planDupes`, with light cone superimpositions up to `MAX_SUPERIMPOSITION`.
 
-### UI conventions
+## State and external data
 
-- **Tabs:** chosen by URL hash. No hash is "Calculadora"; `#cuenta` is "Cuenta" and `#configuracion` is "Configuración", and the legacy `#fuentes` also maps to it.
-- **Themes ("skins"):** `kafka`, `aha`, `grafito` and `sparxie`, set as `data-skin` on `<html>`. Only `aha` (the default) and `sparxie` appear in the selector. `kafka` and `grafito` keep their code but are listed in `HIDDEN_SKINS` (`store.ts`), and `normalizeState` moves them to the default. To bring one back, remove it from that list. All colors are CSS custom properties in `src/styles.css`, with light and dark variants per skin. Use the tokens; never hard-code colors.
-  - `grafito` comes from `designs/resent.DESIGN.md` (flavors.design "Soupabase"), and `sparxie` (called `retro` before; `normalizeState` migrates it) from `designs/droolsuite.DESING.md` (flavors.design "Droolsuite"). Both designs are dark-only or light-only; the missing variant was made up following the same rules.
-  - Their fonts load from Google Fonts (linked in `index.html`). Their component rules sit under `:where(:root[data-skin='…'])` so they keep base specificity.
-  - The hero decoration per skin is the `DECORATION` map in `ResultSummary.tsx` (`sparxie` has none).
-  - `aha` uses Figtree (Google Fonts) for body text, chosen over Outfit, DM Sans and Plus Jakarta Sans.
-  - In `aha`, card titles use Card Characters, a playing-card index font that only has capitals. It ships with the project in `src/assets/fonts/` and loads through `@font-face`, so it does not depend on the system. It is also the voice of result figures, always at 400 (it has one weight): the Resumen's figures, card-header totals, the planner's costs and balance, and the packs card's shards totals (each row and the Total row). Its digits are fixed-width and wider, so the packs' `.pack-total-value` has its own reserved width in `aha` (5.125rem, 4rem on phones).
-- **Light/dark mode:** `settings.theme` is `system | light | dark` and is independent of the skin. `App.tsx` sets it as `data-theme` on `<html>`, or removes the attribute for `system` so the CSS follows `prefers-color-scheme`. The selector has only sun and moon buttons. `system` is the starting value with no button; while it is active, the button for the current OS mode is shown pressed. Every skin needs its dark tokens in both the media query and `[data-theme='dark']`.
-  - In `sparxie`, Pixelify Sans is only for short labels without digits: its 5 looks like an S. Numbers stay in Courier Prime.
-- **Layout stability is a recurring user concern.** `html` has `scrollbar-gutter: stable`, so switching between a tall tab and a short one does not shift the page sideways. Numbers in headers and rows must not shift the layout as their digit count changes:
-  - Use fixed `rem` column widths.
-  - Reserve space with `visibility: hidden` instead of unmounting.
-  - Every input and numeric cell sets `font-variant-numeric: var(--num-variant)` (`styles.css`, `:root`, now `tabular-nums`), so the digit style is one switch. New numbers that line up with others (columns, inputs, costs, totals) should use the variable; numbers inside a phrase that align with nothing (the «(en 18 días)» countdowns in the key dates and the Resumen) use `normal` (proportional).
-- **Input padding:** inputs have 1px less top padding than bottom, to vertically center Segoe UI text. It is the `--input-nudge` variable (`calc(8px - var(--input-nudge))` on top, `+` at the bottom); `aha` (Figtree) and `grafito` (Inter) set it to 0 because their text is already centered, and `sparxie` to -1px because Courier Prime sits 1px high. Use it when adding inputs.
-- **Shared controls:** `NumberField` keeps an empty input while the user types, shows the real (clamped) value again on blur, and while unfocused shows integers of 4+ digits with their thousands point («12.480») through an overlay (`.num-mask`, the input text goes transparent) that copies the input's box, padding and font at runtime (re-measured on resize and on `data-skin`/`data-theme` changes); the input stays `type="number"`, and has an `info` help (text or icons) and an `icon`. The `info` help opens from the label itself (`tip-term`, dotted underline; there is no (i) icon): a mouse click on it still focuses the field, a tap opens the help without focusing. `info` and `hint` are also linked to the input with `aria-describedby`, not put inside its name. `Toggle` renders switch-style checkboxes; use it instead of a plain checkbox. Its explanation is the `tip` prop, read like a glossary entry (user's call, 2026-10-28): one word of the label is wrapped in `<ToggleTerm>` (dotted underline, like field labels) and opens it on hover, keyboard focus or tap, a tap on it does not flip the switch (under `pointer: coarse` it sits above the `.check::after` hit area), a mouse click does; the bubble starts with a `<TipTitle>` naming the term by its full game name, like a dictionary headword («Cosmiluz Inextinguible», «Esquirlas Oníricas», «Garantizado», «Paquetes»; the text below uses the short form), and its id (`Tip`'s `id` prop) is also the input's `aria-describedby`. Wrap the label text in one `<span>` when it has a term, since `.check` is flex. It is only as wide as its text (`justify-self: start`), so a click in the empty row space does not flip it. Off, the track is hollow: a 1.5px `--text-muted` outline and knob (≥3:1, WCAG 1.4.11; the old `--axis` fill gave 1.7:1); on, filled. `sparxie` keeps its own framed track. `Tip` also accepts a function child in `control` mode, `(id) => …`, to put `aria-describedby` on a control that is not its direct child (the switch input, the packs' ×2 checkbox). `Tip` explains a data value (the planner's cost and balance, the odds stats, the `NumberField` label); its content can be text or nodes with icons (then include a `.sr-only` text): it opens on hover after a 400 ms delay (`HOVER_DELAY`) and stays open while the pointer is on the bubble (WCAG 1.4.13: it closes `LEAVE_GRACE`, 150 ms, after leaving the value or the bubble; a fading bubble ignores the pointer), at once on focus (the value is focusable, Esc closes) and on tap (tap again or outside closes), and links the text with `aria-describedby`. The bubble fades in and out like the dupe gallery popover (same `dupe-pop-in`/`dupe-pop-out` keyframes; `leaving` keeps it shown until the exit animation ends, skipped with reduced motion), and has the same arrow, smaller: up when the bubble is below the value, down when it is above (`.tip-above`), kept under the value's center by `--arrow-x` even when the bubble shifts to fit the window. Keep the trigger small: on stat tiles the label is the trigger (`className="tip-term"`, dotted underline), never the whole tile. Use it instead of `title` for explanations; plain `title` is left only on controls that already have an accessible name. To explain a button, wrap it with `<Tip control>`: the button keeps its own focus and click, the bubble opens on hover, keyboard focus or tap (a tap still works the control and also explains it, since phones have no hover; tapping outside closes it; `tapExplains={false}` skips the tap), and `aria-describedby` goes on the button. `side="above"` makes a bubble prefer opening above (Tienda's label, whose options sit right below); by default it prefers below, and either way it flips when it does not fit.
-- **Planner row removal:** the row turns to dust before leaving the plan («Thanos snap»): `leaving` state for `DUST_MS` (600ms), a per-row SVG filter (`feTurbulence` + `feDisplacementMap` whose `scale` animates 0 → `DUST_SCALE` with SMIL `beginElement`) plus a CSS fade and drift (`.is-leaving`, `pull-dust`); then the normal removal with its undo toast. With reduced motion it is removed at once.
-- **Undo instead of confirmations:** components receive `onChange: ChangeState` (`store.ts`). Deleting something or replacing data (import profile) passes a second argument, the notice text: `onChange(update, 'Evento eliminado.')`. `App.tsx` keeps the previous state and shows a toast (`components/Toast.tsx`, bottom-left corner near the inputs column, flies in from the left, one line, max 32rem wide; when it does not fit, only the «name» is cut with an ellipsis) with "Deshacer". The toast closes itself after `TOAST_MS` (5 s), pauses while the pointer or the focus is on it (WCAG 2.2.1), and its region is always mounted (`role="status"`).
-- **Glossary (user's call, 2026-10-28):** a dotted-underlined term opens its definition. Mark a term **once per card**, where it is used to decide something (too many underlines stop signalling; «garantizado» is marked on the character toggle only). **One term, one definition:** a term marked in several cards shows the same content, kept in `components/glossary.tsx` (`StarlightDefinition`, the plan's full one with the refund and odds tables, is also the Cosmiluz field's help in Recursos actuales). Toggle definitions open with a `TipTitle`.
-- **Planner header:** the card is «Plan de tiradas» (UI texts say «el plan», never «la planificación»; the user chose it over the longer «Planificación de tiradas», 2026-10-28). Its add buttons read «+ [icon] Personaje» / «+ [icon] Cono de luz» (`ADD_KINDS`, `.add-pull-text`), and when the card is narrow (container `plan`, ≤ 29rem: narrow phones) the name hides and «+ icon» stays, with the full name in `aria-label`; the desktop text teaches the icons. The header needs ~463px with the text (title on one line 181 + gap + buttons 274).
-- **Planner foot:** one line under the rows, the «Reinvertir Cosmiluz de las tiradas» switch on the left (its Starlight icon right after «Cosmiluz», `.refund-word`, kept on the same line, like «Convertir Esquirlas💠 en Jades💎»; before the text it read as part of the switch) and the balance («Faltan / Sobran N», red only when «Faltan») on the right, in the cost column. What the Starlight gives back is a grey pill «🎫 +35» (`pull-refund`) right after the switch's text, so it is clearly the Starlight's and the visible numbers add up: costs − refund against the Resumen's total. With the switch off, the pill keeps its space (`invisible`). The user tried the balance in the card header, then a receipt with a «−35» line and a sum rule, and chose this (2026-10-24). The balance's tip, though, is that written sum (a `.tip-table`: «Tiradas el 6 dic. 77», «Coste del plan − 160», «Cosmiluz reinvertida + 22» or «—» when off, a `.tip-table-sum` rule and «Faltan 61» in bold, each figure with its pass icon; the signs in their own column, `.tip-table-3`, so the operations line up), not prose. Each row's cost tip is the same kind of sum (`TipSumRow`, shared): «Pity duro 80», «Pity actual − 50» («—» on rows that are not the first of their kind), «50/50 perdido + 80» («50/50 ganado» / «Garantizado» + 0), rule, «Coste 110»; `planPulls` gives the pieces (`hardPity`, `pityDiscount`, `losesFiftyFifty`), not a ready-made string.
-- **Ghost buttons (`.btn-ghost`):** on hover they tint to `color-mix(in srgb, var(--text) 10%, var(--surface))` and the text goes to `--text` (with `--surface-2` the tint was 1.15:1 and hardly visible); `sparxie` keeps its own. Filled `.btn`s tint too on hover, 10 % ink over `--surface-2` (their border going to `--axis` alone was invisible in `aha`; key-date leaves keep a border-only hover). Every `.btn` fades like the bubbles: `--fade-in` (180ms, ease-out) on hover and `--fade-out` (150ms, ease-in) on leaving, the same tokens as the `.tip`/gallery popover animations. The ✕ buttons, «+ Evento», the drag handle, «Ver N versiones más» and the toast actions all share it.
-- **Remove buttons (✕):** always `btn btn-ghost btn-remove` (24px wide, full row height, muted color), like the planner's drag handle. The X inside is `<RemoveGlyph />` (an SVG), never the ✕ character, which some systems render as an emoji.
-- **Calculadora layout:** two equal columns from 1180px. Below that, `.col-inputs`/`.col-results` become `display: contents` and each card has an `order` by its class: `card-summary`, `card-inventory`, `card-plan`, `card-odds`, `card-target`, `card-events`, `card-packs`, `card-breakdown`. «Recursos actuales» comes before the target date: resources are updated on every visit, the date rarely (user's call, 2026-10-28); in one column the date also goes after the plan and the odds (on phones its card is tall and sat between updating resources and reading the balance), next to the events, which are also per version. Breakpoints: rows that split into two lines (planner, events, packs) at ≤720px, phone tweaks at ≤560px, events in three lines at ≤380px, tab icons hidden at ≤430px; also at ≤430px the planner's 50/50 checkbox starts under the portrait (it overlapped the cost at 360px) and the two pity fields stack (`.pity-grid`). Card headers never wrap: the title wraps instead. The Resumen shows the target date next to its title ("11 nov. (en 42 días)", `fmtDayMonth` + `fmtCountdown`, the same format as the key-date leaves); the user had the verdict line under the number removed.
-- **Spacing scale:** `--space-1…5` = 4/8/12/16/20px (inside a small group / between pieces of a group / between groups and in field grids / between cards and as card padding / between blocks). 6px stays for repeating row pitch. Use the tokens for new spacing.
-- **Type scale (`aha`):** 12 / 13 / 14 / 16 / 18 / 20 / 24 / 56px (eight sizes, consolidated from twelve after the taste audit). Use one of them for new text; 13px is the field-label size.
-- **Zeros and dashes:** a real zero is printed as «0» (Resumen shards, pack totals); «—» only means "not applicable" (a disabled income source).
-- **No decorative gradients:** the page background and the Resumen are flat (`--glow` was removed). Gradients remain only where they do a job (masks, the switch knob, the dupe-card glare).
-- **Touch targets:** under `@media (pointer: coarse)`, small controls get an invisible `::after` hit area (44px; 36px tall on `.check`; 24px on `.info`, which sits against an input).
-- **Rarity colors (`components/Rarity.tsx`):** the one exception to the next rule, because they are the game's own colors, like its item icons, not alerts. «4★»/«5★» render as the digit plus a four-pointed SVG star (the game's cards; not the ★ character), both in `--rarity-4` (the purple of 4★ cards) or `--rarity-5` (the gold of 5★): with the digit in ink, the jump of colors next to the star was too strong. An `.sr-only` «★» for screen readers. Same tokens in every skin, with light and dark values, text-safe (≥4.5:1; in light mode a shade darker than the game's). Used for now in the planner foot's Starlight tip, whose two tables (Starlight per item, odds per pull) color each row's whole label («Personaje 5✦ E6») in its rarity, with the figures in ink: the user found it more uniform than a colored star next to ink words. The other «4★/5★» are still plain text in strings.
-- **Color only for problems:** the accent (red in `aha`) is not used on controls or neutral data. Checked checkboxes use `--text`; checked switches use `--switch-on`/`--switch-knob-on` when the skin sets them (`aha`: a muted moss green, #4f8a5f light / #56966a dark, with a white knob; chosen by the user over sage, pine, jade and emerald on 2026-10-24) and otherwise `--text` with a `--surface` knob; and `aha`'s data bars (`--series-1`) are its `--text-muted`. Red stays for what needs attention: «Faltan», a row that does not fit. `sparxie` keeps its turquoise switches and bars (not an alarm color, part of its design).
-- **Shared tokens:** `--control-h` (height of a `.btn`) and `--field-compact-h` to match other pieces to them; `--shadow-pop` for everything that floats (combobox list, calendar, gallery popover); `--border-pop` and `--border-pop-w` for the border and arrow of the bubbles (`.tip` and the gallery popover; the arrows are computed from the width): the accent mixed 90 % with `--surface`, 2px, chosen by the user (2026-10-27) after trying a grey (ink at 50 %, 35 % and pure) and the accent at 100–40 %; the bubbles are the one place where the accent is not a problem signal, by the user's choice; sparxie keeps its turquoise; `--on-accent` and `--selected-bg` for text and background on the accent (calendar's selected day); `--knob` for the switch knob.
-- **Planner name field (`NameCombobox`):** while not focused, the chosen name is painted by an overlay `<span class="combo-value">` and the input text is transparent. Inside an `<input>`, Chrome moves the text down when a glyph comes from a fallback font (the ★ in "Aeon ★ Aha"), whatever the `line-height`; a span with a fixed line-height does not. The overlay sits at `50% + 6px − var(--input-nudge)` (the input's own text position), so nothing jumps on focus. Keep that formula if the field's padding changes.
-- **Icons:** game item icons are PNGs in `src/assets/icons/`, used through `Icon.tsx`.
+- **Storage (localStorage):**
+
+  | Key | What |
+  | --- | --- |
+  | `hsr-jades:v1` | `AppState` (`version: 1`). No full export or import. |
+  | `hsr-jades:catalog:v1` | The catalog cache, outside `AppState`. |
+  | `hsr-jades:catalog-last-sync` | Last sync attempt (1 min cooldown). |
+  | `hsr-jades:details:v1` | yatta details, reset when `DETAILS_VERSION` changes. |
+  | `hsr-jades:details-misses:v1` | What yatta lacks, remembered for 24 h. |
+
+- **Every load goes through `normalizeState`.** It validates each field, fills defaults, clamps quantities to non-negative integers, and holds the **migrations**.
+  - Adding a field to `AppState` means updating `defaultState` and `normalizeState`, plus a store test if it migrates.
+  - Built-in sources always take their name and description from the current defaults, and new built-ins are appended to old saves.
+  - An unknown skin falls back to `aha`.
+- **Catalog:** the 5★ list comes from nanoka.cc at its manifest version (`FALLBACK_VERSION` if that fails), with Spanish names from yatta.moe. Beta content keeps its English name until yatta has it.
+  - A sync makes 5 requests.
+  - It runs from the «Sincronizar contenido» button and automatically on Tuesdays at 10:00 local time.
+  - Being due is checked on load, at that hour, and when the tab becomes visible.
+  - Name searches compare through `fold`, which ignores case, accents and signs.
+  - `NameCombobox` only accepts names picked from the list; without a catalog it accepts free text.
+- **Details popover:** Spanish text from yatta, falling back to nanoka (English).
+  - Items are prefetched once they appear in the gallery.
+  - `<img>` elements use `crossOrigin="anonymous"`, matching the CSS mask's CORS fetch.
+- **Account:** owned characters with their Eidolon, set by hand or imported from Reliquary Archiver's `profile.json`.
+  - With the catalog, only 5★ are kept, and Trailblazers (ids 8000+) are dropped.
+  - Importing replaces everything, with undo.
+
+## UI conventions
+
+- **Tabs** are chosen by URL hash: none is Calculadora, `#cuenta` is Cuenta and `#configuracion` is Configuración.
+- **Skins:** `aha` (the default and the CSS base) and `sparxie`, set as `data-skin` on `<html>`.
+  - Light/dark is separate: `settings.theme` is `system | light | dark` and becomes `data-theme`, or no attribute for `system`.
+  - Every skin defines its dark tokens twice, in the `prefers-color-scheme` query and under `[data-theme='dark']`.
+  - Use the tokens and never hard-code colors.
+  - Sparxie comes from `designs/droolsuite.DESING.md`.
+  - Aha's body font is Figtree. Its card titles and result figures use Card Characters (`--font-card`, one weight, 400), which ships in `src/assets/fonts/`.
+  - In Sparxie, Pixelify Sans is only for labels without digits (its 5 looks like an S); numbers stay in Courier Prime.
+- **CSS organization (`styles.css`):**
+  - The header has an index of sections, each marked `/* == Name == */`.
+  - A skin's rule for one component sits next to that component, under `:where(:root[data-skin='…'])` so it keeps base specificity and wins only by source order. Sparxie's global rules are in its own section at the end.
+  - No `!important`.
+- **Color only for problems.** The accent (red in Aha) marks what needs attention, such as «Faltan» or a row that does not fit.
+  - Checked controls use `--text`; Aha's switches use `--switch-on`, a moss green.
+  - These accent uses are deliberate exceptions:
+    - the bubbles' `--border-pop` and the toast border;
+    - «Deshacer»;
+    - focus rings and the focus border of fields;
+    - the selected tab, the selected key date, and the calendar's selected day and key-date dots;
+    - the dragged row's ring and handle;
+    - the combobox's selected option;
+    - the dupe badges;
+    - the Resumen card and Aha's stat boxes, both at 28 %.
+  - Sparxie's turquoise is not an alarm color, so its switches and bars keep it.
+  - Rarity colors (`--rarity-4`/`--rarity-5`, `Rarity.tsx`) are the game's own colors, the same in every skin.
+  - No state may be shown by color alone; add a word, a shape or a weight.
+- **Layout stability:**
+  - `html` has `scrollbar-gutter: stable`.
+  - Numbers must not shift the layout: use fixed `rem` columns and reserve space with `visibility: hidden` (`.invisible`, `.swap`).
+  - Aligned numbers use `font-variant-numeric: var(--num-variant)`. Numbers inside a phrase, such as countdowns, use `normal`.
+- **Tokens (`:root`):**
+  - spacing `--space-1…5` (4/8/12/16/20; 6px only for repeating row pitch);
+  - type scale 12/13/14/16/18/20/24/56px, with 13px for labels;
+  - control sizes: `--control-h`, `--field-compact-h`, `--field-compact-pad`, `--btn-pad-x`, `--remove-w`;
+  - floating surfaces: `--shadow-pop`, `--border-pop`/`--border-pop-w`;
+  - motion: `--fade-in`/`--fade-out` (180/150ms, shared by bubbles and button hovers);
+  - accent fills: `--on-accent`/`--selected-bg`.
+
+  Inputs use `--input-nudge` (1px less padding on top: 0 in Aha, −1px in Sparxie) when adding padding.
+- **Breakpoints:**
+  - 1480 (dupe gallery), 1180 (two columns), 1040 (Configuración aside);
+  - ≤720 (rows split into two lines), ≤560 (phone tweaks), ≤520 (sources), ≤430 (tab icons hidden, 50/50 under the portrait, pity fields stacked), ≤380 (events in three lines), ≤350 (packs' «por compra» on its own line);
+  - container queries: `plan` ≤29rem (add buttons lose their text), key dates <36rem, account <30rem and <44rem.
+- **Calculadora order:** from 1180px there are two equal columns. Below that, cards order by class:
+  1. Resumen;
+  2. Recursos actuales;
+  3. Plan;
+  4. Previsión;
+  5. Fecha objetivo;
+  6. Versiones y eventos;
+  7. Paquetes;
+  8. Desglose.
+
+  Card headers never wrap; the title wraps instead.
+- **Explanations:**
+  - **`Tip`:**
+    - Explains a data value.
+    - It opens on hover after 400 ms and stays open while the pointer is on it (WCAG 1.4.13). It also opens on focus, where Esc closes it, and on tap.
+    - It links the trigger with `aria-describedby`.
+    - Keep the trigger small: on stat tiles, the label is the trigger (`tip-term`).
+    - `control` wraps a button (a tap still works the button); a function child `(id) => …` describes a control that is not its direct child.
+    - `side="above"` makes it prefer opening above.
+    - Content with icons needs an `.sr-only` text.
+  - **No `title` for explanations.** It is allowed only on controls that already have an accessible name.
+  - **Glossary:** a dotted-underlined term opens its definition.
+    - Mark a term once per card, where it drives a decision.
+    - One term has one definition, shared through `glossary.tsx` (`StarlightDefinition`).
+    - On a `Toggle`, wrap one word of the label in `<ToggleTerm>`. Its bubble starts with a `<TipTitle>` giving the full game name, and its id is also the input's description. Wrap a label that has a term in a single `<span>`.
+- **Shared controls:**
+  - **`NumberField`** accepts only clamped integers and keeps an empty field while typing. Unfocused, a `.num-mask` overlay shows thousands separators. `info` opens from the label (`tip-term`); `info` and `hint` go in `aria-describedby`.
+  - **`Toggle`** is for on/off settings, instead of a plain checkbox. It is as wide as its text. Per-row choices, like the 50/50 and the ×2, stay checkboxes.
+  - **Remove buttons** are `btn btn-ghost btn-remove` with `<RemoveGlyph />`, never the ✕ character.
+  - **Every `.btn` fades its hover** with `--fade-in`/`--fade-out`:
+    - ghost buttons tint at 10 % ink over `--surface`;
+    - filled buttons tint at 10 % over `--surface-2`;
+    - Aha's key-date leaves change only their border.
+- **Undo instead of confirmations:** deleting or replacing data passes a `Notice` as the second argument of `onChange`. `App.tsx` then shows the toast with «Deshacer».
+  - The toast closes after 5 s and pauses on hover or focus.
+  - Its region is always mounted (`role="status"`).
+  - It holds one line, cutting only the name.
+  - Planner rows turn to dust (`DUST_MS`, SVG filter) before leaving, and are removed at once with reduced motion.
+- **Touch:** under `pointer: coarse`, small controls get an invisible hit area of 44px (36px tall on `.check`). Glossary terms sit above it, so tapping a term does not flip its switch.
+- **Zeros and dashes:** a real zero shows as «0». «—» only means "not applicable".
+- **No decorative gradients:** only functional ones (masks, the switch knob, the dupe-card glare).
+- **`NameCombobox`:** while unfocused, the name is painted by `.combo-value` at `50% + 6px − var(--input-nudge)`. Chrome shifts input text that falls back to another font (the ★), so keep that formula if the padding changes.

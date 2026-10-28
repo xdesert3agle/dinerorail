@@ -43,7 +43,7 @@ export function NameCombobox({
   const [active, setActive] = useState(-1);
   // Fuera del campo, el nombre lo pinta un <span> encima del input (cuyo texto queda transparente): dentro
   // de un input, un carácter que la fuente no tiene (la ★ de "Aeon ★ Aha") baja el texto y lo desalinea
-  // de la etiqueta del dupe; en un <span> con interlineado fijo, no.
+  // del tipo de arriba; en un <span> con interlineado fijo, no.
   const [focused, setFocused] = useState(false);
   const masked = !focused && value !== '';
   const suggestions = useMemo(() => (query ? searchCatalog(entries, query) : []), [entries, query]);

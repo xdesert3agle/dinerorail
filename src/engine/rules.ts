@@ -8,6 +8,12 @@ import type { PullKind } from './types';
 /** Jades que cuesta una tirada (1 single). */
 export const JADES_PER_PULL = 160;
 
+/** Unos Jades en tiradas enteras y los que sobran (no llegan a otra). */
+export const splitJades = (jades: number) => ({
+  singles: Math.floor(jades / JADES_PER_PULL),
+  spare: jades % JADES_PER_PULL,
+});
+
 /** Eidolón máximo de un personaje: E6 (la 7.ª copia). */
 export const MAX_EIDOLON = 6;
 
@@ -100,6 +106,11 @@ export const FEATURED_4_STARS = 3;
 
 /** Tiradas que hacen falta de media para cada 4★ (≈ 7,69). */
 export const PULLS_PER_4_STAR = 1 / FOUR_STAR_RATE;
+/** Un 4★ seguro cada 10 tiradas, como mínimo (el peor caso de la previsión). */
+export const FOUR_STAR_PITY = 10;
+
+/** Lo que dura una versión (6 semanas): para proponer el inicio de una nueva y estimar las que no se conocen. */
+export const PATCH_LENGTH_DAYS = 42;
 
 /**
  * Cosmiluz media de un 4★ en cada banner. Con el garantizado, la parte de destacados es 1 / (2 − p):

@@ -2,13 +2,14 @@ import { useId, useState } from 'react';
 import { addDays, toDayNum, WEEKDAYS, weekdayOf } from '../engine/dates';
 import { byVersion, patchText, phaseText, upcomingKeyDates, type KeyDate } from '../engine/keyDates';
 import type { AppState } from '../engine/types';
+import type { ChangeState } from '../state/store';
 import { DateField } from './DateField';
 import { fmtCountdown, fmtDayMonth, fmtMonth } from './format';
 
 interface Props {
   state: AppState;
   today: string;
-  onChange: (update: (s: AppState) => AppState) => void;
+  onChange: ChangeState;
 }
 
 const QUICK_TARGETS = [
@@ -86,13 +87,11 @@ export function TargetDate({ state, today, onChange }: Props) {
           id={targetDateId}
           value={state.targetDate}
           min={today}
-          // Al pasar por el día en el calendario: «Firefly SP · Versión 5.0 - 1.ª parte (estimada)».
+          // Al pasar por el día en el calendario: «Firefly SP · versión 5.0 · 1.ª parte (estimada)», con el mismo
+          // formato de versión que las hojas (patchText).
           marks={keyDates.map((d) => ({
             date: d.date,
-            label:
-              d.label +
-              (d.patch ? ` · Versión ${[d.patch, phaseText(d)].filter(Boolean).join(' - ')}` : '') +
-              (d.estimated ? ' (estimada)' : ''),
+            label: d.label + (d.patch ? ` · versión ${patchText(d)}` : '') + (d.estimated ? ' (estimada)' : ''),
           }))}
           onChange={(v) => onChange((s) => ({ ...s, targetDate: v }))}
         />
@@ -154,7 +153,7 @@ export function TargetDate({ state, today, onChange }: Props) {
               </div>
             ))}
           </div>
-          {/* Solo las próximas a la vista: con todas, la tarjeta empujaba Recursos actuales varias filas abajo. */}
+          {/* Solo las próximas a la vista: con todas, la tarjeta empujaba varias filas abajo a las que van debajo. */}
           {versions.length > SHOWN_VERSIONS && !targetHidden && (
             <button
               type="button"

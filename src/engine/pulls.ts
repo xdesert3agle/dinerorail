@@ -32,6 +32,16 @@ export interface PlannedPullResult {
   guaranteed: boolean;
 }
 
+/**
+ * La cuenta del plan: lo que cuestan las filas (sin la Cosmiluz), lo que la Cosmiluz devuelve y lo que sobra de
+ * las tiradas disponibles (negativo: faltan). `available` es lo mismo que se pasó a planPulls.
+ */
+export function planBalance(rows: PlannedPullResult[], available: number) {
+  const net = rows.at(-1)?.cumulative ?? 0;
+  const gross = rows.reduce((sum, r) => sum + r.cost, 0);
+  return { gross, refunded: gross - net, left: available - net };
+}
+
 export const clampPity = (kind: PullKind, value: number, hardPity = DEFAULT_HARD_PITY) =>
   Math.min(hardPity[kind] - 1, Math.max(0, Math.floor(value)));
 
