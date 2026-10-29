@@ -105,6 +105,16 @@
   --space-4: 16px;
   --space-5: 20px;
   /*
+   * Capas de lo que flota sobre la página, de abajo arriba: la tarjeta con la lista del buscador abierta, esa
+   * lista, el popover de la galería, las burbujas (y el salto al contenido) y el aviso de deshacer. Los -1, 1 y 2
+   * sueltos solo ordenan piezas dentro de su componente (decoración detrás, etiqueta sobre el campo).
+   */
+  --z-raised: 5;
+  --z-list: 30;
+  --z-popover: 40;
+  --z-tip: 50;
+  --z-toast: 60;
+  /*
    * Cifras de toda la app: proporcionales (normal) o de ancho fijo (tabular-nums). Solo se nota en Figtree
    * (Aha): Courier Prime (Sparxie) es monoespaciada y en Segoe UI ya son de ancho fijo.
    */
@@ -349,7 +359,7 @@ p {
 /* Salto al contenido: fuera de la vista hasta que se llega con el tabulador. */
 .skip-link {
   position: absolute;
-  z-index: 50;
+  z-index: var(--z-tip);
   top: 8px;
   left: 8px;
   transform: translateY(-200%);
@@ -977,7 +987,7 @@ p {
  */
 .dupe-pop {
   position: fixed;
-  z-index: 40;
+  z-index: var(--z-popover);
   display: grid;
   gap: 6px;
   width: max-content;
@@ -1545,7 +1555,7 @@ select:focus {
 /* La burbuja: como el popover de la galería (borde de las burbujas y sombra de lo que flota), en pequeño. */
 .tip {
   position: fixed;
-  z-index: 50;
+  z-index: var(--z-tip);
   width: max-content;
   max-width: min(20rem, calc(100vw - 16px));
   padding: 8px 10px;
@@ -2435,7 +2445,7 @@ tfoot td {
 }
 .combo-list {
   position: absolute;
-  z-index: 30;
+  z-index: var(--z-list);
   top: calc(100% + 4px);
   left: 0;
   /* Tan ancha como el nombre más largo, para no cortarlo; como mínimo, como el campo. */
@@ -2473,7 +2483,7 @@ tfoot td {
 /* Con la lista abierta, la tarjeta pasa por encima de las de debajo (algunas crean su propio apilamiento). */
 .card:has(.combo.is-open) {
   position: relative;
-  z-index: 5;
+  z-index: var(--z-raised);
 }
 /* Asa para arrastrar y reordenar. */
 .drag-handle {
@@ -3294,6 +3304,8 @@ tfoot td {
    */
   grid-template-columns: minmax(0, 1fr) 5.5rem auto 4rem auto auto;
   column-gap: var(--space-3);
+  /* Hueco fijo de los totales de Esquirlas (.pack-total-value): cada tema y el móvil cambian solo esto. */
+  --pack-total-w: 4.75rem;
   row-gap: 6px;
   align-items: center;
 }
@@ -3339,7 +3351,7 @@ tfoot td {
  */
 .pack-total-value {
   /* En rem y no en ch: las filas vacías no van en negrita y su "ch" es más estrecho. */
-  min-width: 4.75rem;
+  min-width: var(--pack-total-w);
 }
 .pack-price {
   color: var(--text-secondary);
@@ -3515,8 +3527,8 @@ tfoot td {
     font-size: 0.875rem;
   }
   /* Hueco para 5 cifras con punto (medido a 15px: 60,6px en Figtree; a 14px sobra; Sparxie, 56,7px). */
-  .pack-total-value {
-    min-width: 3.875rem;
+  .pack-list {
+    --pack-total-w: 3.875rem;
   }
 }
 /*
@@ -3529,12 +3541,12 @@ tfoot td {
   font-weight: 400;
 }
 /* Sus cifras son de ancho fijo y más anchas: «999.999» mide 81,9px a 18px y 63,7px a 14px (móvil). */
-:where(:root[data-skin='aha']) .pack-total-value {
-  min-width: 5.125rem;
+:where(:root[data-skin='aha']) .pack-list {
+  --pack-total-w: 5.125rem;
 }
 @media (width <= 560px) {
-  :where(:root[data-skin='aha']) .pack-total-value {
-    min-width: 4rem;
+  :where(:root[data-skin='aha']) .pack-list {
+    --pack-total-w: 4rem;
   }
 }
 /*
@@ -3577,7 +3589,7 @@ tfoot td {
  */
 .toast-region {
   position: fixed;
-  z-index: 60;
+  z-index: var(--z-toast);
   left: 24px;
   bottom: 24px;
   width: max-content;

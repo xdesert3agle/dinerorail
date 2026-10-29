@@ -23,7 +23,7 @@ npx vitest run -t "nombre del test"          # one test by name
 ```
 
 - **Before calling something done,** run `npm test` and `npm run build`.
-  - There is no linter.
+  - There is no linter. Imports go packages first, then `../`, then `./`, each alphabetical by path.
   - `tsc -b` is strict, with `noUnusedLocals` and `noUnusedParameters`, so an unused import or variable fails the build.
 - **Deploy:** every push to `main` runs the tests and the build, on the Node version in `.nvmrc`, and publishes to GitHub Pages (`.github/workflows/deploy.yml`). That is the link the user's friends use.
   - Never commit or push unless asked.
@@ -197,6 +197,7 @@ React hooks and browser storage.
   - controls: `--control-h`, `--field-compact-h`, `--field-compact-pad`, `--btn-pad-x`, `--remove-w`, `--date-field-w`, `--badge-out`, `--focus-ring`;
   - floating surfaces: `--shadow-pop`, `--border-pop`;
   - accent mixes: `--accent-frame`, `--accent-hover`;
+  - layers, bottom to top: `--z-raised`, `--z-list`, `--z-popover`, `--z-tip`, `--z-toast` (the loose −1/1/2 only order pieces inside a component);
   - motion: `--fade-in`/`--fade-out`.
   - Field padding follows `--input-nudge`: 0 in Aha, and −1px in Sparxie, whose Courier sits high, so it gets 1px more on top.
 - **Breakpoints:**

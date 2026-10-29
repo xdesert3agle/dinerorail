@@ -1,8 +1,8 @@
 import type { ComponentType } from 'react';
 import type { Result } from '../engine/calculate';
 import { formatDate } from '../engine/dates';
-import { fmtCountdown, fmtDayMonth, fmtInt, fmtSingles } from './format';
 import type { Skin } from '../engine/types';
+import { fmtCountdown, fmtDayMonth, fmtInt, fmtSingles } from './format';
 import { Icon } from './Icon';
 import { Masks } from './Masks';
 import { Tip } from './Tip';

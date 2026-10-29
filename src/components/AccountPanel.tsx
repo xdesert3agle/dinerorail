@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react';
 import { byPath, fiveStarOnly, parseProfile, roster, withEidolon, type RosterEntry } from '../engine/account';
 import { fold, type Catalog } from '../engine/catalog';
-import { characterPortraitUrl, pathIconUrl } from '../engine/urls';
 import { PATHS, type PathId } from '../engine/rules';
 import type { AppState, OwnedCharacter } from '../engine/types';
+import { characterPortraitUrl, pathIconUrl } from '../engine/urls';
 import { namedNotice, type Notice, type ChangeState } from '../state/store';
 import { EidolonShards } from './EidolonShards';
 import { fmtInt, fmtMoment } from './format';

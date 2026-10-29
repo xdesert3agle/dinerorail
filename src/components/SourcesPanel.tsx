@@ -6,12 +6,12 @@ import { canBePending, occurrences } from '../engine/sources';
 import type { AppState, Reward, Schedule, Source, SourceCategory } from '../engine/types';
 import { newId } from '../engine/util';
 import { namedNotice, type ChangeState } from '../state/store';
+import { DateField } from './DateField';
 import { describeSchedule, fmtInt, fmtSingles, pendingLabel } from './format';
 import { Icon } from './Icon';
-import { DateField } from './DateField';
+import { PLAIN_TEXT_INPUT } from './inputs';
 import { NumberField } from './NumberField';
 import { SwitchInput, Toggle } from './Toggle';
-import { PLAIN_TEXT_INPUT } from './inputs';
 
 interface Props {
   state: AppState;

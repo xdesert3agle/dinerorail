@@ -1,7 +1,7 @@
 import { WEEKDAYS } from '../engine/dates';
+import type { ShownChance } from '../engine/odds';
 import { JPY_PER_EUR } from '../engine/packs';
 import { canBePending } from '../engine/sources';
-import type { ShownChance } from '../engine/odds';
 import type { Schedule } from '../engine/types';
 
 // useGrouping 'always': en es-ES los números de 4 cifras no llevan punto por defecto (6560 pero 12.960).

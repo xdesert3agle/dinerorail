@@ -1,6 +1,6 @@
 import { cleanName } from './catalog';
-import { nanokaUrl, YATTA } from './urls';
 import type { PullKind } from './types';
+import { nanokaUrl, YATTA } from './urls';
 import { isObj } from './util';
 
 /*

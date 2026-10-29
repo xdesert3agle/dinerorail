@@ -6,10 +6,10 @@ import { nextVersion } from '../engine/sources';
 import type { AppState, Patch, PatchEvent } from '../engine/types';
 import { newId } from '../engine/util';
 import { namedNotice, type ChangeState } from '../state/store';
-import { fmtSingles } from './format';
 import { DateField } from './DateField';
-import { NumberField } from './NumberField';
+import { fmtSingles } from './format';
 import { PLAIN_TEXT_INPUT } from './inputs';
+import { NumberField } from './NumberField';
 import { RemoveGlyph } from './RemoveGlyph';
 
 interface Props {
