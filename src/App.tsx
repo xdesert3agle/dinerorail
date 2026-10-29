@@ -228,7 +228,7 @@ export default function App() {
                 className="segment"
                 aria-pressed={skin === id}
                 title={SKIN_OPTIONS[id].title}
-                onClick={() => setState(withSettings({ skin: id }))}
+                onClick={() => change(withSettings({ skin: id }))}
               >
                 <span className={`swatch swatch-${id}`} aria-hidden="true" />
                 {SKIN_OPTIONS[id].label}
@@ -244,7 +244,7 @@ export default function App() {
                 aria-pressed={activeTheme === t.id}
                 aria-label={t.title}
                 title={t.title}
-                onClick={() => setState(withSettings({ theme: t.id }))}
+                onClick={() => change(withSettings({ theme: t.id }))}
               >
                 {THEME_ICONS[t.id]}
               </button>

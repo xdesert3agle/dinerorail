@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { SourceTotal } from '../engine/calculate';
 import { formatDate, fromDayNum, toDayNum, WEEKDAYS } from '../engine/dates';
-import { PATCH_LENGTH_DAYS } from '../engine/rules';
+import { DEFAULT_CYCLE_DAYS } from '../engine/rules';
 import { canBePending, occurrences } from '../engine/sources';
 import type { AppState, Reward, Schedule, Source, SourceCategory } from '../engine/types';
 import { newId } from '../engine/util';
@@ -46,7 +46,7 @@ function defaultSchedule(type: Schedule['type'], today: string): Schedule {
     case 'monthly':
       return { type, day: 1 };
     case 'cycle':
-      return { type, anchor: today, periodDays: PATCH_LENGTH_DAYS };
+      return { type, anchor: today, periodDays: DEFAULT_CYCLE_DAYS };
     case 'perPatch':
       return { type, offsetDays: 0 };
   }

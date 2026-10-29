@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { defaultState } from '../engine/defaults';
-import { normalizeState } from './store';
+import { normalizeState, sameAsSaved } from './store';
 
 describe('normalizeState', () => {
   it('fuentes predefinidas: nombre y descripción de la versión actual; su calendario guardado se respeta', () => {
@@ -128,5 +128,30 @@ describe('normalizeState', () => {
   it('normalizar dos veces da lo mismo (las pestañas se sincronizan reescribiendo el estado)', () => {
     const once = normalizeState(JSON.parse(JSON.stringify(defaultState())));
     expect(JSON.stringify(normalizeState(JSON.parse(JSON.stringify(once))))).toBe(JSON.stringify(once));
+  });
+});
+
+describe('sameAsSaved', () => {
+  /** localStorage falso con `saved` guardado. */
+  const stubSaved = (saved: string | null) =>
+    vi.stubGlobal('localStorage', { getItem: () => saved, setItem: () => {} });
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('el mismo contenido con las claves en otro orden no se reescribe (no rebota a las otras pestañas)', () => {
+    const state = defaultState();
+    // Como lo deja la app: el entryId, añadido al elegir el nombre, va al final de la fila.
+    const fromApp = { ...state, plannedPulls: [{ id: 'a', name: 'Kafka', kind: 'character', winsFiftyFifty: false, entryId: '1005' }] };
+    stubSaved(JSON.stringify(fromApp));
+    expect(sameAsSaved(normalizeState(fromApp))).toBe(true);
+  });
+
+  it('otro contenido, nada guardado o lo guardado ilegible se escriben', () => {
+    const state = defaultState();
+    stubSaved(JSON.stringify({ ...state, targetDate: '2030-01-01' }));
+    expect(sameAsSaved(state)).toBe(false);
+    stubSaved(null);
+    expect(sameAsSaved(state)).toBe(false);
+    stubSaved('{roto');
+    expect(sameAsSaved(state)).toBe(false);
   });
 });

@@ -126,6 +126,12 @@ export const FOUR_STAR_PITY = 10;
 export const PATCH_LENGTH_DAYS = 42;
 
 /**
+ * Lo que dura un ciclo de los modos de reto (Salón Olvidado, Pura Ficción, Espejismo Apocalíptico): el de las
+ * fuentes «Cada N días» si no se dice otro.
+ */
+export const DEFAULT_CYCLE_DAYS = 42;
+
+/**
  * Cosmiluz media de un 4★ en cada banner. Con el garantizado, la parte de destacados es 1 / (2 − p):
  * 2/3 en el de personaje y 4/5 en el de conos. El resto sale de la reserva sin los 3 destacados:
  * 19 personajes y 31 conos en el de personaje; 22 personajes y 28 conos en el de conos.

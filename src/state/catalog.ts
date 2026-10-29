@@ -44,19 +44,22 @@ async function fetchJson(url: string): Promise<unknown> {
 
 /**
  * Descarga el catálogo: la versión del manifest de nanoka (o la última conocida si no responde) y, a la vez,
- * las listas de nanoka y los nombres en español de yatta. Si yatta falla, los nombres se quedan en inglés.
+ * las listas de nanoka y los nombres en español de yatta. Si yatta falla, se quedan los nombres del catálogo
+ * anterior (`previous`), y lo que no estaba en él, en inglés.
+ * Si nanoka trae un formato que ya no se entiende (ver parseCatalogEntries), falla: así no pisa el catálogo
+ * guardado, que dejaría el plan sin copias (toda la Cosmiluz de personaje nuevo) y la cuenta vacía.
  */
-export async function fetchCatalog(): Promise<Catalog> {
+export async function fetchCatalog(previous: Catalog | null = null): Promise<Catalog> {
   const version = await fetchJson(MANIFEST_URL)
     .then(parseManifestVersion)
     .catch(() => FALLBACK_VERSION);
   const spanish = (kind: PullKind) =>
     fetchJson(YATTA_NAMES_URLS[kind])
       .then(parseYattaNames)
-      .catch(() => new Map<string, string>());
+      .catch(() => new Map((previous?.[kind] ?? []).map((e) => [e.id, e.name])));
   const entries = async (kind: PullKind) => {
     const [raw, names] = await Promise.all([fetchJson(catalogUrl(version, kind)), spanish(kind)]);
-    return parseCatalogEntries(raw, names);
+    return parseCatalogEntries(raw, names, { withPaths: kind === 'character' });
   };
   const [character, lightCone] = await Promise.all([entries('character'), entries('lightCone')]);
   return { syncedAt: Date.now(), version, character, lightCone };
@@ -85,6 +88,9 @@ export function useCatalog(): CatalogSync {
   // montaje de StrictMode, el botón y el temporizador a la vez) ven ya la primera, sin esperar a otro render.
   const inFlight = useRef(false);
   const attempt = useRef(lastAttempt);
+  // El catálogo de ahora, para los nombres en español si yatta falla (sync no cambia con él).
+  const current = useRef(catalog);
+  current.current = catalog;
 
   const sync = useCallback(async () => {
     if (inFlight.current) return;
@@ -96,7 +102,7 @@ export function useCatalog(): CatalogSync {
     setSyncing(true);
     setError(null);
     try {
-      const next = await fetchCatalog();
+      const next = await fetchCatalog(current.current);
       setCatalog(next);
       write(CATALOG_KEY, next);
     } catch {

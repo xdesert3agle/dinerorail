@@ -106,8 +106,20 @@ describe('catálogo de personajes y conos', () => {
     expect(parseCatalogEntries(raw)).toHaveLength(1);
   });
 
-  it('rechaza lo que no es un objeto', () => {
+  it('con las vías, rechaza la lista si a un personaje le falta (aunque sea a uno), no si trae una nueva', () => {
+    const raw = {
+      '1005': { rank: 'CombatPowerAvatarRarityType5', en: 'Kafka', baseType: 'Warlock' },
+      '1999': { rank: 'CombatPowerAvatarRarityType5', en: 'Nueva', baseType: 'Unknown' },
+    };
+    expect(parseCatalogEntries(raw, undefined, { withPaths: true })).toHaveLength(2);
+    const renamed = { ...raw, '1006': { rank: 'CombatPowerAvatarRarityType5', en: 'Silver Wolf', path: 'Warlock' } };
+    expect(() => parseCatalogEntries(renamed, undefined, { withPaths: true })).toThrow();
+  });
+
+  it('rechaza lo que no es un objeto o no trae ningún 5★', () => {
     expect(() => parseCatalogEntries([])).toThrow();
+    expect(() => parseCatalogEntries({})).toThrow();
+    expect(() => parseCatalogEntries({ '1001': { rank: 'CombatPowerAvatarRarityType4', en: 'March 7th' } })).toThrow();
     expect(normalizeCatalog({ character: [] })).toBeNull();
   });
 

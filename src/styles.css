@@ -2275,6 +2275,8 @@ tfoot td {
   --pull-row-pad: 8px;
   /* Lado de la miniatura y alto del campo del nombre, que van a la par. */
   --pull-thumb: 3.375rem;
+  /* Lado del ticket de los costes y del balance (size={26} en PullRow y PlanFooter; menor en móviles). */
+  --pull-ticket: 26px;
   display: grid;
   grid-template-columns: auto auto minmax(0, 1fr) auto auto auto;
   column-gap: var(--pull-gap);
@@ -2410,9 +2412,13 @@ tfoot td {
   color: var(--text-secondary);
   font-variant-numeric: var(--num-variant);
 }
-/* Fila que no llega con las tiradas: el borde del nombre avisa. */
+/*
+ * Fila que no llega con las tiradas: el borde del nombre, discontinuo y en rojo. Lo discontinuo avisa aunque no
+ * se distinga el rojo (ningún estado solo por color); no ocupa sitio ni mueve la fila.
+ */
 .pull-row.is-short .pull-name {
-  border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
+  border-style: dashed;
+  border-color: var(--danger);
 }
 /* Nombre con sugerencias del catálogo: la lista flota bajo el campo, por encima de las filas siguientes. */
 .combo {
@@ -2594,9 +2600,9 @@ tfoot td {
 .pull-balance > :is(.pull-balance-label, strong) {
   align-self: baseline;
 }
-/* La cifra, del alto del ticket (size={26} en PlanFooter.tsx): así sigue centrada con él, como las de las filas de encima. */
+/* La cifra, del alto del ticket: así sigue centrada con él, como las de las filas de encima. */
 .pull-summary .pull-cost strong {
-  line-height: 26px;
+  line-height: var(--pull-ticket);
 }
 /*
  * Lo que devuelve la Cosmiluz, pegado al texto de su interruptor: una pastilla gris «🎫 +35» (suelta, el «+»
@@ -2699,15 +2705,15 @@ tfoot td {
   }
 }
 @media (width <= 560px) {
+  .pull-list {
+    --pull-ticket: 20px;
+  }
   .pull-cost {
     font-size: 1.125rem;
   }
   .pull-cost .icon {
-    width: 20px;
-    height: 20px;
-  }
-  .pull-summary .pull-cost strong {
-    line-height: 20px;
+    width: var(--pull-ticket);
+    height: var(--pull-ticket);
   }
 }
 /*

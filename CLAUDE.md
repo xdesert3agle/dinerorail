@@ -43,7 +43,15 @@ Most work arrives as small, one-off UI requests. Never apply them blindly; that 
 3. **If it does not fit,** say so in a line or two and propose fixing the system first, with the reason. For example: "button colors should become a token; today this change would touch three rules."
    - Wait for the user's go-ahead if the fix changes more than they asked for.
    - A purely internal improvement can be done directly and reported.
-4. **If it fits,** just do it. Then run `npm test` and `npm run build`.
+4. **If it fits,** do it, following steps 5 and 6.
+5. **While doing it:**
+   - Reuse before writing: look for an existing function, component, token or rule that does the job, or generalize it.
+   - Keep siblings consistent: if the change touches one instance of a pattern (a card, a button, a row), apply it to the others or ask.
+   - Engine and state changes come with their tests.
+6. **Before calling it done:**
+   - Remove what the change left orphaned: dead code, unused CSS rules, tokens, exports or texts.
+   - Update this file when what it describes changes, and add rejected alternatives to `docs/decisiones.md`.
+   - Run `npm test` and `npm run build`.
 
 ## Module map
 

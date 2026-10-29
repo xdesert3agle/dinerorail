@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { byName, clampEidolon } from '../engine/account';
 import { isValidISO } from '../engine/dates';
-import { DEFAULT_CYCLE_DAYS, defaultState } from '../engine/defaults';
+import { defaultState } from '../engine/defaults';
 import { SHARD_PACKS } from '../engine/packs';
-import { DEFAULT_HARD_PITY } from '../engine/rules';
+import { DEFAULT_CYCLE_DAYS, DEFAULT_HARD_PITY } from '../engine/rules';
 import type {
   Account,
   AppState,
@@ -217,8 +217,8 @@ function load(): AppState {
     raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return normalizeState(JSON.parse(raw));
   } catch {
-    // Sin acceso a localStorage o datos que no se pueden leer (corruptos, de otra versión, una migración que
-    // falla): se empieza con los valores por defecto. Lo guardado se copia antes aparte, porque el estado nuevo
+    // Sin acceso a localStorage o datos que no se pueden leer (corruptos o de otra versión): se empieza con los
+    // valores por defecto. Lo guardado se copia antes aparte, porque el estado nuevo
     // se escribe encima en cuanto arranca y sin la copia no habría forma de recuperarlo.
     try {
       if (raw) localStorage.setItem(UNREADABLE_KEY, raw);
@@ -256,6 +256,26 @@ export const withSettings =
   (patch: Partial<Settings>) =>
   (s: AppState): AppState => ({ ...s, settings: { ...s.settings, ...patch } });
 
+/** JSON con las claves en orden alfabético: el mismo contenido da el mismo texto, se construya como se construya. */
+const canonical = (v: unknown) =>
+  JSON.stringify(v, (_, x: unknown) =>
+    isObj(x) ? Object.fromEntries(Object.entries(x).sort(([a], [b]) => (a < b ? -1 : 1))) : x,
+  );
+
+/**
+ * Lo guardado ya tiene este contenido. Se compara sin el orden de las claves: normalizeState no las pone en el
+ * orden en que las deja la app (el entryId de una fila), y por eso solo no hay que reescribir.
+ */
+export function sameAsSaved(state: AppState): boolean {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved !== null && canonical(JSON.parse(saved)) === canonical(state);
+  } catch {
+    // Lo guardado no se puede leer: se escribe encima (load ya guardó una copia aparte).
+    return false;
+  }
+}
+
 /**
  * El estado de la app, guardado en localStorage y al día con las demás pestañas abiertas. `onExternalChange`
  * avisa cuando llega un cambio de otra pestaña (App cierra con él el aviso de deshacer, cuya foto ya no vale).
@@ -266,9 +286,9 @@ export function useAppState(onExternalChange?: () => void) {
   external.current = onExternalChange;
   useEffect(() => {
     try {
-      // Sin reescribir lo mismo: así no se avisa a las otras pestañas de un cambio que no hay.
-      const json = JSON.stringify(state);
-      if (localStorage.getItem(STORAGE_KEY) !== json) localStorage.setItem(STORAGE_KEY, json);
+      // Sin reescribir lo mismo: así no se avisa a las otras pestañas de un cambio que no hay (el estado que llega
+      // de otra rebotaba y le cerraba el aviso de deshacer).
+      if (!sameAsSaved(state)) localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch {
       // Navegación privada o almacenamiento bloqueado: la app sigue funcionando sin guardar.
     }

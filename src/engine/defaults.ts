@@ -1,8 +1,11 @@
 import { addDays, todayISO } from './dates';
-import { DEFAULT_HARD_PITY, PATCH_LENGTH_DAYS } from './rules';
+import { DEFAULT_CYCLE_DAYS, DEFAULT_HARD_PITY, PATCH_LENGTH_DAYS } from './rules';
 import type { AppState, Reward, Source } from './types';
 
 const reward = (jades: number, specialPasses = 0): Reward => ({ jades, specialPasses });
+
+/** Lo que dice cada modo de reto, con la duración de su ciclo (DEFAULT_CYCLE_DAYS) en semanas. */
+const CHALLENGE_DESCRIPTION = `800 + 100 del modo Starward. Ciclos de ${DEFAULT_CYCLE_DAYS / 7} semanas.`;
 
 /*
  * Cantidades por defecto. Todas son editables desde la app.
@@ -50,7 +53,7 @@ export function defaultSources(today = todayISO()): Source[] {
     {
       id: 'memory-of-chaos',
       name: 'Salón Olvidado',
-      description: '800 + 100 del modo Starward. Ciclos de 6 semanas.',
+      description: CHALLENGE_DESCRIPTION,
       category: 'endgame',
       enabled: true,
       schedule: { type: 'cycle', anchor: '2026-11-02', periodDays: DEFAULT_CYCLE_DAYS },
@@ -60,7 +63,7 @@ export function defaultSources(today = todayISO()): Source[] {
     {
       id: 'apocalyptic-shadow',
       name: 'Espejismo Apocalíptico',
-      description: '800 + 100 del modo Starward. Ciclos de 6 semanas.',
+      description: CHALLENGE_DESCRIPTION,
       category: 'endgame',
       enabled: true,
       schedule: { type: 'cycle', anchor: '2026-10-05', periodDays: DEFAULT_CYCLE_DAYS },
@@ -70,7 +73,7 @@ export function defaultSources(today = todayISO()): Source[] {
     {
       id: 'pure-fiction',
       name: 'Pura Ficción',
-      description: '800 + 100 del modo Starward. Ciclos de 6 semanas.',
+      description: CHALLENGE_DESCRIPTION,
       category: 'endgame',
       enabled: true,
       schedule: { type: 'cycle', anchor: '2026-10-19', periodDays: DEFAULT_CYCLE_DAYS },
@@ -211,7 +214,4 @@ export function defaultState(today = todayISO()): AppState {
       hardPity: { ...DEFAULT_HARD_PITY },
     },
   };
-}/** Duración de un ciclo de los modos de reto (Memoria del Caos, Ficción Pura, Sombra Apocalíptica). */
-export const DEFAULT_CYCLE_DAYS = 42;
-
-
+}

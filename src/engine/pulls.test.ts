@@ -59,8 +59,21 @@ describe('planPulls', () => {
     expect(rows.map((r) => Math.round(r.starlight))).toEqual([444, 245]);
     expect(rows.map((r) => r.netCost)).toEqual([138, 128]);
     expect(rows.map((r) => r.cumulative)).toEqual([138, 266]);
-    expect(rows.map((r) => r.remaining)).toEqual([62, -66]);
     expect(rows.map((r) => r.affordable)).toEqual([true, false]);
+  });
+
+  it('tras una fila que no llega, ninguna llega, aunque necesite menos', () => {
+    // El cono, con 69 de pity y el garantizado, cuesta 1: con los 40 de Cosmiluz del personaje (2 singles),
+    // necesita una menos que él. Con 139 llegaría al cono, pero no al personaje que va antes.
+    const rows = planPulls(
+      [pull('a', 'character'), pull('b', 'lightCone')],
+      { character: 0, lightCone: 69 },
+      139,
+      { ...repeated, guaranteed: { character: false, lightCone: true } },
+    );
+    expect(rows.map((r) => r.needed)).toEqual([140, 139]);
+    expect(rows.map((r) => r.affordable)).toEqual([false, false]);
+    expect(planBalance(rows, 139).left).toBe(-1);
   });
 
   it('la Cosmiluz del 5★ buscado no paga su propia fila', () => {
@@ -152,10 +165,31 @@ describe('planPulls', () => {
 describe('planBalance', () => {
   it('coste de las filas, lo que devuelve la Cosmiluz y lo que sobra o falta', () => {
     const plan = [pull('a', 'character'), pull('b', 'lightCone')];
-    const rows = planPulls(plan, { character: 0, lightCone: 0 }, 200, repeated);
+    const rows = planPulls(plan, { character: 0, lightCone: 0 }, 1000, repeated);
     // 160 + 140 de coste; la Cosmiluz devuelve 34 (ver el test de la acumulación): netas 266.
-    expect(planBalance(rows, 200)).toEqual({ gross: 300, refunded: 34, left: -66 });
+    expect(planBalance(rows, 1000)).toEqual({ gross: 300, refunded: 34, left: 734 });
     expect(planBalance([], 50)).toEqual({ gross: 0, refunded: 0, left: 50 });
+  });
+
+  it('si una fila no llega, su propia Cosmiluz no cuenta: faltan las que necesita esa fila', () => {
+    const plan = [pull('a', 'character'), pull('b', 'lightCone')];
+    const rows = planPulls(plan, { character: 0, lightCone: 0 }, 200, repeated);
+    // El cono no llega: antes de su 5★ hay 649,2 de Cosmiluz (32 singles), sin los 40 de él: 300 − 32 = 268.
+    expect(rows.map((r) => r.needed)).toEqual([140, 268]);
+    expect(planBalance(rows, 200)).toEqual({ gross: 300, refunded: 32, left: -68 });
+  });
+
+  it('el pie y las filas dicen lo mismo: «Faltan» si y solo si alguna fila no llega', () => {
+    // En el borde, la Cosmiluz del propio 5★ (40 de E1, 100 tras E6) decidía «Sobran» con la fila sin llegar.
+    const plan = [pull('a', 'character')];
+    for (const eidolon of [0, 1, 7]) {
+      for (let available = 120; available <= 170; available++) {
+        const rows = planPulls(plan, { character: 0, lightCone: 0 }, available, {
+          copies: [{ characterId: 'a', eidolon }],
+        });
+        expect(planBalance(rows, available).left < 0).toBe(!rows[0].affordable);
+      }
+    }
   });
 });
 

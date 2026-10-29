@@ -25,8 +25,15 @@ export interface PlannedPullResult {
   netCost: number;
   /** Singles netas acumuladas hasta esta fila (incluida). */
   cumulative: number;
-  /** Singles que quedan tras esta fila (negativo = faltan). */
-  remaining: number;
+  /**
+   * Singles que hacen falta para llegar al 5★ de esta fila (con las anteriores): como `cumulative`, pero sin la
+   * Cosmiluz de su propio 5★, que llega después.
+   */
+  needed: number;
+  /**
+   * Llega con las singles disponibles (`needed` ≤ disponibles) y llegan todas las anteriores: el plan se tira en
+   * orden, así que tras una fila que no llega ninguna llega, aunque la siguiente necesite menos.
+   */
   affordable: boolean;
   /** Es la primera fila de su tipo y descuenta el pity actual. */
   usesPity: boolean;
@@ -37,6 +44,9 @@ export interface PlannedPullResult {
 /**
  * La cuenta del plan: lo que cuestan las filas (sin la Cosmiluz), lo que la Cosmiluz devuelve y lo que sobra de
  * las tiradas disponibles (negativo: faltan). `available` es lo mismo que se pasó a planPulls.
+ * Si alguna fila no llega, la cuenta es la de terminar el plan: hay que pasar por el `needed` de cada fila (la
+ * Cosmiluz de un 5★ llega después de él), así que hacen falta las del mayor. La Cosmiluz reinvertida es la que
+ * se obtendría por el camino. Así el pie nunca dice «Sobran» con una fila que no llega.
  */
 export interface PlanBalance {
   gross: number;
@@ -45,7 +55,9 @@ export interface PlanBalance {
 }
 
 export function planBalance(rows: PlannedPullResult[], available: number): PlanBalance {
-  const net = rows.at(-1)?.cumulative ?? 0;
+  const net = rows.every((r) => r.affordable)
+    ? (rows.at(-1)?.cumulative ?? 0)
+    : Math.max(...rows.map((r) => r.needed));
   const gross = rows.reduce((sum, r) => sum + r.cost, 0);
   return { gross, refunded: gross - net, left: available - net };
 }
@@ -98,6 +110,7 @@ export function planPulls(
   let pulls = 0;
   let starlight = initialStarlight;
   let cumulative = 0;
+  let reachable = true;
   const current = effectivePity(pity, hardPity);
 
   return plan.map((pull, i) => {
@@ -123,6 +136,7 @@ export function planPulls(
     const netCumulative = pulls - refund(starlight);
     const netCost = netCumulative - cumulative;
     cumulative = netCumulative;
+    reachable &&= needed <= availableSingles;
 
     return {
       id: pull.id,
@@ -133,8 +147,8 @@ export function planPulls(
       starlight: rowStarlight,
       netCost,
       cumulative,
-      remaining: availableSingles - cumulative,
-      affordable: needed <= availableSingles,
+      needed,
+      affordable: reachable,
       usesPity,
       guaranteed: isGuaranteed,
     };

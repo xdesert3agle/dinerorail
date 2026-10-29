@@ -89,18 +89,27 @@ export const cleanName = (name: string) => name.replace(/<[^>]*>/g, '').replace(
  * Se descartan los Trazacaminos (su nombre en inglés es "{NICKNAME}"), que no salen en banners.
  * Orden: lo más nuevo primero (por fecha de salida si la hay; si no, por id). Lo que aún no tiene fecha
  * es lo que todavía no ha salido, así que va delante.
+ * Falla con un formato que ya no se entiende: sin ningún 5★ o, con `withPaths` (la lista de personajes), con
+ * alguno sin `baseType`. Así una sincronización no pisa el catálogo guardado con uno que dejaría el plan sin
+ * copias y la cuenta sin vías. Una vía que aún no está en PATHS sí se acepta (queda sin `path`).
  */
-export function parseCatalogEntries(raw: unknown, spanish: Map<string, string> = new Map()): CatalogEntry[] {
+export function parseCatalogEntries(
+  raw: unknown,
+  spanish: Map<string, string> = new Map(),
+  { withPaths = false } = {},
+): CatalogEntry[] {
   if (!isObj(raw)) throw new Error('Formato inesperado');
   const items: (CatalogEntry & { release: number })[] = [];
   for (const [id, value] of Object.entries(raw)) {
     if (!isObj(value) || !isFiveStar(value.rank) || typeof value.en !== 'string') continue;
     const en = cleanName(value.en);
     if (!en || en.includes('{')) continue;
+    if (withPaths && typeof value.baseType !== 'string') throw new Error('Formato inesperado');
     const name = spanish.get(id) ?? en;
     const release = typeof value.release === 'number' ? value.release : Infinity;
     items.push({ id, name, release, ...(isPathId(value.baseType) && { path: value.baseType }) });
   }
+  if (!items.length) throw new Error('Formato inesperado');
   items.sort((a, b) => b.release - a.release || Number(b.id) - Number(a.id));
   const seen = new Set<string>();
   return items

@@ -20,6 +20,14 @@ volver a proponer y por qué.
 - **Cosmiluz del 5★ buscado (2026-10-29):** se propuso un selector por fila «nuevo / repetido / E6». Se descartó:
   la copia ya sale del orden del plan y de la cuenta (`planCopies`, lo mismo que los dupes), así que se deduce
   sola. Antes se contaban 40 siempre, también por un personaje nuevo, que en el juego da 0.
+- **Fila que no llega (2026-10-29):** el borde del nombre, discontinuo y en rojo pleno (en gris se sigue
+  distinguiendo). Se descartaron:
+  - «No llega ·» delante del %: chocaba con la probabilidad («No llega · 95 %») y pisaba el tipo;
+  - «Sin cubrir» sobre el coste: con las filas en dos líneas, todas crecían 14–16px por el hueco reservado;
+  - toda la fila con barra y fondo rojizos: se confundía con la fila arrastrada y teñía el plan;
+  - borde de 2px y la cifra del coste en rojo: sin color apenas se notaba;
+  - la cifra del coste en rojo junto al discontinuo: el «Faltan» del pie dejaba de destacar y el coste parecía
+    erróneo.
 - **Espaciado vertical de las tarjetas:** no aumentarlo. Se planteó hacer más alto el botón de añadir, pero
   obligaba a subir el alto de la fila, y el usuario ve el espaciado actual justo como debe ser.
 
