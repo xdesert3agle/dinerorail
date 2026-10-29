@@ -4,3 +4,5 @@ dist
 *.tsbuildinfo
 profile.json
 .taste-skill/
+# Informes y ajustes locales de la skill impeccable (llevan rutas de este equipo).
+.impeccable/

@@ -1,7 +1,7 @@
-import { useRef, useState, type CSSProperties } from 'react';
+import { useRef, useState } from 'react';
 import { byPath, fiveStarOnly, parseProfile, roster, withEidolon, type RosterEntry } from '../engine/account';
 import { fold, type Catalog } from '../engine/catalog';
-import { characterPortraitUrl, pathIconUrl } from '../engine/dupes';
+import { characterPortraitUrl, pathIconUrl } from '../engine/urls';
 import { PATHS, type PathId } from '../engine/rules';
 import type { AppState, OwnedCharacter } from '../engine/types';
 import { namedNotice, type Notice, type ChangeState } from '../state/store';
@@ -105,7 +105,7 @@ export function AccountPanel({ state, catalog, onChange }: Props) {
           <p className="muted">
             {importedAt
               ? `Importado el ${fmtMoment(importedAt)}.`
-              : 'Rellena la lista de una vez con los personajes de la cuenta y sus Eidolones. Sustituye lo marcado a mano.'}
+              : 'Importar el perfil marca los personajes de la cuenta y sus Eidolones, en lugar de lo marcado a mano.'}
           </p>
           {/* El botón y su resultado juntos: vacío, el aviso no suma el hueco de la tarjeta bajo el botón. */}
           <div className="account-action">
@@ -166,15 +166,15 @@ export function AccountPanel({ state, catalog, onChange }: Props) {
                   Solo si el catálogo trae las vías.
                 */}
                 {all.some((c) => c.path) && (
-                  <div className="skin-switch path-filter" role="group" aria-label="Filtrar por vía">
-                    <button type="button" className="skin-option" aria-pressed={paths.size === 0} onClick={() => setPaths(new Set())}>
+                  <div className="segmented path-filter" role="group" aria-label="Filtrar por vía">
+                    <button type="button" className="segment" aria-pressed={paths.size === 0} onClick={() => setPaths(new Set())}>
                       Todas
                     </button>
                     {PATHS.map((p) => (
                       <button
                         key={p.id}
                         type="button"
-                        className="skin-option path-option"
+                        className="segment path-option"
                         aria-pressed={paths.has(p.id)}
                         aria-label={p.name}
                         onClick={() => togglePath(p.id)}
@@ -261,6 +261,6 @@ function AccountRow({ character: c, onSet }: { character: RosterEntry; onSet: (e
 /** Icono de una vía (PNG blanco de StarRailRes usado como máscara, para que tome el color del texto). */
 function PathIcon({ icon }: { icon: string }) {
   return (
-    <span className="path-icon" aria-hidden="true" style={{ '--path-icon': `url(${pathIconUrl(icon)})` } as CSSProperties} />
+    <span className="path-icon" aria-hidden="true" style={{ '--path-icon': `url(${pathIconUrl(icon)})` }} />
   );
 }

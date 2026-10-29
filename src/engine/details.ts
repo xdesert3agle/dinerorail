@@ -1,4 +1,5 @@
-import { cleanName, nanokaUrl } from './catalog';
+import { cleanName } from './catalog';
+import { nanokaUrl, YATTA } from './urls';
 import type { PullKind } from './types';
 import { isObj } from './util';
 
@@ -9,25 +10,18 @@ import { isObj } from './util';
  * el texto y sus parámetros, que es poco comparado con el JSON entero.
  */
 
-/*
- * Sin el parámetro vh (versión) de su web: solo cambia algo en lo que está en beta, que de todas formas
- * sale de nanoka.cc.
- */
-const YATTA_URL = 'https://sr.yatta.moe/api/v2/es';
-
-/** Fuentes de los datos, por orden de preferencia. */
-export const DETAILS_SOURCES = ['yatta', 'nanoka'] as const;
-export type DetailsSource = (typeof DETAILS_SOURCES)[number];
+/** Fuentes de los datos: primero yatta.moe (en español) y, si no lo tiene, nanoka.cc (en inglés). */
+export type DetailsSource = 'yatta' | 'nanoka';
 
 /** Idioma de los textos de cada fuente: decide el separador decimal de los valores. */
 export type Lang = 'es' | 'en';
 export const SOURCE_LANG: Record<DetailsSource, Lang> = { yatta: 'es', nanoka: 'en' };
 
 /*
- * Si cambia, lo guardado deja de valer. Solo se guarda lo de yatta (lo de nanoka va en memoria), así que no
- * depende de la versión de nanoka.
+ * Versión de lo guardado: subirla si cambia lo que se guarda o de dónde sale (YATTA), y lo guardado deja de
+ * valer. Solo se guarda lo de yatta (lo de nanoka va en memoria), así que no depende de la versión de nanoka.
  */
-export const DETAILS_VERSION = YATTA_URL;
+export const DETAILS_VERSION = 'yatta-v2-es-1';
 
 /** Un efecto tal como viene del juego: el texto lleva huecos ("#1[i]%") que se llenan con params. */
 export interface Effect {
@@ -57,7 +51,7 @@ export type Details = CharacterDetails | LightConeDetails;
 
 /** URL de los detalles en una fuente; nanoka, en la versión del catálogo (`version`). */
 export function detailsUrl(source: DetailsSource, kind: PullKind, id: string, version: string) {
-  if (source === 'yatta') return `${YATTA_URL}/${kind === 'character' ? 'avatar' : 'equipment'}/${id}`;
+  if (source === 'yatta') return `${YATTA}/${kind === 'character' ? 'avatar' : 'equipment'}/${id}`;
   return `${nanokaUrl(version)}/en/${kind === 'character' ? 'character' : 'lightcone'}/${id}.json`;
 }
 

@@ -53,7 +53,7 @@ export function defaultSources(today = todayISO()): Source[] {
       description: '800 + 100 del modo Starward. Ciclos de 6 semanas.',
       category: 'endgame',
       enabled: true,
-      schedule: { type: 'cycle', anchor: '2026-11-02', periodDays: 42 },
+      schedule: { type: 'cycle', anchor: '2026-11-02', periodDays: DEFAULT_CYCLE_DAYS },
       reward: reward(900),
       pendingNow: false,
     },
@@ -63,7 +63,7 @@ export function defaultSources(today = todayISO()): Source[] {
       description: '800 + 100 del modo Starward. Ciclos de 6 semanas.',
       category: 'endgame',
       enabled: true,
-      schedule: { type: 'cycle', anchor: '2026-10-05', periodDays: 42 },
+      schedule: { type: 'cycle', anchor: '2026-10-05', periodDays: DEFAULT_CYCLE_DAYS },
       reward: reward(900),
       pendingNow: false,
     },
@@ -73,7 +73,7 @@ export function defaultSources(today = todayISO()): Source[] {
       description: '800 + 100 del modo Starward. Ciclos de 6 semanas.',
       category: 'endgame',
       enabled: true,
-      schedule: { type: 'cycle', anchor: '2026-10-19', periodDays: 42 },
+      schedule: { type: 'cycle', anchor: '2026-10-19', periodDays: DEFAULT_CYCLE_DAYS },
       reward: reward(900),
       pendingNow: false,
     },
@@ -211,4 +211,7 @@ export function defaultState(today = todayISO()): AppState {
       hardPity: { ...DEFAULT_HARD_PITY },
     },
   };
-}
+}/** Duración de un ciclo de los modos de reto (Memoria del Caos, Ficción Pura, Sombra Apocalíptica). */
+export const DEFAULT_CYCLE_DAYS = 42;
+
+

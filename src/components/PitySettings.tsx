@@ -17,11 +17,9 @@ const FIELDS: { kind: PullKind; label: string }[] = [
 export function PitySettings({ state, onChange }: Props) {
   const setHardPity = (kind: PullKind, value: number) =>
     onChange((s) => {
-      // Vacío o 0: vuelve al valor por defecto.
-      const v = Math.floor(value);
-      // El pity actual no se recorta aquí: mientras se escribe "80" se pasa por "8" y se perdería.
-      // El plan ya lo limita al calcular.
-      return withSettings({ hardPity: { ...s.settings.hardPity, [kind]: v >= 1 ? v : DEFAULT_HARD_PITY[kind] } })(s);
+      // Vacío o 0 (NumberField da 0 al vaciarlo): vuelve al valor por defecto. El pity guardado no se toca
+      // (mientras se escribe "80" se pasa por "8"): lo que lo usa lo limita al máximo (effectivePity).
+      return withSettings({ hardPity: { ...s.settings.hardPity, [kind]: value >= 1 ? value : DEFAULT_HARD_PITY[kind] } })(s);
     });
 
   return (
@@ -35,7 +33,8 @@ export function PitySettings({ state, onChange }: Props) {
             key={kind}
             label={label}
             value={state.settings.hardPity[kind]}
-            min={1}
+            // 0 y no 1: vacío o 0 vuelven al valor por defecto (con 1 se quedaría en 1 tirada por 5★).
+            min={0}
             onChange={(v) => setHardPity(kind, v)}
           />
         ))}

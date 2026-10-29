@@ -84,7 +84,8 @@ export function fiveStarRate(kind: PullKind): number {
 
 /*
  * Cosmiluz Inextinguible que se recupera al tirar. En la tienda, 20 de Cosmiluz = 1 Pase Especial.
- * - 5★ (personaje repetido o cono): 40. Un personaje 5★ más allá de E6 da 100, pero se supone que no.
+ * - Cono 5★: 40, también el primero. Personaje 5★: nada si es nuevo, 40 si es repetido (de E1 a E6) y 100
+ *   pasado E6 (targetStarlight). El del 50/50 perdido (uno de la reserva estándar) se supone repetido: 40.
  * - 4★: 13 % por tirada, la probabilidad consolidada oficial (5,1 % base con el garantizado cada 10).
  *   Personaje 4★ (siempre en E6): 20. Cono 4★: 8.
  * - Qué 4★ sale: uno de los 3 destacados (personajes en su banner, conos en el de conos) con un
@@ -95,6 +96,18 @@ export const STARLIGHT_PER_5_STAR = 40;
 export const STARLIGHT_PER_5_STAR_E6 = 100;
 export const STARLIGHT_PER_4_STAR = { character: 20, lightCone: 8 } as const;
 export const STARLIGHT_PER_PASS = 20;
+
+/**
+ * Cosmiluz que da el 5★ buscado de una fila, según las copias suyas que hay antes (`copiesBefore`: las de la
+ * cuenta y las de las filas anteriores, de planCopies). Si no se sabe (null: sin catálogo o fuera de él), el
+ * personaje se cuenta como nuevo, que es lo seguro.
+ */
+export function targetStarlight(kind: PullKind, copiesBefore: number | null): number {
+  if (kind === 'lightCone') return STARLIGHT_PER_5_STAR;
+  if (!copiesBefore) return 0;
+  return copiesBefore <= MAX_EIDOLON ? STARLIGHT_PER_5_STAR : STARLIGHT_PER_5_STAR_E6;
+}
+
 export const FOUR_STAR_RATE = 0.13;
 /** Probabilidad base de 4★ por tirada, sin contar el garantizado cada 10 (la publicada por el juego). */
 export const FOUR_STAR_BASE_RATE = 0.051;

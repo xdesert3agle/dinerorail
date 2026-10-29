@@ -1,18 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  catalogUrl,
   FALLBACK_VERSION,
-  MANIFEST_URL,
   nextWeeklySync,
   normalizeCatalog,
   parseCatalogEntries,
   parseManifestVersion,
   parseYattaNames,
   syncDue,
-  YATTA_NAMES_URLS,
   type Catalog,
 } from '../engine/catalog';
 import type { PullKind } from '../engine/types';
+import { catalogUrl, MANIFEST_URL, YATTA_NAMES_URLS } from '../engine/urls';
 
 // Va aparte del estado de la app: es una caché de datos del juego.
 const CATALOG_KEY = 'hsr-jades:catalog:v1';
@@ -48,7 +46,7 @@ async function fetchJson(url: string): Promise<unknown> {
  * Descarga el catálogo: la versión del manifest de nanoka (o la última conocida si no responde) y, a la vez,
  * las listas de nanoka y los nombres en español de yatta. Si yatta falla, los nombres se quedan en inglés.
  */
-async function fetchCatalog(): Promise<Catalog> {
+export async function fetchCatalog(): Promise<Catalog> {
   const version = await fetchJson(MANIFEST_URL)
     .then(parseManifestVersion)
     .catch(() => FALLBACK_VERSION);
@@ -62,11 +60,6 @@ async function fetchCatalog(): Promise<Catalog> {
   };
   const [character, lightCone] = await Promise.all([entries('character'), entries('lightCone')]);
   return { syncedAt: Date.now(), version, character, lightCone };
-}
-
-/** Versión de nanoka del catálogo guardado (la usan los detalles de la galería); la conocida si aún no hay. */
-export function catalogVersion(): string {
-  return normalizeCatalog(read(CATALOG_KEY))?.version ?? FALLBACK_VERSION;
 }
 
 export interface CatalogSync {
@@ -88,8 +81,16 @@ export function useCatalog(): CatalogSync {
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Lo que decide si se puede empezar otra descarga, en refs y no en estado: así dos llamadas seguidas (el doble
+  // montaje de StrictMode, el botón y el temporizador a la vez) ven ya la primera, sin esperar a otro render.
+  const inFlight = useRef(false);
+  const attempt = useRef(lastAttempt);
+
   const sync = useCallback(async () => {
+    if (inFlight.current) return;
+    inFlight.current = true;
     const now = Date.now();
+    attempt.current = now;
     setLastAttempt(now);
     write(LAST_SYNC_KEY, now);
     setSyncing(true);
@@ -101,6 +102,7 @@ export function useCatalog(): CatalogSync {
     } catch {
       setError('No se ha podido descargar el contenido. Se puede volver a intentar en un rato.');
     } finally {
+      inFlight.current = false;
       setSyncing(false);
     }
   }, []);
@@ -109,23 +111,16 @@ export function useCatalog(): CatalogSync {
    * Sincronización automática, una vez por semana: los martes a las 10:00 (hora local). La app no tiene servidor,
    * así que se comprueba al abrirla (si el catálogo es anterior al último martes a las 10, o no hay), a esa hora
    * si está abierta, y al volver a la pestaña (con el equipo suspendido, el temporizador se retrasa). Si hace
-   * menos de un minuto de otro intento (p. ej. falló y se ha recargado), se respeta la espera.
+   * menos de un minuto de otro intento (p. ej. falló y se ha recargado), se respeta la espera. Un intento que
+   * falla no se repite solo: se vuelve a probar al volver a la pestaña, al recargar o con el botón.
    */
-  const latest = useRef({ catalog, lastAttempt, syncing });
-  latest.current = { catalog, lastAttempt, syncing };
   const syncIfDue = useCallback(() => {
-    const { catalog, lastAttempt, syncing } = latest.current;
     const now = Date.now();
-    if (!syncing && syncDue(catalog, new Date(now)) && now - lastAttempt >= SYNC_COOLDOWN_MS) {
-      void sync();
-    }
-  }, [sync]);
+    if (syncDue(catalog, new Date(now)) && now - attempt.current >= SYNC_COOLDOWN_MS) void sync();
+  }, [catalog, sync]);
 
-  // Al abrir la app. La ref evita la doble descarga del doble montaje de StrictMode en desarrollo.
-  const autoSynced = useRef(false);
+  // Al abrir la app, y al cambiar el catálogo (ya al día, no hace nada).
   useEffect(() => {
-    if (autoSynced.current) return;
-    autoSynced.current = true;
     syncIfDue();
   }, [syncIfDue]);
 
@@ -139,7 +134,7 @@ export function useCatalog(): CatalogSync {
       window.clearTimeout(timer);
       document.removeEventListener('visibilitychange', onVisible);
     };
-  }, [syncIfDue, catalog?.syncedAt]);
+  }, [syncIfDue]);
 
   // Otra pestaña abierta que sincroniza: se recoge su catálogo y su tiempo de espera.
   useEffect(() => {
@@ -147,7 +142,10 @@ export function useCatalog(): CatalogSync {
       if (e.key === CATALOG_KEY) setCatalog(normalizeCatalog(read(CATALOG_KEY)));
       if (e.key === LAST_SYNC_KEY) {
         const v = read(LAST_SYNC_KEY);
-        if (typeof v === 'number') setLastAttempt(v);
+        if (typeof v === 'number') {
+          attempt.current = v;
+          setLastAttempt(v);
+        }
       }
     };
     window.addEventListener('storage', onStorage);

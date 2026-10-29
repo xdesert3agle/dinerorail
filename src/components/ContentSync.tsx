@@ -42,7 +42,7 @@ export function ContentSync({ catalog, syncing, error, lastAttempt, sync }: Cata
       <p className="muted" role="status">
         {catalog
           ? `Sincronizado el ${fmtMoment(catalog.syncedAt)}. Se actualiza solo los ${WEEKLY_TEXT}.`
-          : 'Descarga los personajes y conos de luz 5★ para sugerirlos en el plan de tiradas.'}
+          : 'Se descargan los personajes y conos de luz 5★ para sugerirlos en el plan de tiradas.'}
       </p>
       <div className="content-sync-row">
         <button type="button" className="btn" disabled={disabled} aria-busy={syncing} onClick={() => void sync()}>

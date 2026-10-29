@@ -38,12 +38,12 @@ export function StoreSettings({ state, onChange }: Props) {
             Precios de los paquetes
           </Tip>
         </span>
-        <div className="skin-switch" role="group" aria-labelledby={labelId}>
+        <div className="segmented" role="group" aria-labelledby={labelId}>
           {STORES.map((s) => (
             <button
               key={s.label}
               type="button"
-              className="skin-option"
+              className="segment"
               aria-pressed={inYen === s.yen}
               onClick={() => onChange(withSettings({ packsInYen: s.yen }))}
             >

@@ -1,8 +1,8 @@
 import type { Result } from '../engine/calculate';
-import { clampPity } from '../engine/pulls';
+import { effectivePity } from '../engine/pulls';
 import type { AppState, Inventory, PullKind } from '../engine/types';
 import { withSettings, type ChangeState } from '../state/store';
-import { fmtInt, wholeSingles } from './format';
+import { fmtInt, floorSingles } from './format';
 import { StarlightDefinition } from './glossary';
 import { Icon } from './Icon';
 import { NumberField } from './NumberField';
@@ -34,9 +34,9 @@ export function CurrentInventory({ state, result, onChange }: Props) {
         <h2>Recursos actuales</h2>
         {/* Solo las enteras (no se tira media tirada); sin explicación, como la cifra del Resumen. */}
         <span className="card-total">
-          <Icon kind="pass" size={22} decorative />
+          <Icon kind="pass" size={28} decorative />
           <span className="sr-only">Tiradas ahora: </span>
-          {fmtInt(wholeSingles(result.currentSingles))}
+          {fmtInt(floorSingles(result.currentSingles))}
         </span>
       </header>
 
@@ -59,7 +59,7 @@ export function CurrentInventory({ state, result, onChange }: Props) {
             info={<StarlightDefinition />}
             value={inv.starlight}
             min={0}
-            onChange={(starlight) => setInv({ starlight: Math.max(0, Math.floor(starlight)) })}
+            onChange={(starlight) => setInv({ starlight })}
           />
         </div>
 
@@ -76,7 +76,7 @@ export function CurrentInventory({ state, result, onChange }: Props) {
               <span className="with-icon with-icon-tight">
                 1 Esquirla Onírica
                 <Icon kind="shard" size={18} decorative />
-                {' = 1 Jade Estelar'}
+                {'\u00a0=\u00a01 Jade Estelar'}
                 <Icon kind="jade" size={18} decorative />
               </span>
             </>
@@ -89,7 +89,7 @@ export function CurrentInventory({ state, result, onChange }: Props) {
               Convertir <ToggleTerm>Esquirlas</ToggleTerm>
             </span>
             <Icon kind="shard" size={16} decorative />
-            {' en Jades'}
+            {'\u00a0en Jades'}
             <Icon kind="jade" size={16} decorative />
           </span>
         </Toggle>
@@ -100,13 +100,13 @@ export function CurrentInventory({ state, result, onChange }: Props) {
           <div key={kind} className="pity-field">
             <NumberField
               label={label}
-              // Recortado al pity duro de ahora: si se baja en Configuración, el guardado no se toca (por si se
-              // vuelve a subir) y el cálculo ya lo recorta; aquí se ve el que cuenta.
-              value={clampPity(kind, state.pity[kind], hardPity)}
+              // El que cuenta (effectivePity): hasta el máximo de Configuración − 1, como el plan y la previsión.
+              value={effectivePity(state.pity, hardPity)[kind]}
               min={0}
               max={hardPity[kind] - 1}
+              info={`Tiradas desde el último 5★. Llega hasta ${hardPity[kind] - 1}: con el máximo de Configuración (${hardPity[kind]}), la siguiente lo da seguro. Si se llevan más, subir allí el máximo.`}
               onChange={(v) =>
-                onChange((s) => ({ ...s, pity: { ...s.pity, [kind]: clampPity(kind, v, s.settings.hardPity) } }))
+                onChange((s) => ({ ...s, pity: { ...s.pity, [kind]: v } }))
               }
             />
             <Toggle

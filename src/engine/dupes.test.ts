@@ -43,12 +43,18 @@ describe('copias del plan', () => {
     expect(ids(plan)).toEqual([null, '1005:0', null, '1308:0', '1005:1', '1308:1', null]);
   });
 
-  it('si encajan varios personajes, se queda con el nombre más largo', () => {
+  it('nombres parecidos no se confunden: cada fila es su personaje exacto', () => {
     expect(ids([pull('Silver Wolf LV.999'), pull('Silver Wolf'), pull('Silver Wolf LV.999')])).toEqual([
       '1506:0',
       '1006:0',
       '1506:1',
     ]);
+  });
+
+  it('una fila con id del catálogo sigue siendo el mismo aunque el catálogo le cambie el nombre', () => {
+    // «Silver Wolf» (1006) traducido: la fila guardada con el nombre en inglés y su id lo sigue encontrando.
+    const renamed = { ...pull('Silver Wolf'), entryId: '1006', name: 'Silver Wolf (inglés)' };
+    expect(ids([renamed])).toEqual(['1006:0']);
   });
 
   it('las copias de la cuenta van antes: con Kafka en E1, la primera del plan es su E2', () => {

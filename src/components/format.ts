@@ -1,6 +1,7 @@
 import { WEEKDAYS } from '../engine/dates';
 import { JPY_PER_EUR } from '../engine/packs';
 import { canBePending } from '../engine/sources';
+import type { ShownChance } from '../engine/odds';
 import type { Schedule } from '../engine/types';
 
 // useGrouping 'always': en es-ES los números de 4 cifras no llevan punto por defecto (6560 pero 12.960).
@@ -11,6 +12,8 @@ const dec1 = nf(1);
 const dec2 = nf(2);
 
 export const fmtInt = (n: number) => int.format(n);
+const euros = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', useGrouping: 'always' });
+export const fmtEuros = (n: number) => euros.format(n);
 const pct1 = new Intl.NumberFormat('es-ES', { style: 'percent', maximumFractionDigits: 1 });
 const pct2 = new Intl.NumberFormat('es-ES', { style: 'percent', maximumFractionDigits: 2 });
 /** Una probabilidad de las reglas («0,6 %»), con hasta 1 decimal o 2 (la de 5★ de conos es 1,87 %, no 1,9 %). */
@@ -22,7 +25,7 @@ export const YEN_RATE = `${new Intl.NumberFormat('es-ES', { maximumFractionDigit
 export const YEN_PRICES_TIP = `Precios de Japón (¥) pasados a euros a ${YEN_RATE}`;
 export const fmtSingles = (n: number, digits: 1 | 2 = 2) => (digits === 1 ? dec1 : dec2).format(n);
 /** Singles enteras, las que se pueden tirar: 81,5 son 81 (el margen salva los errores de coma flotante). */
-export const wholeSingles = (n: number) => Math.floor(n + 1e-9);
+export const floorSingles = (n: number) => Math.floor(n + 1e-9);
 
 const timeFmt = new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digit' });
 // A mano y no con Intl: según el navegador, es-ES sale con punto ("nov.") o sin él ("nov").
@@ -79,4 +82,17 @@ export function pendingLabel(s: Schedule): string | null {
     default:
       return null;
   }
+}
+
+/**
+ * Porcentaje legible, sin decimales. 100 % y 0 % solo en los casos seguros (shownChances); si no, como mucho
+ * ">99 %" y como poco "<1 %".
+ */
+export function fmtChance({ p, certain, impossible }: ShownChance): string {
+  // Espacio de no separación antes del %: no se queda solo en otra línea.
+  if (certain) return '100\u00a0%';
+  if (impossible) return '0\u00a0%';
+  if (p > 0.99) return '>99\u00a0%';
+  if (p < 0.01) return '<1\u00a0%';
+  return `${Math.round(p * 100)}\u00a0%`;
 }

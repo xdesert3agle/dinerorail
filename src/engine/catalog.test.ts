@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  entryOf,
+  findByName,
   fold,
   lastWeeklySync,
   nextWeeklySync,
@@ -9,6 +11,7 @@ import {
   parseYattaNames,
   searchCatalog,
   syncDue,
+  withCatalogIds,
 } from './catalog';
 
 describe('sincronización semanal (martes a las 10:00, hora local)', () => {
@@ -135,5 +138,44 @@ describe('catálogo de personajes y conos', () => {
     expect(ids('niv 999')).toEqual(['3']);
     expect(ids('★')).toEqual([]);
     expect(fold('  Dan Heng -  Imbibitor ')).toBe('dan heng imbibitor');
+  });
+});
+
+describe('el mismo nombre', () => {
+  it('sin contar mayúsculas ni espacios de los bordes, pero entero: no por prefijo ni con signos de menos', () => {
+    const entries = [
+      { id: '1005', name: 'Kafka' },
+      { id: '1308', name: 'Acheron' },
+    ];
+    expect(findByName(entries, '  kafka ')?.name).toBe('Kafka');
+    expect(findByName(entries, 'Kafkaa')).toBeNull();
+    expect(findByName(entries, 'Kaf')).toBeNull();
+    expect(findByName(entries, '   ')).toBeNull();
+  });
+});
+
+describe('filas del plan y catálogo', () => {
+  const catalog = {
+    syncedAt: 0,
+    character: [{ id: '1505', name: 'Castorice' }],
+    lightCone: [{ id: '23040', name: 'Hacer el mundo clamar' }],
+  };
+  const row = (name: string, entryId?: string) => ({ id: 'r', name, kind: 'lightCone' as const, winsFiftyFifty: false, ...(entryId ? { entryId } : {}) });
+
+  it('se encuentran por id aunque el nombre guardado sea otro (el beta, en inglés)', () => {
+    expect(entryOf(row('Make the World Clamor', '23040'), catalog.lightCone)?.id).toBe('23040');
+    expect(entryOf(row('Hacer el mundo clamar'), catalog.lightCone)?.id).toBe('23040');
+    expect(entryOf(row('Make the World Clamor'), catalog.lightCone)).toBeNull();
+  });
+
+  it('ganan el id y el nombre actual; si no cambia nada, la misma lista', () => {
+    const plan = [row('hacer el mundo clamar'), row('Make the World Clamor', '23040'), row('Libre')];
+    expect(withCatalogIds(plan, catalog)).toEqual([
+      row('Hacer el mundo clamar', '23040'),
+      row('Hacer el mundo clamar', '23040'),
+      row('Libre'),
+    ]);
+    const synced = withCatalogIds(plan, catalog);
+    expect(withCatalogIds(synced, catalog)).toBe(synced);
   });
 });

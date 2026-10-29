@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import type { Result } from '../engine/calculate';
-import { guaranteedNeeded, planOdds, shownChances, simulatePlan, type PlanOdds, type ShownChance } from '../engine/odds';
+import type { RowCopy } from '../engine/dupes';
+import { guaranteedNeeded, planOdds, shownChances, simulatePlan, type PlanOdds } from '../engine/odds';
+import { effectivePity } from '../engine/pulls';
 import type { AppState } from '../engine/types';
-
-/** Intentos de la simulación. */
-export const RUNS = 10000;
+import { fmtChance } from './format';
 
 export interface PlanOddsView {
   odds: PlanOdds;
@@ -15,40 +15,25 @@ export interface PlanOddsView {
 }
 
 /**
- * Porcentaje legible, sin decimales. 100 % y 0 % solo en los casos seguros (shownChances); si no, como mucho
- * ">99 %" y como poco "<1 %".
- */
-function fmtPct({ p, certain, impossible }: ShownChance): string {
-  // Espacio de no separación antes del %: no se queda solo en otra línea.
-  if (certain) return '100 %';
-  if (impossible) return '0 %';
-  if (p > 0.99) return '>99 %';
-  if (p < 0.01) return '<1 %';
-  return `${Math.round(p * 100)} %`;
-}
-
-/**
  * La simulación del plan, una sola vez para la planificación (el % de cada fila) y la previsión
- * (las estadísticas). Null si no hay nada planificado.
+ * (las estadísticas). Null si no hay nada planificado. `copies` (planCopies) decide la Cosmiluz de cada 5★ buscado.
  */
-export function usePlanOdds(state: AppState, result: Result): PlanOddsView | null {
+export function usePlanOdds(state: AppState, result: Result, copies: readonly (RowCopy | null)[]): PlanOddsView | null {
   const plan = state.plannedPulls;
-  const { pity, guaranteed } = state;
-  const { countStarlight } = state.settings;
+  const { guaranteed } = state;
+  const { countStarlight, hardPity } = state.settings;
+  const pity = effectivePity(state.pity, hardPity);
   const budget = result.wholeSingles;
   const initialStarlight = result.starlightLeftover;
 
-  // Solo importan el tipo y el orden de cada objetivo: cambiar un nombre no repite la simulación. Por eso las
-  // dependencias llevan `kinds` (el texto) y no `plan`, aunque la simulación lea `plan`.
-  const kinds = plan.map((p) => p.kind).join(',');
   const sim = useMemo(
-    () => simulatePlan(plan, pity, { countStarlight, guaranteed, initialStarlight }, RUNS),
-    [kinds, pity.character, pity.lightCone, guaranteed.character, guaranteed.lightCone, countStarlight, initialStarlight],
+    () => simulatePlan(plan, pity, { countStarlight, guaranteed, initialStarlight, copies }),
+    [plan, pity.character, pity.lightCone, guaranteed.character, guaranteed.lightCone, countStarlight, initialStarlight, copies],
   );
 
   if (plan.length === 0) return null;
   const odds = planOdds(sim, budget);
-  const sure = guaranteedNeeded(plan, pity, { countStarlight, guaranteed, initialStarlight });
-  const pct = shownChances(odds.chances, sure, budget).map(fmtPct);
+  const sure = guaranteedNeeded(plan, pity, { countStarlight, guaranteed, initialStarlight, copies });
+  const pct = shownChances(odds.chances, sure, budget).map(fmtChance);
   return { odds, sure, pct };
 }

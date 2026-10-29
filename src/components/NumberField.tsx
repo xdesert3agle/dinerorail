@@ -66,9 +66,10 @@ export function NumberField({
   const [overlay, setOverlay] = useState<CSSProperties | null>(null);
 
   useEffect(() => {
-    // Solo se sincroniza cuando el valor cambia desde fuera (p. ej. al deshacer).
-    setText((t) => (Number(t) === value && t !== '' ? t : String(value)));
-  }, [value]);
+    // Sin foco, el texto sigue al valor (al salir, o si cambia desde fuera, p. ej. al deshacer). Con foco no se
+    // toca aunque el padre recorte lo escrito: el recorte se ve al salir, sea cual sea el valor de antes.
+    if (!focused) setText((t) => (Number(t) === value && t !== '' ? t : String(value)));
+  }, [value, focused]);
 
   /*
    * Sin foco, las cifras de 4 o más llevan su punto de miles («12.480», como el resto de la app). Un input
@@ -154,14 +155,10 @@ export function NumberField({
             if (e.target.value !== '' && Number.isFinite(n)) onChange(accept(n));
           }}
           onBlur={() => {
+            // Al salir, el efecto de arriba pone el valor real (el recortado, o el que el padre haya dejado).
             setFocused(false);
-            if (text === '' || !Number.isFinite(Number(text))) {
-              const zero = accept(0);
-              setText(String(zero));
-              onChange(zero);
-            } else {
-              setText(String(value));
-            }
+            // Vacío cuenta como 0 (el padre puede cambiarlo por otro: el pity máximo vuelve al de por defecto).
+            if (text === '' || !Number.isFinite(Number(text))) onChange(accept(0));
           }}
         />
         {overlay && (

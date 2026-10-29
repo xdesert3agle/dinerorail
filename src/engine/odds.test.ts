@@ -64,6 +64,28 @@ describe('probabilidades', () => {
     expect(guaranteedNeeded([pull('c', 'lightCone')], { character: 0, lightCone: 0 })).toEqual([160 - 8]);
   });
 
+  it('el 4★ garantizado cuenta por banner: las tiradas de personaje no adelantan el de conos', () => {
+    const plan = [pull('a', 'character'), pull('c', 'lightCone')];
+    // Personaje: 90 + 90 tiradas, 17 4★ (alternando cono y personaje): 9 × 8 + 8 × 20 = 232, más 2 × 40.
+    // Conos: 80 + 80 tiradas, solo 15 4★ propios (no 16, como si siguieran las 180 de antes): 15 × 8 = 120, más
+    // 40 del primero. 312 + 160 = 472 de Cosmiluz antes del último 5★ → 23 singles: 340 − 23 = 317.
+    const repeated = [{ characterId: 'a', eidolon: 1 }, null];
+    expect(guaranteedNeeded(plan, { character: 0, lightCone: 0 }, { copies: repeated })).toEqual([167, 317]);
+  });
+
+  it('el personaje buscado nuevo no da Cosmiluz; el perdido en el 50/50 se supone repetido (40)', () => {
+    const plan = [pull('a', 'character'), pull('c', 'lightCone')];
+    const pity = { character: 0, lightCone: 0 };
+    // Como el test anterior, sin los 40 del personaje buscado: 432 → 21 singles: 340 − 21 = 319.
+    expect(guaranteedNeeded(plan, pity, { copies: [{ characterId: 'a', eidolon: 0 }, null] })).toEqual([167, 319]);
+    expect(guaranteedNeeded(plan, pity)).toEqual([167, 319]);
+    // En la simulación también: con el personaje repetido hacen falta menos singles (o las mismas), nunca más.
+    const fresh = simulatePlan(plan, pity, {}, 3000);
+    const again = simulatePlan(plan, pity, { copies: [{ characterId: 'a', eidolon: 1 }, null] }, 3000);
+    expect(again.needed[1].every((v, i) => v <= fresh.needed[1][i])).toBe(true);
+    expect(again.needed[1].some((v, i) => v < fresh.needed[1][i])).toBe(true);
+  });
+
   it('con el garantizado, el primer objetivo de ese banner se consigue antes', () => {
     const plan = [pull('a', 'character'), pull('b', 'character')];
     const pity = { character: 0, lightCone: 0 };

@@ -2,7 +2,7 @@ import { emptyPurchase, MAX_PACK_COUNT, packPrice, packShards, packsTotal, SHARD
 import { splitJades } from '../engine/rules';
 import type { AppState, ShardPackPurchase } from '../engine/types';
 import { withSettings, type ChangeState } from '../state/store';
-import { fmtInt, YEN_PRICES_TIP } from './format';
+import { fmtEuros, fmtInt, YEN_PRICES_TIP } from './format';
 import { Icon } from './Icon';
 import { NumberField } from './NumberField';
 import { Tip, TipTitle } from './Tip';
@@ -12,8 +12,6 @@ interface Props {
   state: AppState;
   onChange: ChangeState;
 }
-
-const euros = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', useGrouping: 'always' });
 
 export function ShardPacks({ state, onChange }: Props) {
   const inYen = state.settings.packsInYen;
@@ -50,7 +48,7 @@ export function ShardPacks({ state, onChange }: Props) {
             .filter(Boolean)
             .join('\n')}
         >
-          <Icon kind="pass" size={22} decorative />
+          <Icon kind="pass" size={28} decorative />
           <span className="sr-only">Tiradas de los paquetes: </span>
           {fmtInt(packSingles)}
         </Tip>
@@ -79,7 +77,7 @@ export function ShardPacks({ state, onChange }: Props) {
           // la fila no se podía comprobar multiplicando (2 compras de 980 enseñaban 1.960 y sumaban 3.050).
           const perPack = pack.base + pack.bonus;
           const shards = packShards(pack, purchase);
-          const price = euros.format(packPrice(pack, inYen));
+          const price = fmtEuros(packPrice(pack, inYen));
           return (
             <div key={pack.id} className={`pack-row ${shards > 0 ? '' : 'is-empty'}`} role="row">
               {/* «×6.480» con el icono: el título de la tarjeta ya dice que son Esquirlas. */}
@@ -164,11 +162,12 @@ export function ShardPacks({ state, onChange }: Props) {
             </Tip>
           </span>
           <strong className="num pack-price" role="cell">
-            {euros.format(total.euros)}
+            {fmtEuros(total.euros)}
           </strong>
-          <span role="cell" />
-          <span role="cell" />
-          <span role="cell" />
+          {/* Las columnas de por compra, cantidad y ×2, vacías en la fila Total (en el móvil se quitan). */}
+          <span className="pack-gap" role="cell" />
+          <span className="pack-gap" role="cell" />
+          <span className="pack-gap" role="cell" />
           <strong className="num pack-total" role="cell">
             <Icon kind="shard" size={18} decorative />
             <span className="pack-total-value">{fmtInt(total.shards)}</span>

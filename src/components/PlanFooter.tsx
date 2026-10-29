@@ -1,6 +1,7 @@
 import type { RefObject } from 'react';
 import type { Result } from '../engine/calculate';
 import { formatDate } from '../engine/dates';
+import type { PlanBalance } from '../engine/pulls';
 import { withSettings, type ChangeState } from '../state/store';
 import { fmtDayMonth, fmtInt } from './format';
 import { StarlightDefinition } from './glossary';
@@ -13,7 +14,7 @@ interface Props {
   result: Result;
   countStarlight: boolean;
   /** La cuenta del plan (planBalance). */
-  balance: { gross: number; refunded: number; left: number };
+  balance: PlanBalance;
   onChange: ChangeState;
   /** El pie: el arrastre de las filas no pasa de su borde de arriba (restrictToRows). */
   footRef: RefObject<HTMLDivElement | null>;

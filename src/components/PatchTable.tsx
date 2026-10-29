@@ -1,4 +1,4 @@
-import { toSingles } from '../engine/calculate';
+import { eventTiming, toSingles, type EventTiming } from '../engine/calculate';
 import { addDays } from '../engine/dates';
 import { defaultEventDate } from '../engine/defaults';
 import { PATCH_LENGTH_DAYS } from '../engine/rules';
@@ -20,6 +20,14 @@ interface Props {
 
 const eventsSingles = (events: PatchEvent[]) =>
   events.reduce((sum, e) => sum + toSingles({ jades: e.jades, specialPasses: e.specialPasses }), 0);
+
+/** Por qué un evento no cuenta (eventTiming); los que cuentan no llevan aviso. */
+const EVENT_STATUS: Record<EventTiming, string | undefined> = {
+  counts: undefined,
+  past: 'Fecha pasada: no se cuenta',
+  today: 'Hoy: se da por cobrado, no se cuenta',
+  late: 'Después de la fecha objetivo: no se cuenta',
+};
 
 export function PatchTable({ state, today, onChange }: Props) {
   const patches = [...state.patches].sort((a, b) => a.start.localeCompare(b.start));
@@ -104,9 +112,7 @@ export function PatchTable({ state, today, onChange }: Props) {
               </div>
             )}
             {p.events.map((ev) => {
-              const past = ev.date <= today;
-              const late = ev.date > state.targetDate;
-              const status = past ? 'Fecha pasada: no se cuenta' : late ? 'Después de la fecha objetivo: no se cuenta' : undefined;
+              const status = EVENT_STATUS[eventTiming(ev.date, today, state.targetDate)];
               // Etiquetas con el evento y la versión: la cabecera de columnas no llega a los lectores de pantalla.
               const evName = ev.name || 'evento sin nombre';
               return (

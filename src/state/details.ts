@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import {
-  DETAILS_SOURCES,
   DETAILS_VERSION,
   detailsUrl,
   normalizeDetails,
@@ -10,7 +9,6 @@ import {
 } from '../engine/details';
 import type { PullKind } from '../engine/types';
 import { isObj } from '../engine/util';
-import { catalogVersion } from './catalog';
 
 /*
  * Caché de los detalles (Eidolones y efectos de conos) para el popover de la galería de dupes. Como el
@@ -27,9 +25,12 @@ const YATTA_RETRY_MS = 24 * 60 * 60 * 1000;
 export interface DetailsRef {
   kind: PullKind;
   id: string;
+  /** Versión de nanoka del catálogo (para su respaldo en inglés); no forma parte de la clave de la caché. */
+  version: string;
 }
 
-const keyOf = ({ kind, id }: DetailsRef) => `${kind}:${id}`;
+/** Clave de cada uno en las cachés (sin la versión: no cambia lo que se guarda). */
+export const keyOf = ({ kind, id }: Pick<DetailsRef, 'kind' | 'id'>) => `${kind}:${id}`;
 
 /** Lo guardado, si es de la versión actual de los datos; los detalles de cada uno se validan al leerlos. */
 let stored: Record<string, unknown> | null = null;
@@ -79,35 +80,37 @@ const memory = new Map<string, Details>();
 const pending = new Map<string, Promise<Details>>();
 
 /** Los detalles si ya están (en memoria o guardados), sin descargar nada. */
-export function cachedDetails(ref: DetailsRef): Details | null {
+export function cachedDetails(ref: Pick<DetailsRef, 'kind' | 'id'>): Details | null {
   const key = keyOf(ref);
   const hit = memory.get(key) ?? normalizeDetails(ref.kind, readStored()[key]);
   if (hit) memory.set(key, hit);
   return hit;
 }
 
+async function fetchFrom(source: DetailsSource, ref: DetailsRef): Promise<Details> {
+  const res = await fetch(detailsUrl(source, ref.kind, ref.id, ref.version));
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return parseDetails(source, ref.kind, await res.json());
+}
+
 /**
- * Prueba las fuentes por orden (yatta.moe, luego nanoka.cc) y se queda con la primera que los tiene. Se salta
- * yatta.moe si hace menos de YATTA_RETRY_MS que no lo tenía.
+ * Primero yatta.moe (en español) y, si no lo tiene, nanoka.cc (en inglés). Se salta yatta.moe si hace menos de
+ * YATTA_RETRY_MS que no lo tenía.
  */
 async function fetchFirst(ref: DetailsRef): Promise<{ source: DetailsSource; details: Details }> {
   const missedAt = readMisses()[keyOf(ref)];
-  const skipYatta = missedAt !== undefined && Date.now() - missedAt < YATTA_RETRY_MS;
-  let error: unknown = null;
-  for (const source of DETAILS_SOURCES) {
-    if (source === 'yatta' && skipYatta) continue;
+  const tryYatta = missedAt === undefined || Date.now() - missedAt >= YATTA_RETRY_MS;
+  if (tryYatta) {
     try {
-      const res = await fetch(detailsUrl(source, ref.kind, ref.id, catalogVersion()));
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const details = parseDetails(source, ref.kind, await res.json());
-      // Solo cuenta como que yatta.moe no lo tiene si nanoka.cc sí responde: si fallan las dos, será la red.
-      if (source !== 'yatta' && !skipYatta) setMiss(keyOf(ref), Date.now());
-      return { source, details };
-    } catch (e) {
-      error = e;
+      return { source: 'yatta', details: await fetchFrom('yatta', ref) };
+    } catch {
+      // Se prueba con nanoka.cc.
     }
   }
-  throw error;
+  const details = await fetchFrom('nanoka', ref);
+  // Solo cuenta como que yatta.moe no lo tiene si nanoka.cc sí responde: si fallan las dos, será la red.
+  if (tryYatta) setMiss(keyOf(ref), Date.now());
+  return { source: 'nanoka', details };
 }
 
 /** Los detalles de un personaje o cono, descargándolos si hace falta (una sola descarga a la vez por cada uno). */
@@ -145,20 +148,21 @@ export function prefetchDetails(refs: DetailsRef[]) {
 export function useDetails(ref: DetailsRef | null): { details: Details | null; failed: boolean } {
   const kind = ref?.kind;
   const id = ref?.id;
+  const version = ref?.version;
   const [state, setState] = useState<{ key: string; details: Details | null; failed: boolean } | null>(null);
-  const key = kind && id ? `${kind}:${id}` : null;
+  const key = kind && id ? keyOf({ kind, id }) : null;
 
   useEffect(() => {
-    if (!kind || !id) return;
+    if (!kind || !id || !version) return;
     let alive = true;
-    loadDetails({ kind, id }).then(
-      (details) => alive && setState({ key: `${kind}:${id}`, details, failed: false }),
-      () => alive && setState({ key: `${kind}:${id}`, details: null, failed: true }),
+    loadDetails({ kind, id, version }).then(
+      (details) => alive && setState({ key: keyOf({ kind, id }), details, failed: false }),
+      () => alive && setState({ key: keyOf({ kind, id }), details: null, failed: true }),
     );
     return () => {
       alive = false;
     };
-  }, [kind, id]);
+  }, [kind, id, version]);
 
   if (!kind || !id) return { details: null, failed: false };
   // Lo que ya está en caché se muestra en el primer render, sin esperar al efecto.

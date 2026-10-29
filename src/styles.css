@@ -4,13 +4,15 @@
  * Formularios · Burbujas de explicación (Tip) · Botones · Fechas destacadas · Fuentes de ingresos · Interruptores ·
  * Tablas y desglose · Plan de tiradas · Sincronizar contenido · Cuenta · Versiones y eventos · Previsión de suerte ·
  * Paquetes de Esquirlas · Tienda · Toast · Tema Sparxie.
- * Las reglas de un tema para un componente van junto a él, bajo :where(:root[data-skin='…']) para pesar lo
- * mismo que las de base; las de Sparxie que lo cambian todo, en su sección, al final.
+ * Las reglas de un tema van bajo :where(:root[data-skin='…']), para pesar lo mismo que las de base y ganar
+ * solo por ir después. Las que tocan un solo componente, junto a él; la capa de Sparxie para las piezas comunes
+ * (página, pestañas, tarjetas, campos, botones, interruptores, tablas, aviso), en su sección, al final.
  */
 /* == Tokens == */
 /*
- * Tokens. La base es Aha (Exultación), el tema por defecto: negro rojizo de teatro, rojo carmesí como acento y
- * blanco hueso para las máscaras, con el rojo solo para lo que pide atención, los datos y la decoración.
+ * Tokens. Cada color lleva su valor claro y oscuro: light-dark(claro, oscuro). La base es Aha (Exultación), el
+ * tema por defecto: negro rojizo de teatro, rojo carmesí como acento y blanco hueso para las máscaras. El acento marca lo que pide atención, lo seleccionado y el foco, nunca datos
+ * neutros ni controles en reposo; la decoración (naipes, foco del Resumen) va en su propio rojo, --deco.
  * Sparxie, más abajo, redefine encima su paleta.
  */
 :root {
@@ -21,34 +23,40 @@
   /* Letra de índice de naipe: títulos de tarjeta y cifras de resultado de Aha. Tiene un solo peso (400). */
   --font-card: 'Card Characters', system-ui, sans-serif;
   --input-nudge: 0px;
-  --page: #f0eae9;
-  --surface: #ffffff;
-  --surface-2: #f6e8e5;
-  --text: #1e0c0d;
-  --text-secondary: #5f4442;
+  --page: light-dark(#f0eae9, #0f0708);
+  --surface: light-dark(#ffffff, #29151a);
+  --surface-2: light-dark(#f6e8e5, #311b1e);
+  --text: light-dark(#1e0c0d, #ffffff);
+  --text-secondary: light-dark(#5f4442, #d2b9b6);
   /* ≥4,5:1 sobre --surface, --page y --surface-2. */
-  --text-muted: #7a6360;
-  --grid: #eedcd8;
-  --axis: #d9c0bb;
-  --border: rgba(70, 10, 10, 0.1);
-  --series-1: #7a6360; /* Barras de datos en el gris del texto apagado: el rojo queda para los problemas. */
+  --text-muted: light-dark(#7a6360, #9c8481);
+  --grid: light-dark(#eedcd8, #2f1a1c);
+  --axis: light-dark(#d9c0bb, #4a2a2d);
+  --border: light-dark(rgba(70, 10, 10, 0.1), rgba(255, 200, 190, 0.09));
+  --series-1: light-dark(#7a6360, #9c8481); /* Barras de datos en el gris del texto apagado: el rojo queda para los problemas. */
   /* Interruptor encendido: verde musgo apagado (dice «encendido» sin competir con el rojo de los avisos). */
-  --switch-on: #4f8a5f;
+  --switch-on: light-dark(#4f8a5f, #56966a);
+  /* Botón del interruptor: apagado, del gris del contorno de la pista; encendido, blanco. */
+  --switch-knob-off: var(--text-muted);
   --switch-knob-on: #ffffff;
-  --accent: #c4262d;
-  --accent-text: #a51d24;
-  --accent-soft: #fbd9d6;
-  --deco: #d0333a;
+  /* Anillo de foco de los controles. */
+  --focus-ring: 2px solid var(--accent);
+  --accent: light-dark(#c4262d, #e23b3f);
+  --accent-text: light-dark(#a51d24, #ff7a72);
+  --accent-soft: light-dark(#fbd9d6, #4d1416);
+  --deco: light-dark(#d0333a, #e5393f);
   --deco-opacity: 0.3;
-  --bevel-lo: rgba(120, 40, 40, 0.12);
+  --bevel-lo: light-dark(rgba(120, 40, 40, 0.12), rgba(0, 0, 0, 0.45));
   --page-pattern-opacity: 0.17;
-  --card-title: #c8102e;
-  --danger: #d03b3b;
-  --warning-bg: #fff4dc;
-  --warning-text: #7a5200;
+  --card-title: light-dark(#c8102e, var(--text));
+  /* Intensidad del foco de teatro del Resumen (Masks.tsx). */
+  --spotlight-opacity: 0.12;
+  --danger: light-dark(#d03b3b, #f0605a);
+  --warning-bg: light-dark(#fff4dc, #3a2c0b);
+  --warning-text: light-dark(#7a5200, #fab219);
   /* Texto sobre el acento (día elegido del calendario) y su fondo. */
   --on-accent: #ffffff;
-  --selected-bg: var(--accent);
+  --selected-bg: light-dark(var(--accent), #c4262d);
   --radius: 12px;
   /* Alto de un botón (.btn: letra de 0,875rem) y de un campo compacto, para igualar otras piezas con ellos. */
   --control-h: calc(0.875rem * 1.45 + 14px);
@@ -57,8 +65,12 @@
   --field-compact-pad: calc(6px - var(--input-nudge)) 8px calc(6px + var(--input-nudge));
   /* Relleno a los lados de .btn: los botones que alinean su texto con una columna lo compensan (más su borde de 1px). */
   --btn-pad-x: 12px;
-  /* Ancho del botón de quitar (✕): el pie del plan deja su hueco para alinearse con los costes. */
+  /* Ancho del botón de quitar (✕): el pie del plan y la columna de los eventos dejan su hueco. */
   --remove-w: 24px;
+  /* Ancho de un campo de fecha (dd/mm/aaaa y su icono): la fecha objetivo y el inicio de cada versión. */
+  --date-field-w: 9.5rem;
+  /* Lo que la pastilla del Eidolón (.eidolon-badge) sale del retrato, en Cuenta y en el plan. */
+  --badge-out: 6px;
   /*
    * Sombra de lo que flota sobre la página: desplegables, calendario y popover de la galería. En oscuro, negra:
    * con el color del texto (blanco) era un halo claro. light-dark() sigue al color-scheme de cada modo.
@@ -73,6 +85,9 @@
    */
   --border-pop: color-mix(in srgb, var(--accent) 90%, var(--surface));
   --border-pop-w: 2px;
+  /* Bordes teñidos de acento: el marco del Resumen y de sus recuadros de cifras, y el hover de los atajos y las fechas destacadas. */
+  --accent-frame: color-mix(in srgb, var(--accent) 28%, var(--border));
+  --accent-hover: color-mix(in srgb, var(--accent) 55%, var(--border));
   /*
    * Lo que tarda en aparecer y en irse lo que reacciona al ratón: las burbujas (.tip y el popover de la galería)
    * y el tinte de los botones fantasma. Al irse, algo más rápido: lo que se deja ya no interesa.
@@ -94,64 +109,36 @@
    * (Aha): Courier Prime (Sparxie) es monoespaciada y en Segoe UI ya son de ancho fijo.
    */
   --num-variant: tabular-nums;
+  /*
+   * Colores de rareza del juego (Rarity.tsx): el morado de las cartas 4★ y el dorado de las 5★. Son del juego,
+   * como sus iconos, no avisos, así que valen para todos los temas. Pintan la cifra y la estrella juntas (con la
+   * cifra en tinta, el salto de colores junto a la estrella era fuerte), así que como texto: ≥ 4,5:1 con la
+   * tarjeta. En claro, un punto más oscuros que los del juego (morado 5,5:1, dorado 4,71:1); en oscuro, 7,23:1 y
+   * 9,13:1. Morado y dorado se separan también por luminosidad, no solo por tono.
+   */
+  --rarity-4: light-dark(#7a4fcc, #b39af0);
+  --rarity-5: light-dark(#9a6a1f, #e8b45a);
 }
 
+/*
+ * Modo oscuro: lo pone el sistema (sin data-theme) o el usuario (data-theme='dark'), así que va dos veces. Los
+ * colores ya llevan sus dos valores en light-dark(claro, oscuro), que sigue a color-scheme; aquí solo va eso y
+ * lo que no es color (opacidades, la trama, la sombra), para los dos temas.
+ */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     color-scheme: dark;
-    --page: #0f0708;
-    --surface: #29151a;
-    --surface-2: #311b1e;
-    --text: #ffffff;
-    --text-secondary: #d2b9b6;
-    --text-muted: #9c8481;
-    --grid: #2f1a1c;
-    --axis: #4a2a2d;
-    --border: rgba(255, 200, 190, 0.09);
-    --series-1: #9c8481;
-    --switch-on: #56966a;
-    --switch-knob-on: #ffffff;
-    --accent: #e23b3f;
-    --accent-text: #ff7a72;
-    --accent-soft: #4d1416;
-    --deco: #e5393f;
     --deco-opacity: 0.45;
-    --bevel-lo: rgba(0, 0, 0, 0.45);
     --page-pattern-opacity: 0.21;
-    --card-title: var(--text);
-    --danger: #f0605a;
-    --warning-bg: #3a2c0b;
-    --warning-text: #fab219;
-    --selected-bg: #c4262d;
+    --spotlight-opacity: 0.35;
   }
 }
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --page: #0f0708;
-  --surface: #29151a;
-  --surface-2: #311b1e;
-  --text: #ffffff;
-  --text-secondary: #d2b9b6;
-  --text-muted: #9c8481;
-  --grid: #2f1a1c;
-  --axis: #4a2a2d;
-  --border: rgba(255, 200, 190, 0.09);
-  --series-1: #9c8481;
-  --switch-on: #56966a;
-  --switch-knob-on: #ffffff;
-  --accent: #e23b3f;
-  --accent-text: #ff7a72;
-  --accent-soft: #4d1416;
-  --deco: #e5393f;
   --deco-opacity: 0.45;
-  --bevel-lo: rgba(0, 0, 0, 0.45);
   --page-pattern-opacity: 0.21;
-  --card-title: var(--text);
-  --danger: #f0605a;
-  --warning-bg: #3a2c0b;
-  --warning-text: #fab219;
-  --selected-bg: #c4262d;
+  --spotlight-opacity: 0.35;
 }
 
 /*
@@ -161,31 +148,36 @@
  * El diseño solo trae el esquema claro; el oscuro ("Night Swim") es una piscina de noche con las mismas reglas.
  */
 :root[data-skin='sparxie'] {
-  --page: #f6d5d5;
-  --surface: #ffffff;
-  --surface-2: #f9f0e9;
-  --text: #000000;
-  --text-secondary: #5f5550;
-  --text-muted: #766b66;
-  --grid: color-mix(in srgb, var(--text) 18%, transparent);
-  --axis: #9b9b9b;
-  --border: #000000;
+  --page: light-dark(#f6d5d5, #1c2742);
+  --surface: light-dark(#ffffff, #211d28);
+  --surface-2: light-dark(#f9f0e9, #2e2a36);
+  --text: light-dark(#000000, #f9f0e9);
+  --text-secondary: light-dark(#5f5550, #cbbfb7);
+  --text-muted: light-dark(#766b66, #9e928c);
+  --grid: light-dark(color-mix(in srgb, var(--text) 18%, transparent), color-mix(in srgb, var(--text) 16%, transparent));
+  --axis: light-dark(#9b9b9b, #6d6478);
+  --border: light-dark(#000000, #5a5266);
   --series-1: #afe5dd;
   --accent: #afe5dd;
-  --accent-text: #24675f;
-  --accent-soft: #afe5dd;
+  --accent-text: light-dark(#24675f, #afe5dd);
+  --accent-soft: light-dark(#afe5dd, #2f4a47);
   --deco: #000000;
   --deco-opacity: 0;
-  --danger: #c42020;
-  --warning-bg: #faf5c6;
-  --warning-text: #6b4e00;
-  --tertiary: #faf5c6;
-  --button: #f6d6d5;
-  --button-shadow: #7b6b6b;
-  --bevel-hi: #ffffff;
-  --bevel-dark: #9b9b9b;
-  --chip: #e3dcd6;
-  --knob: #ffffff;
+  --danger: light-dark(#c42020, #ff7a72);
+  --warning-bg: light-dark(#faf5c6, #36321a);
+  --warning-text: light-dark(#6b4e00, #f3d77a);
+  --tertiary: light-dark(#faf5c6, #36321f);
+  --button: light-dark(#f6d6d5, #4d3640);
+  --button-shadow: light-dark(#7b6b6b, #24171c);
+  --bevel-hi: light-dark(#ffffff, #4a4552);
+  --bevel-dark: light-dark(#9b9b9b, #0d0b10);
+  --chip: light-dark(#e3dcd6, #3a3540);
+  /* Interruptor: botón crema apagado y encendido; encendido, la pista turquesa (no es color de alarma). */
+  --switch-knob-off: light-dark(#ffffff, #f9f0e9);
+  --switch-knob-on: light-dark(#ffffff, #f9f0e9);
+  --switch-on: var(--accent);
+  /* Foco punteado, como en los sistemas de la época: el turquesa apenas se ve sobre blanco. */
+  --focus-ring: 2px dotted var(--text);
   --on-accent: #000000;
   --selected-bg: var(--accent);
   --ink: #000000;
@@ -199,59 +191,19 @@
   --font-mono: 'VT323', ui-monospace, monospace;
   /* Las burbujas, con el borde turquesa de su diseño (su acento no es un color de alarma, como sus interruptores). */
   --border-pop: var(--accent);
+  /* Títulos de tarjeta y de burbuja en tinta. */
+  --card-title: var(--text);
   font-family: var(--font-type);
 }
 
 @media (prefers-color-scheme: dark) {
   :root[data-skin='sparxie']:not([data-theme='light']) {
-    --page: #1c2742;
-    --surface: #211d28;
-    --surface-2: #2e2a36;
-    --text: #f9f0e9;
-    --text-secondary: #cbbfb7;
-    --text-muted: #9e928c;
-    --grid: color-mix(in srgb, var(--text) 16%, transparent);
-    --axis: #6d6478;
-    --border: #5a5266;
-    --accent-text: #afe5dd;
-    --accent-soft: #2f4a47;
-    --danger: #ff7a72;
-    --warning-bg: #36321a;
-    --warning-text: #f3d77a;
-    --tertiary: #36321f;
-    --button: #4d3640;
-    --button-shadow: #24171c;
-    --bevel-hi: #4a4552;
-    --bevel-dark: #0d0b10;
-    --chip: #3a3540;
-    --knob: #f9f0e9;
     --dither: 5%;
     --shadow-win: 0 50px 80px -50px rgba(0, 0, 0, 0.6);
   }
 }
 
 :root[data-skin='sparxie'][data-theme='dark'] {
-  --page: #1c2742;
-  --surface: #211d28;
-  --surface-2: #2e2a36;
-  --text: #f9f0e9;
-  --text-secondary: #cbbfb7;
-  --text-muted: #9e928c;
-  --grid: color-mix(in srgb, var(--text) 16%, transparent);
-  --axis: #6d6478;
-  --border: #5a5266;
-  --accent-text: #afe5dd;
-  --accent-soft: #2f4a47;
-  --danger: #ff7a72;
-  --warning-bg: #36321a;
-  --warning-text: #f3d77a;
-  --tertiary: #36321f;
-  --button: #4d3640;
-  --button-shadow: #24171c;
-  --bevel-hi: #4a4552;
-  --bevel-dark: #0d0b10;
-  --chip: #3a3540;
-  --knob: #f9f0e9;
   --dither: 5%;
   --shadow-win: 0 50px 80px -50px rgba(0, 0, 0, 0.6);
 }
@@ -305,8 +257,6 @@ body {
   pointer-events: none;
   background: var(--deco);
   opacity: var(--page-pattern-opacity);
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='144' height='144' viewBox='0 0 144 144'%3E%3Cg stroke='%23000'%3E%3Cg transform='translate(36 38) rotate(-12)'%3E%3Cpath d='M-12-21H12A3 3 0 0 1 15-18V18A3 3 0 0 1 12 21H-12A3 3 0 0 1-15 18V-18A3 3 0 0 1-12-21Z' fill='%23000' fill-opacity='.18'/%3E%3Cpath d='M0 9C-4.5 6 -7 3.5 -7 1C-7 -1.5 -5 -3 -3.25 -3C-1.75 -3 -0.5 -2 0 -0.75C0.5 -2 1.75 -3 3.25 -3C5 -3 7 -1.5 7 1C7 3.5 4.5 6 0 9ZM-3.5 -4.5L-4 -8.5L-1.75 -6.5L0 -9.5L1.75 -6.5L4 -8.5L3.5 -4.5Z' fill='%23000' fill-opacity='.45'/%3E%3Cpath d='M-9 -17A2.3 3 0 1 0 -9 -11A2.3 3 0 1 0 -9 -17ZM-8.2 -12.4L-6.2 -10' fill='none' stroke-width='.9'/%3E%3C/g%3E%3Cpath d='M108 50C99 44 94 39 94 34C94 29 98 26 101.5 26C104.5 26 107 28 108 30.5C109 28 111.5 26 114.5 26C118 26 122 29 122 34C122 39 117 44 108 50Z' fill='none'/%3E%3Cpath d='M36 122C27 116 22 111 22 106C22 101 26 98 29.5 98C32.5 98 35 100 36 102.5C37 100 39.5 98 42.5 98C46 98 50 101 50 106C50 111 45 116 36 122ZM29 95L28 87L32.5 91L36 85L39.5 91L44 87L43 95Z' fill='%23000' fill-opacity='.3'/%3E%3Cg transform='translate(108 106) rotate(10)'%3E%3Cpath d='M-12-21H12A3 3 0 0 1 15-18V18A3 3 0 0 1 12 21H-12A3 3 0 0 1-15 18V-18A3 3 0 0 1-12-21Z' fill='%23000' fill-opacity='.18'/%3E%3Cpath d='M0 8.5C-5.85 4.6 -9.1 1.35 -9.1 -1.9C-9.1 -5.15 -6.5 -7.1 -4.23 -7.1C-2.27 -7.1 -0.65 -5.8 0 -4.17C0.65 -5.8 2.28 -7.1 4.23 -7.1C6.5 -7.1 9.1 -5.15 9.1 -1.9C9.1 1.35 5.85 4.6 0 8.5Z' fill='%23000' fill-opacity='.45'/%3E%3Cpath d='M-9.5 -11.8C-11.48 -13.12 -12.58 -14.22 -12.58 -15.32C-12.58 -16.42 -11.7 -17.08 -10.93 -17.08C-10.27 -17.08 -9.72 -16.64 -9.5 -16.09C-9.28 -16.64 -8.73 -17.08 -8.07 -17.08C-7.3 -17.08 -6.42 -16.42 -6.42 -15.32C-6.42 -14.22 -7.52 -13.12 -9.5 -11.8Z' fill='%23000'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")
-    0 0 / 144px 144px repeat;
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='144' height='144' viewBox='0 0 144 144'%3E%3Cg stroke='%23000'%3E%3Cg transform='translate(36 38) rotate(-12)'%3E%3Cpath d='M-12-21H12A3 3 0 0 1 15-18V18A3 3 0 0 1 12 21H-12A3 3 0 0 1-15 18V-18A3 3 0 0 1-12-21Z' fill='%23000' fill-opacity='.18'/%3E%3Cpath d='M0 9C-4.5 6 -7 3.5 -7 1C-7 -1.5 -5 -3 -3.25 -3C-1.75 -3 -0.5 -2 0 -0.75C0.5 -2 1.75 -3 3.25 -3C5 -3 7 -1.5 7 1C7 3.5 4.5 6 0 9ZM-3.5 -4.5L-4 -8.5L-1.75 -6.5L0 -9.5L1.75 -6.5L4 -8.5L3.5 -4.5Z' fill='%23000' fill-opacity='.45'/%3E%3Cpath d='M-9 -17A2.3 3 0 1 0 -9 -11A2.3 3 0 1 0 -9 -17ZM-8.2 -12.4L-6.2 -10' fill='none' stroke-width='.9'/%3E%3C/g%3E%3Cpath d='M108 50C99 44 94 39 94 34C94 29 98 26 101.5 26C104.5 26 107 28 108 30.5C109 28 111.5 26 114.5 26C118 26 122 29 122 34C122 39 117 44 108 50Z' fill='none'/%3E%3Cpath d='M36 122C27 116 22 111 22 106C22 101 26 98 29.5 98C32.5 98 35 100 36 102.5C37 100 39.5 98 42.5 98C46 98 50 101 50 106C50 111 45 116 36 122ZM29 95L28 87L32.5 91L36 85L39.5 91L44 87L43 95Z' fill='%23000' fill-opacity='.3'/%3E%3Cg transform='translate(108 106) rotate(10)'%3E%3Cpath d='M-12-21H12A3 3 0 0 1 15-18V18A3 3 0 0 1 12 21H-12A3 3 0 0 1-15 18V-18A3 3 0 0 1-12-21Z' fill='%23000' fill-opacity='.18'/%3E%3Cpath d='M0 8.5C-5.85 4.6 -9.1 1.35 -9.1 -1.9C-9.1 -5.15 -6.5 -7.1 -4.23 -7.1C-2.27 -7.1 -0.65 -5.8 0 -4.17C0.65 -5.8 2.28 -7.1 4.23 -7.1C6.5 -7.1 9.1 -5.15 9.1 -1.9C9.1 1.35 5.85 4.6 0 8.5Z' fill='%23000' fill-opacity='.45'/%3E%3Cpath d='M-9.5 -11.8C-11.48 -13.12 -12.58 -14.22 -12.58 -15.32C-12.58 -16.42 -11.7 -17.08 -10.93 -17.08C-10.27 -17.08 -9.72 -16.64 -9.5 -16.09C-9.28 -16.64 -8.73 -17.08 -8.07 -17.08C-7.3 -17.08 -6.42 -16.42 -6.42 -15.32C-6.42 -14.22 -7.52 -13.12 -9.5 -11.8Z' fill='%23000'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")
     0 0 / 144px 144px repeat;
 }
@@ -332,7 +282,7 @@ h3 {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-muted);
-  margin: 16px 0 6px;
+  margin: 0 0 6px;
 }
 p {
   margin: 0;
@@ -353,27 +303,7 @@ p {
 .invisible {
   visibility: hidden;
 }
-/*
- * Colores de rareza del juego (Rarity.tsx): el morado de las cartas 4★ y el dorado de las 5★. Son del juego, como
- * sus iconos, no avisos, así que valen para todos los temas. Pintan la cifra y la estrella juntas (con la cifra en
- * tinta, el salto de colores junto a la estrella era fuerte), así que como texto: ≥ 4,5:1 con la tarjeta. En claro,
- * un punto más oscuros que los del juego (morado 5,5:1, dorado 4,71:1); en oscuro, 7,23:1 y 9,13:1. Morado y
- * dorado se separan también por luminosidad, no solo por tono.
- */
-:root {
-  --rarity-4: #7a4fcc;
-  --rarity-5: #9a6a1f;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --rarity-4: #b39af0;
-    --rarity-5: #e8b45a;
-  }
-}
-:root[data-theme='dark'] {
-  --rarity-4: #b39af0;
-  --rarity-5: #e8b45a;
-}
+/* Colores de rareza: --rarity-4 y --rarity-5, en los tokens. */
 .rarity {
   white-space: nowrap;
 }
@@ -397,6 +327,17 @@ p {
   border-radius: 8px;
   padding: 8px 12px;
   font-size: 0.875rem;
+}
+/*
+ * Lo que flota sobre la página con borde de burbuja: el popover de la galería, las burbujas (.tip) y el aviso
+ * (.toast). Mismo fondo, borde (--border-pop), esquinas y sombra; cada uno pone su tamaño y su letra.
+ */
+:is(.dupe-pop, .tip, .toast) {
+  background: var(--surface);
+  color: var(--text);
+  border: var(--border-pop-w) solid var(--border-pop);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-pop);
 }
 /* Textos alternativos apilados en el mismo hueco: ocupa lo que el más ancho y no salta al cambiar. */
 .swap {
@@ -451,60 +392,6 @@ p {
   gap: 2px 10px;
   vertical-align: middle;
 }
-.input-wrap {
-  position: relative;
-  display: block;
-}
-.input-wrap.has-icon .icon {
-  position: absolute;
-  left: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-}
-.input-wrap.has-icon input {
-  padding-left: 40px;
-}
-.field-compact .input-wrap.has-icon .icon {
-  left: 6px;
-}
-/*
- * Cifra con punto de miles sobre un campo numérico sin foco (NumberField): la capa toma del input su caja,
- * bordes (transparentes) y rellenos, y el texto del input se vuelve transparente debajo.
- */
-.input-wrap input.is-masked {
-  color: transparent;
-}
-.num-mask {
-  position: absolute;
-  display: flex;
-  box-sizing: border-box;
-  border: 0 solid transparent;
-  overflow: hidden;
-  white-space: nowrap;
-  color: var(--text);
-  font-variant-numeric: var(--num-variant);
-  pointer-events: none;
-}
-.field-compact .input-wrap.has-icon input {
-  padding-left: 32px;
-}
-/*
- * Campo de fecha (air-datepicker): solo lectura, se abre el calendario al pulsarlo; icono a la derecha.
- * Con [type] para ganar a input[type='text'], que si no pisa el relleno del icono.
- */
-.date-field input[type='text'] {
-  padding-right: 32px;
-  cursor: pointer;
-}
-.date-field-icon {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-muted);
-  pointer-events: none;
-}
 /*
  * Iconos de interfaz monocromos (personaje, cono de luz): el PNG blanco se usa como máscara sobre el color
  * del texto, así siguen al tema y al modo claro u oscuro.
@@ -523,28 +410,18 @@ p {
 }
 /* El personaje es una silueta rellena: se dibuja algo más pequeño (1,25em) para no pesar más que el cono. */
 .glyph-character {
-  -webkit-mask: url('./assets/icons/character.png') center / 83.333% no-repeat;
   mask: url('./assets/icons/character.png') center / 83.333% no-repeat;
 }
 /* El cono es de trazo fino: ocupa toda la caja. */
 .glyph-light-cone {
-  -webkit-mask: url('./assets/icons/light-cone.png') center / contain no-repeat;
   mask: url('./assets/icons/light-cone.png') center / contain no-repeat;
-}
-/* Campos compactos (filas de eventos, inicio de actualización): icono a 8px del borde y 4px de aire. */
-.field-compact .date-field input[type='text'],
-.event-row .date-field input[type='text'] {
-  padding-right: 28px;
-}
-.field-compact .date-field-icon,
-.event-row .date-field-icon {
-  right: 8px;
 }
 
 /* == Calendario (air-datepicker) == */
 /* Calendario de air-datepicker, con los colores del tema. Se monta en <body>, fuera de las tarjetas. */
 .air-datepicker {
-  --adp-font-family: inherit;
+  /* La letra de la página (la librería trae la suya). */
+  font-family: inherit;
   --adp-font-size: 0.875rem;
   --adp-width: 264px;
   --adp-padding: 6px;
@@ -611,13 +488,20 @@ p {
 .air-datepicker--pointer::after {
   background: var(--adp-background-color);
 }
+
+/* == Maquetación: cabecera, pestañas y columnas == */
+/* El título de la app; en Aha, en la letra de naipe de los títulos de tarjeta (solo tiene mayúsculas). */
 .title {
   display: flex;
   align-items: center;
   gap: 10px;
 }
-
-/* == Maquetación: cabecera, pestañas y columnas == */
+:where(:root[data-skin='aha']) .title {
+  font-family: var(--font-card);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
 .app {
   max-width: 1280px;
   margin: 0 auto;
@@ -650,8 +534,11 @@ p {
   align-items: center;
   gap: 8px;
 }
-/* Selector de tema */
-.skin-switch {
+/*
+ * Control segmentado (.segmented con sus .segment): el selector de tema y el de claro u oscuro de la cabecera,
+ * la tienda de Configuración y el filtro de vías de Cuenta.
+ */
+.segmented {
   display: inline-flex;
   padding: 3px;
   gap: 2px;
@@ -660,7 +547,7 @@ p {
   border-radius: 999px;
 }
 /* Misma letra que los botones de al lado y el mismo alto que ellos (3 + 3 de relleno y 4 + 2 del contenedor). */
-.skin-option {
+.segment {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -673,10 +560,10 @@ p {
   padding: 3px 10px;
   cursor: pointer;
 }
-.skin-option:hover {
+.segment:hover {
   color: var(--text);
 }
-.skin-option[aria-pressed='true'] {
+.segment[aria-pressed='true'] {
   color: var(--text);
   background: var(--surface);
   box-shadow: 0 0 0 1px var(--border);
@@ -739,7 +626,7 @@ p {
   border-bottom-color: var(--accent);
 }
 /* En móviles estrechos, solo el texto: con los iconos, la última pestaña quedaba cortada en el borde. */
-@media (max-width: 430px) {
+@media (width <= 430px) {
   .tab svg {
     display: none;
   }
@@ -779,7 +666,7 @@ p {
  * que también van por versiones; los paquetes y el desglose.
  * Las columnas desaparecen (display: contents) y cada tarjeta lleva su orden; el hueco sigue siendo el de .layout.
  */
-@media (max-width: 1179px) {
+@media (width < 1180px) {
   .col-inputs,
   .col-results {
     display: contents;
@@ -810,7 +697,7 @@ p {
   }
 }
 /* Configuración: la columna estrecha (sincronizar contenido) pasa a la derecha desde 1040px. */
-@media (min-width: 1040px) {
+@media (width >= 1040px) {
   .layout-settings {
     grid-template-columns: minmax(0, 820px) 18rem;
   }
@@ -823,7 +710,7 @@ p {
  * Dos columnas desde 1180px (antes 1040): por debajo, la de resultados dejaba el nombre de cada tirada en
  * unos 100px. A partes iguales: el plan necesita tanto sitio como las entradas.
  */
-@media (min-width: 1180px) {
+@media (width >= 1180px) {
   .layout {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: start;
@@ -841,8 +728,16 @@ p {
  */
 .dupes {
   display: none;
+  /* Colores de la galería (contorno, reflejo y sombras de las cartas), solo para sus piezas. */
+  --dupe-outline: #fff;
+  --dupe-glare: rgb(255 255 255 / 0.3);
+  --dupe-glare-soft: rgb(255 255 255 / 0.09);
+  --dupe-glare-band: rgb(255 255 255 / 0.22);
+  /* Negras en los dos modos (una sombra no es un halo); en oscuro, más densas para que se noten. */
+  --dupe-shadow-contact: light-dark(rgb(0 0 0 / 0.4), rgb(0 0 0 / 0.75));
+  --dupe-shadow-cast: light-dark(rgb(0 0 0 / 0.22), rgb(0 0 0 / 0.6));
 }
-@media (min-width: 1480px) {
+@media (width >= 1480px) {
   .dupes {
     --dupe-gutter: calc((100vw - 1280px) / 2);
     --dupe-gap: 8px;
@@ -967,7 +862,7 @@ p {
     transition-duration: 0.15s;
   }
 }
-@media (min-width: 2000px) {
+@media (width >= 2000px) {
   .dupes {
     --eidolon-cols: 2;
     --eidolon-rows: 3;
@@ -986,15 +881,6 @@ p {
   syntax: '<number>';
   inherits: true;
   initial-value: 0;
-}
-:root {
-  --dupe-outline: #fff;
-  --dupe-glare: rgb(255 255 255 / 0.3);
-  --dupe-glare-soft: rgb(255 255 255 / 0.09);
-  --dupe-glare-band: rgb(255 255 255 / 0.22);
-  /* Negras en los dos modos (una sombra no es un halo); en oscuro, más densas para que se noten. */
-  --dupe-shadow-contact: light-dark(rgb(0 0 0 / 0.4), rgb(0 0 0 / 0.75));
-  --dupe-shadow-cast: light-dark(rgb(0 0 0 / 0.22), rgb(0 0 0 / 0.6));
 }
 /*
  * Sombras de algo que se despega de la página, con luz desde arriba. La altura (--h, en px) sale de la
@@ -1026,7 +912,6 @@ p {
   position: absolute;
   inset: 0;
   background: var(--shadow-color);
-  -webkit-mask: var(--dupe-src) center / contain no-repeat;
   mask: var(--dupe-src) center / contain no-repeat;
 }
 .dupe-shadow-contact {
@@ -1099,12 +984,6 @@ p {
   /* Crece con el texto, para que los párrafos no se alarguen hacia abajo. */
   max-width: 23.5rem;
   padding: 12px 14px;
-  background: var(--surface);
-  color: var(--text);
-  /* El borde de las burbujas, como .tip (ver --border-pop). */
-  border: var(--border-pop-w) solid var(--border-pop);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-pop);
   font-size: 0.875rem;
   line-height: 1.45;
   pointer-events: none;
@@ -1243,10 +1122,59 @@ p {
   flex: 0 1 auto;
   min-width: 0;
 }
-/* Títulos de las tarjetas en mayúsculas, con algo de espaciado para que no queden apretados. */
+/*
+ * Títulos de las tarjetas en mayúsculas, con letra de naipe. Sin negrita: la fuente solo tiene un peso y se
+ * vería falseada. En claro, rojo de naipe (--card-title); en oscuro, el color del texto.
+ */
 .card-header h2 {
+  color: var(--card-title);
+  font-family: var(--font-card);
+  font-weight: 400;
+  font-size: 1.125rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
+}
+/* En móvil, un poco más pequeños: la letra de naipe es ancha y el total o los botones tienen que caber al lado. */
+@media (width <= 560px) {
+  .card-header h2 {
+    font-size: 1rem;
+  }
+}
+/*
+ * Total en singles de una tarjeta, en su cabecera (Recursos actuales, Paquetes, Previsión de suerte): como los
+ * costes del plan (misma letra de cifras del tema y mismo tamaño, 20px: un tamaño menos en la escala).
+ */
+.card-total {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text);
+  font-variant-numeric: var(--num-variant);
+}
+/*
+ * El ticket, que se vea igual de grande que la cifra: el dibujo, inclinado y estrecho, tiene que medir unas
+ * 1,3 veces su alto para no parecer más pequeño (elegido comparando tamaños: 28px con la letra de naipe de
+ * Aha, cuyas cifras miden 17px). Sparxie, en proporción a sus cifras de Courier (12px).
+ */
+.card-total .icon {
+  width: 28px;
+  height: 28px;
+}
+/* Courier deja sus cifras altas en la línea: el ticket sube con ellas para quedar centrado. */
+:where(:root[data-skin='sparxie']) .card-total .icon {
+  position: relative;
+  top: -1.5px;
+  width: 20px;
+  height: 20px;
+}
+/* Aha: coste de cada tirada, balance y total de las cabeceras en letra de naipe (juntos, para que los tickets
+ * sigan en la misma columna). */
+:where(:root[data-skin='aha']) :is(.pull-cost strong, .card-total) {
+  font-family: var(--font-card);
+  font-weight: 400;
 }
 
 /* == Resumen == */
@@ -1256,8 +1184,11 @@ p {
   overflow: hidden;
   isolation: isolate;
   gap: 4px;
-  border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
-  background: var(--surface);
+  border-color: var(--accent-frame);
+  /* Deja ver un poco los naipes del fondo (solo el fondo de la tarjeta es translúcido). */
+  background: color-mix(in srgb, var(--surface) 50%, transparent);
+  /* La decoración y la ilustración se suavizan hacia la izquierda con el mismo degradado. */
+  --hero-fade: linear-gradient(to right, rgba(0, 0, 0, 0.35), #000 45%);
 }
 /* Decoración de fondo de la tarjeta principal (el foco de Aha). */
 .hero-deco {
@@ -1271,23 +1202,11 @@ p {
   color: var(--deco);
   filter: drop-shadow(0 0 3px color-mix(in srgb, var(--deco) 60%, transparent));
   /* Cubre toda la tarjeta y solo se suaviza hacia el borde izquierdo. */
-  -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, 0.35), #000 45%);
-  mask-image: linear-gradient(to right, rgba(0, 0, 0, 0.35), #000 45%);
+  mask-image: var(--hero-fade);
 }
 /* Foco de teatro detrás del personaje. */
 .spotlight-core {
-  stop-opacity: 0.35;
-}
-:where(:root[data-skin='aha']) .spotlight-core {
-  stop-opacity: 0.12;
-}
-@media (prefers-color-scheme: dark) {
-  :where(:root[data-skin='aha']:not([data-theme='light'])) .spotlight-core {
-    stop-opacity: 0.35;
-  }
-}
-:where(:root[data-skin='aha'][data-theme='dark']) .spotlight-core {
-  stop-opacity: 0.35;
+  stop-opacity: var(--spotlight-opacity);
 }
 /* Ilustración del personaje (fondo transparente), anclada a la derecha y más alta que la tarjeta. */
 .hero-art {
@@ -1301,17 +1220,18 @@ p {
   pointer-events: none;
   user-select: none;
   /* Las llaves de la izquierda se atenúan para no competir con el texto. */
-  -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, 0.35), #000 45%);
-  mask-image: linear-gradient(to right, rgba(0, 0, 0, 0.35), #000 45%);
+  mask-image: var(--hero-fade);
 }
 .hero-value {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: clamp(3rem, 8vw, 4.5rem);
-  font-weight: 700;
+  /* Letra de naipe a 56px fijos: no crece ni encoge con la ventana. */
+  font-family: var(--font-card);
+  font-size: 3.5rem;
+  font-weight: 400;
   line-height: 1;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
 }
 .hero-stats {
   display: grid;
@@ -1319,11 +1239,17 @@ p {
   gap: 8px;
   margin: 12px 0 0;
 }
-/* Recuadros de cifras, los del Resumen y los de la Previsión de suerte (más abajo, su rejilla). */
+/*
+ * Recuadros de cifras, los del Resumen y los de la Previsión de suerte (más abajo, su rejilla): color plano con
+ * el mismo borde que la tarjeta y una sombra leve. Transparencia muy ligera: se intuye lo de detrás sin restar
+ * legibilidad.
+ */
 :is(.hero-stats, .odds-stats) div {
-  background: var(--surface-2);
-  border-radius: 8px;
-  padding: 8px 10px;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: color-mix(in srgb, var(--surface-2) 92%, transparent);
+  border: 1px solid var(--accent-frame);
+  box-shadow: 0 3px 10px var(--bevel-lo);
 }
 :is(.hero-stats, .odds-stats) dt {
   font-size: 0.75rem;
@@ -1362,7 +1288,7 @@ p {
   color: var(--text-muted);
 }
 /* En móvil, cada cifra en su fila (etiqueta a la izquierda y valor a la derecha): en tres columnas no cabían. */
-@media (max-width: 560px) {
+@media (width <= 560px) {
   .hero-stats {
     grid-template-columns: minmax(0, 1fr);
     gap: 6px;
@@ -1383,60 +1309,17 @@ p {
    */
   .hero-art {
     opacity: 0.6;
-    -webkit-mask-image: linear-gradient(to right, transparent 30%, #000 75%);
     mask-image: linear-gradient(to right, transparent 30%, #000 75%);
   }
-  .hero-deco.masks {
+  .hero-deco {
     display: none;
   }
 }
 
-/* Aha: la tarjeta Resumen deja ver un poco los naipes del fondo (solo el fondo de la tarjeta es translúcido). */
-:where(:root[data-skin='aha']) .hero {
-  background: color-mix(in srgb, var(--surface) 50%, transparent);
-}
-/* Aha: títulos de tarjeta con letra de naipe. Sin negrita: la fuente solo tiene un peso y se vería falseada. */
-:where(:root[data-skin='aha']) .card-header h2 {
-  /* En claro, rojo de naipe; en oscuro, el color del texto. */
-  color: var(--card-title);
-  font-family: var(--font-card);
-  font-weight: 400;
-  font-size: 1.125rem;
-  letter-spacing: 0.02em;
-}
-/* En móvil, un poco más pequeños: la letra de naipe es ancha y el total o los botones tienen que caber al lado. */
-@media (max-width: 560px) {
-  :where(:root[data-skin='aha']) .card-header h2 {
-    font-size: 1rem;
-  }
-}
-/* El título de la app, en la misma letra de naipe (solo tiene mayúsculas). */
-:where(:root[data-skin='aha']) .title {
-  font-family: var(--font-card);
-  font-weight: 400;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-}
-/* Aha: recuadros de color plano con el mismo borde que la tarjeta, y cifra con un leve resplandor. */
-:where(:root[data-skin='aha']) :is(.hero-stats, .odds-stats) div {
-  border-radius: 10px;
-  padding: 10px 12px;
-  /* Transparencia muy ligera: se intuye lo de detrás sin restar legibilidad. */
-  background: color-mix(in srgb, var(--surface-2) 92%, transparent);
-  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
-  box-shadow: 0 3px 10px var(--bevel-lo);
-}
 /* Cifras de Jades, Pases y Esquirlas del resumen, también con letra de naipe. */
 :where(:root[data-skin='aha']) .hero-stats dd {
   font-family: var(--font-card);
   font-weight: 400;
-}
-:where(:root[data-skin='aha']) .hero-value {
-  font-family: var(--font-card);
-  /* 56px fijos (no crece ni encoge con la ventana como en los otros temas). */
-  font-size: 3.5rem;
-  font-weight: 400;
-  letter-spacing: 0;
 }
 
 /* == Formularios == */
@@ -1447,7 +1330,7 @@ p {
   gap: var(--space-3);
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
-@media (min-width: 721px) {
+@media (width > 720px) {
   .grid-3 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -1471,7 +1354,7 @@ p {
   align-content: start;
 }
 /* En móviles estrechos, un pity debajo del otro: en dos columnas, «Siguiente cono de luz garantizado» ocupaba tres líneas. */
-@media (max-width: 430px) {
+@media (width <= 430px) {
   .pity-grid {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1494,10 +1377,11 @@ p {
   font-size: 0.75rem;
   color: var(--text-muted);
 }
-input[type='number'],
-input[type='text'],
-input[type='search'],
-select {
+/*
+ * Campos de texto, número y desplegables. Bajo :where() (peso 0): cualquier regla de un componente les gana con
+ * su clase, sin tener que repetir el [type] para igualar el peso.
+ */
+:where(input[type='number'], input[type='text'], input[type='search'], select) {
   font: inherit;
   /* Cifras como en el resto de la app (ver --num-variant). */
   font-variant-numeric: var(--num-variant);
@@ -1535,11 +1419,75 @@ select {
 .field-compact select {
   padding: calc(6px - var(--input-nudge)) 28px calc(6px + var(--input-nudge)) 8px;
 }
+/* Campos con icono (NumberField, DateField), la capa del punto de miles y el campo de fecha. */
+.input-wrap {
+  position: relative;
+  display: block;
+}
+.input-wrap.has-icon .icon {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.input-wrap.has-icon input {
+  padding-left: 40px;
+}
+.field-compact .input-wrap.has-icon .icon {
+  left: 6px;
+}
+/*
+ * Cifra con punto de miles sobre un campo numérico sin foco (NumberField): la capa toma del input su caja,
+ * bordes (transparentes) y rellenos, y el texto del input se vuelve transparente debajo.
+ */
+.input-wrap input.is-masked {
+  color: transparent;
+}
+.num-mask {
+  position: absolute;
+  display: flex;
+  border: 0 solid transparent;
+  overflow: hidden;
+  white-space: nowrap;
+  color: var(--text);
+  font-variant-numeric: var(--num-variant);
+  pointer-events: none;
+}
+.field-compact .input-wrap.has-icon input {
+  padding-left: 32px;
+}
+/* Campo de fecha (air-datepicker): solo lectura, se abre el calendario al pulsarlo; icono a la derecha. */
+.date-field input {
+  padding-right: 32px;
+  cursor: pointer;
+}
+.date-field-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+/* Campos compactos (filas de eventos, inicio de actualización): icono a 8px del borde y 4px de aire. */
+.field-compact .date-field input,
+.event-row .date-field input {
+  padding-right: 28px;
+}
+.field-compact .date-field-icon,
+.event-row .date-field-icon {
+  right: 8px;
+}
 input:focus-visible,
 select:focus-visible,
 button:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: var(--focus-ring);
   outline-offset: 2px;
+}
+input:focus,
+select:focus {
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
 }
 .check {
   display: flex;
@@ -1550,7 +1498,7 @@ button:focus-visible {
   cursor: pointer;
 }
 /* Marcadas en el color del texto, no en el acento: el color queda para lo que avisa de un problema («Faltan»). */
-.check input {
+.check > input {
   accent-color: var(--text);
   width: 16px;
   height: 16px;
@@ -1568,7 +1516,7 @@ button:focus-visible {
 }
 /* Del ancho de la fecha (siempre dd/mm/aaaa) y su icono, como el «Inicio» de las actualizaciones: 200px sobraban. */
 .target-row .date-field {
-  flex: 0 1 9.5rem;
+  flex: 0 1 var(--date-field-w);
 }
 .chips {
   display: flex;
@@ -1585,10 +1533,10 @@ button:focus-visible {
   cursor: help;
 }
 .tip-trigger:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: var(--focus-ring);
   outline-offset: 2px;
 }
-/* Término con explicación (las etiquetas de la previsión): subrayado punteado discreto, como una abreviatura. */
+/* Término con explicación (etiquetas de campos y de la previsión, glosario): subrayado punteado discreto, como una abreviatura. */
 .tip-term {
   text-decoration: underline dotted color-mix(in srgb, currentColor 55%, transparent);
   text-decoration-thickness: 1px;
@@ -1601,11 +1549,6 @@ button:focus-visible {
   width: max-content;
   max-width: min(20rem, calc(100vw - 16px));
   padding: 8px 10px;
-  background: var(--surface);
-  color: var(--text);
-  border: var(--border-pop-w) solid var(--border-pop);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-pop);
   font-size: 0.8125rem;
   font-weight: 400;
   line-height: 1.45;
@@ -1682,17 +1625,12 @@ button:focus-visible {
 .tip-title {
   display: block;
   margin-bottom: var(--space-2);
-  font-size: 0.875rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-/* Sin negrita: la fuente solo tiene un peso. 16px: a 13px, la letra de naipe (ancha) se apelmaza. */
-:where(:root[data-skin='aha']) .tip-title {
+  /* Como los títulos de tarjeta. Sin negrita: la fuente solo tiene un peso. 16px: a 13px, la letra de naipe (ancha) se apelmaza. */
   color: var(--card-title);
   font-family: var(--font-card);
-  font-weight: 400;
   font-size: 1rem;
+  font-weight: 400;
+  text-transform: uppercase;
   letter-spacing: 0.02em;
 }
 /*
@@ -1715,13 +1653,10 @@ button:focus-visible {
   display: flex;
   margin-bottom: var(--space-3);
 }
-.tip[hidden] {
-  display: none;
-}
 /*
  * Flecha hacia el dato, como la del popover de la galería en pequeño: arriba si la burbuja sale debajo y
  * abajo si sale encima. --arrow-x (desde la izquierda de la burbuja) la pone Tip.tsx.
- * Dos triángulos sin girar (no el cuadrado girado de la galería: a este tamaño, sus esquinas finas se
+ * Dos triángulos sin girar, como la de la galería (con un cuadrado girado, a este tamaño sus esquinas finas se
  * desvaían en la unión con el borde o se metían en el bocadillo): uno del acento, desde el borde interior,
  * y encima otro del fondo, 2px más adentro en perpendicular (2√2 en vertical), que tapa ese trozo de borde
  * y acaba en el borde interior. --arrow-h: lo que sobresale del borde. --arrow-seam: el del fondo entra 1px
@@ -1786,23 +1721,33 @@ button:focus-visible {
 .chip {
   border-radius: 999px;
 }
+/* Solo el borde, como las fechas destacadas: el texto en rojo es «fecha elegida» y no se usa para el hover. */
+.chip:hover {
+  border-color: var(--accent-hover);
+}
 /*
  * Hover: el fondo se tiñe con un 10 % de tinta, el mismo paso que los fantasma sobre la tarjeta (≈1,2:1 en
  * claro, 1,35:1 en oscuro). Solo con el borde a --axis no se veía: en Aha casi coincide con --border.
+ * Cada variante (fantasma, fechas destacadas, Sparxie) da sus valores a estas dos variables, sin regla de hover
+ * propia que deshaga esta.
  */
-.btn:hover:not(:disabled) {
-  border-color: var(--axis);
-  background: color-mix(in srgb, var(--text) 10%, var(--surface-2));
+.btn {
+  --btn-hover-bg: color-mix(in srgb, var(--text) 10%, var(--surface-2));
+  --btn-hover-border: var(--axis);
 }
-/* El cambio entra y sale como las burbujas (--fade-in al entrar, --fade-out al salir). */
+.btn:hover:not(:disabled) {
+  border-color: var(--btn-hover-border);
+  background: var(--btn-hover-bg);
+}
+/* El cambio entra y sale como las burbujas (--fade-in al entrar, --fade-out al salir), también en los atajos. */
 @media (prefers-reduced-motion: no-preference) {
-  .btn {
+  :is(.btn, .chip) {
     transition:
       background-color var(--fade-out) ease-in,
       border-color var(--fade-out) ease-in,
       color var(--fade-out) ease-in;
   }
-  .btn:hover:not(:disabled) {
+  :is(.btn:hover:not(:disabled), .chip:hover) {
     transition-duration: var(--fade-in);
     transition-timing-function: ease-out;
   }
@@ -1812,26 +1757,26 @@ button:focus-visible {
   opacity: 0.5;
   cursor: not-allowed;
 }
+/*
+ * Fantasma: sin borde, también al pasar el ratón; solo se tiñe, con un paso de tono que se vea (con --surface-2
+ * era 1,15:1 y casi no se notaba), y el texto pasa a tinta.
+ */
 .btn-ghost {
+  --btn-hover-bg: color-mix(in srgb, var(--text) 10%, var(--surface));
+  --btn-hover-border: transparent;
   background: transparent;
   border-color: transparent;
   color: var(--text-secondary);
 }
-/*
- * Sin el borde de .btn:hover: los fantasma solo se tiñen (como en Sparxie), con un paso de tono que se vea (con
- * --surface-2 era 1,15:1 y casi no se notaba) y el texto en tinta. Sparxie tiene el suyo.
- */
 .btn-ghost:hover:not(:disabled) {
   color: var(--text);
-  background: color-mix(in srgb, var(--text) 10%, var(--surface));
-  border-color: transparent;
 }
 .btn-danger {
   color: var(--danger);
 }
 /*
- * Botón de quitar (la X de RemoveGlyph) en todo el sitio: como el asa del planificador (24px de ancho, todo
- * el alto de su fila, gris que se aclara al pasar el ratón), con la X centrada.
+ * Botón de quitar (la X de RemoveGlyph) en todo el sitio: como el asa del planificador (--remove-w de ancho, todo
+ * el alto de su fila, gris que pasa a tinta al pasar el ratón, como todo .btn-ghost), con la X centrada.
  */
 .btn-remove {
   display: grid;
@@ -1839,15 +1784,10 @@ button:focus-visible {
   align-self: stretch;
   width: var(--remove-w);
   padding: 0;
-  font-size: 0.75rem;
-  line-height: 1.2;
   color: var(--text-muted);
 }
 .remove-glyph {
   display: block;
-}
-.btn-remove:hover {
-  color: var(--text);
 }
 /*
  * En pantallas táctiles, zona de toque de al menos 44 × 44px en los controles pequeños (✕, casillas, selector
@@ -1856,10 +1796,10 @@ button:focus-visible {
  * El selector claro/oscuro ya usa ::after (su línea invisible de texto), así que el suyo va en ::before.
  */
 @media (pointer: coarse) {
-  :is(.btn-remove, .check, .skin-option, .theme-option) {
+  :is(.btn-remove, .check, .segment, .theme-option) {
     position: relative;
   }
-  :is(.btn-remove, .check, .skin-option)::after,
+  :is(.btn-remove, .check, .segment)::after,
   .theme-option::before {
     content: '';
     position: absolute;
@@ -1878,22 +1818,10 @@ button:focus-visible {
     z-index: 1;
   }
 }
-/* Solo el borde, como las fechas destacadas: el texto en rojo es «fecha elegida» y no se usa para el hover. */
-.chip:hover {
-  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
-}
-input:focus,
-select:focus {
-  border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
-}
 /* == Fechas destacadas == */
 /*
- * Fechas destacadas: bajo la fecha y sus atajos, con el aire entre grupos. Cada una es una hoja de calendario
- * (el mes en una banda de acento y el día grande) con su nombre y cuánto falta al lado; varias van en fila y
- * bajan de línea si no caben.
- */
-/*
- * Una fila por versión: la versión a la izquierda y sus dos partes en columnas iguales, con la cabecera
+ * Bajo la fecha y sus atajos, con el aire entre grupos. Cada fecha es una hoja de calendario (el mes en una
+ * banda de acento y el día grande) con su nombre y cuánto falta al lado. Una fila por versión: la versión a la izquierda y sus dos partes en columnas iguales, con la cabecera
  * «1.ª parte / 2.ª parte» una sola vez (las hojas no la repiten). Cada fila es su propia rejilla con las
  * mismas columnas, así las hojas quedan alineadas. Decide el ancho de la tarjeta, no el de la pantalla.
  */
@@ -1924,17 +1852,14 @@ select:focus {
 }
 .key-date-version {
   align-self: center;
-  font-size: 1rem;
-  font-weight: 600;
-  font-variant-numeric: var(--num-variant);
-}
-:where(:root[data-skin='aha']) .key-date-version {
   font-family: var(--font-card);
-  font-weight: 400;
   font-size: 1.125rem;
+  font-weight: 400;
+  font-variant-numeric: var(--num-variant);
 }
 :where(:root[data-skin='sparxie']) .key-date-version {
   font-family: var(--font-type);
+  font-size: 1rem;
   font-weight: 700;
 }
 /*
@@ -1964,7 +1889,7 @@ select:focus {
  * Tarjeta estrecha (móvil, o la columna de 1180–1300px): sin cabecera de columnas; la versión encima y sus
  * hojas debajo, una por línea, y cada hoja dice su parte. Las celdas vacías no ocupan sitio.
  */
-@container (max-width: 36rem) {
+@container (width <= 36rem) {
   .key-date-head {
     display: none;
   }
@@ -1985,9 +1910,8 @@ select:focus {
     display: inline;
   }
 }
-/* «Ver N más»: un enlace discreto bajo las hojas, no otro botón que compita con ellas. */
 /*
- * Con relleno para que el tinte del hover no acabe en la primera y la última letra, y un margen negativo de
+ * «Ver N versiones más»: un enlace discreto bajo las hojas, no otro botón que compita con ellas. Con relleno para que el tinte del hover no acabe en la primera y la última letra, y un margen negativo de
  * ese relleno más el borde (1px) de .btn para que el texto siga alineado con la columna de «Versión».
  */
 .key-dates-more {
@@ -2056,7 +1980,7 @@ select:focus {
   color: var(--text-secondary);
   font-variant-numeric: normal;
 }
-/* La que es la fecha objetivo: borde y nombre en el acento; sin relleno, que el acento es para los datos. */
+/* La que es la fecha objetivo: seleccionada, con borde y nombre en el acento; sin relleno de color. */
 .key-date[aria-pressed='true'] {
   border-color: var(--accent);
   box-shadow: inset 0 0 0 1px var(--accent);
@@ -2065,21 +1989,18 @@ select:focus {
   color: var(--accent-text);
 }
 /*
- * Hover en Aha: el de los atajos de la misma tarjeta (borde teñido de acento); el genérico de .btn (borde a
- * --axis) casi no se veía en oscuro. La ya elegida no reacciona: pulsarla otra vez no hace nada (antes el hover
- * le quitaba el borde rojo). Sparxie mantiene su hover de botón, pero la elegida tampoco cambia.
+ * Hover en Aha: el de los atajos de la misma tarjeta, solo el borde teñido de acento y sin el tinte de .btn (el
+ * genérico, borde a --axis, casi no se veía en oscuro). La ya elegida no reacciona en ningún tema: pulsarla otra
+ * vez no hace nada (antes el hover le quitaba el borde rojo). Sparxie mantiene su hover de botón.
  */
-:where(:root[data-skin='aha']) .btn.key-date:hover:not([aria-pressed='true']) {
-  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
-  /* Solo el borde, como los atajos: sin el tinte de fondo de .btn. */
-  background: var(--surface-2);
+:where(:root[data-skin='aha']) .btn.key-date {
+  --btn-hover-bg: var(--surface-2);
+  --btn-hover-border: var(--accent-hover);
 }
 .btn.key-date[aria-pressed='true'] {
+  --btn-hover-bg: var(--surface-2);
+  --btn-hover-border: var(--accent);
   cursor: default;
-}
-.btn.key-date[aria-pressed='true']:hover {
-  border-color: var(--accent);
-  background: var(--surface-2);
 }
 /* En Aha, el día con la letra de naipe de los títulos (un solo peso: sin negrita). */
 :where(:root[data-skin='aha']) .key-date-day {
@@ -2090,9 +2011,6 @@ select:focus {
  * En Sparxie, la cifra en máquina de escribir, como el resto de números del tema (en su serif grande el «11» se
  * leía «ll»), y esquinas casi rectas, como sus ventanas.
  */
-:where(:root[data-skin='sparxie']) .key-date-day {
-  font-family: var(--font-type);
-}
 :where(:root[data-skin='sparxie']) .key-date-leaf {
   border-radius: 2px;
 }
@@ -2122,9 +2040,6 @@ select:focus {
   display: grid;
 }
 /* Arriba ya separa el gap de la tarjeta (12px); entre grupos, 8px más, como .group-gap. */
-.source-group h3 {
-  margin-top: 0;
-}
 .source-group + .source-group {
   margin-top: 8px;
 }
@@ -2177,7 +2092,7 @@ select:focus {
   gap: 8px;
   flex-wrap: wrap;
 }
-@media (max-width: 520px) {
+@media (width <= 520px) {
   .source-row {
     grid-template-columns: auto minmax(0, 1fr) auto;
   }
@@ -2217,7 +2132,7 @@ select:focus {
  * Encendido, rellena: el estado se distingue también por la forma, no solo por el color.
  */
 .switch span {
-  --knob: var(--text-muted);
+  --knob: var(--switch-knob-off);
   position: absolute;
   inset: 0;
   background-color: transparent;
@@ -2238,17 +2153,17 @@ select:focus {
   }
 }
 /*
- * Encendido: pista del color del texto y botón del de la tarjeta (oscuro sobre claro en modo oscuro), no el
- * acento: el color queda para lo que avisa de un problema («Faltan»).
+ * Encendido: pista rellena en --switch-on (el verde musgo de Aha) y botón en --switch-knob-on, no en el acento:
+ * el color queda para lo que avisa de un problema («Faltan»). Sparxie tiene los suyos.
  */
 .switch input:checked + span {
-  --knob: var(--switch-knob-on, var(--surface));
-  background-color: var(--switch-on, var(--text));
+  --knob: var(--switch-knob-on);
+  background-color: var(--switch-on);
   box-shadow: none;
   background-position: 100% 50%;
 }
 .switch input:focus-visible + span {
-  outline: 2px solid var(--accent);
+  outline: var(--focus-ring);
   outline-offset: 2px;
 }
 /*
@@ -2258,13 +2173,9 @@ select:focus {
 .toggle {
   justify-self: start;
 }
-/* El input ocupa todo el interruptor, no los 16px de .check. */
+/* El interruptor no encoge con la etiqueta (es flex). */
 .toggle .switch {
   flex: none;
-}
-.toggle .switch input {
-  width: auto;
-  height: auto;
 }
 
 /* == Tablas y desglose == */
@@ -2306,7 +2217,7 @@ tfoot td {
   width: 30%;
 }
 /* En móvil, la barra más estrecha y menos relleno: con el 30 %, los nombres de las fuentes ocupaban tres líneas. */
-@media (max-width: 560px) {
+@media (width <= 560px) {
   .bar-col {
     width: 18%;
   }
@@ -2339,7 +2250,7 @@ tfoot td {
 .card-plan {
   container: plan / inline-size;
 }
-@container plan (max-width: 29rem) {
+@container plan (width <= 29rem) {
   .add-pull-text {
     display: none;
   }
@@ -2352,6 +2263,8 @@ tfoot td {
   --pull-gap: 8px;
   /* Relleno de arriba y abajo de cada fila. */
   --pull-row-pad: 8px;
+  /* Lado de la miniatura y alto del campo del nombre, que van a la par. */
+  --pull-thumb: 3.375rem;
   display: grid;
   grid-template-columns: auto auto minmax(0, 1fr) auto auto auto;
   column-gap: var(--pull-gap);
@@ -2374,11 +2287,6 @@ tfoot td {
 .pull-row:first-child {
   border-top-color: transparent;
 }
-.pull-row input[type='text'] {
-  padding: var(--field-compact-pad);
-  /* Nombre largo cortado con puntos suspensivos (mientras no se escribe en él). */
-  text-overflow: ellipsis;
-}
 /*
  * Miniatura de la fila: el retrato redondo del personaje (en un hueco redondo) o el icono del cono.
  * Debajo, el icono del tipo, que se ve si no hay imagen.
@@ -2387,9 +2295,8 @@ tfoot td {
   position: relative;
   display: grid;
   place-items: center;
-  /* Del mismo alto que el campo del nombre (.pull-field), para que queden a la par. */
-  width: 3.375rem;
-  height: 3.375rem;
+  width: var(--pull-thumb);
+  height: var(--pull-thumb);
   border-radius: 8px;
   overflow: hidden;
   background: var(--surface-2);
@@ -2429,23 +2336,20 @@ tfoot td {
 /*
  * El tipo va dentro del recuadro del nombre: sin nombre, centrado y a tamaño normal, como un placeholder;
  * al entrar a escribir o con nombre, sube arriba a la izquierda en pequeño y el nombre queda debajo.
- * El campo gana relleno por arriba para dejarle sitio y mide lo mismo que la miniatura (3,375rem).
+ * El campo gana relleno por arriba para dejarle sitio y mide lo mismo que la miniatura (--pull-thumb).
  */
 /*
- * --badge-room: lo que el Eidolón sale de la miniatura (.eidolon-badge, right: -6px). El campo se aparta eso
- * más: sin ello la pastilla quedaba a 2px del campo y el anillo de foco (4px por fuera: 2 de grosor + 2 de
- * separación) se le montaba encima. Así queda a --pull-gap del campo, como la miniatura en las filas sin dupe.
+ * El campo se aparta de la miniatura lo que sale de ella la pastilla del Eidolón (--badge-out): sin ello la
+ * pastilla quedaba a 2px del campo y el anillo de foco (4px por fuera: 2 de grosor + 2 de separación) se le
+ * montaba encima. Así queda a --pull-gap del campo, como la miniatura en las filas sin dupe.
  */
-.pull-row {
-  --badge-room: 6px;
-}
 .pull-field {
   position: relative;
-  margin-left: var(--badge-room);
+  margin-left: var(--badge-out);
 }
 /*
  * Sube y se encoge solo con transform (escala desde su esquina de arriba a la izquierda): de centrada en el
- * campo (3,375rem de alto) a 7px del borde de arriba y 0,6875 de su tamaño (11px).
+ * campo (--pull-thumb de alto) a 7px del borde de arriba y 0,6875 de su tamaño (11px).
  */
 .pull-field .field-label {
   position: absolute;
@@ -2460,17 +2364,18 @@ tfoot td {
   pointer-events: none;
 }
 .pull-field:is(:focus-within, .has-value) .field-label {
-  transform: translateY(calc(7px - 1.6875rem)) scale(0.6875);
+  transform: translateY(calc(7px - var(--pull-thumb) / 2)) scale(0.6875);
 }
 @media (prefers-reduced-motion: no-preference) {
   .pull-field .field-label {
     transition: transform 150ms ease;
   }
 }
-.pull-row .pull-field input[type='text'] {
-  height: 3.375rem;
-  padding-top: calc(18px - var(--input-nudge));
-  padding-bottom: calc(6px + var(--input-nudge));
+.pull-row .pull-field input {
+  height: var(--pull-thumb);
+  padding: calc(18px - var(--input-nudge)) 8px calc(6px + var(--input-nudge));
+  /* Nombre largo cortado con puntos suspensivos (mientras no se escribe en él). */
+  text-overflow: ellipsis;
 }
 /*
  * El nombre pintado encima, a la altura del texto del input (no del centro del recuadro). El texto del input
@@ -2509,7 +2414,7 @@ tfoot td {
  * transparente): así no lo mueve un carácter de otra fuente, como la ★ (ver NameCombobox). Empieza donde
  * el texto del input (borde + relleno) y se corta con puntos suspensivos.
  */
-.combo.is-masked input[type='text'] {
+.combo.is-masked input {
   color: transparent;
 }
 .combo-value {
@@ -2523,6 +2428,10 @@ tfoot td {
   overflow: hidden;
   text-overflow: ellipsis;
   pointer-events: none;
+}
+/* El nombre pintado encima del campo del planificador, con la misma letra que el campo. */
+:where(:root[data-skin='sparxie']) .combo-value {
+  font-family: var(--font-type);
 }
 .combo-list {
   position: absolute;
@@ -2574,9 +2483,6 @@ tfoot td {
   color: var(--text-muted);
   cursor: grab;
   touch-action: none;
-}
-.drag-handle:hover {
-  color: var(--text);
 }
 .drag-handle svg {
   fill: currentColor;
@@ -2668,42 +2574,6 @@ tfoot td {
   text-align: right;
 }
 /*
- * Total en singles de una tarjeta, en su cabecera (Recursos actuales, Paquetes, Previsión de suerte): como los
- * costes de la planificación (misma letra de cifras del tema y mismo tamaño, 20px: un tamaño menos en la escala).
- */
-.card-total {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 1.25rem;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--text);
-  font-variant-numeric: var(--num-variant);
-}
-/*
- * El ticket, que se vea igual de grande que la cifra: el dibujo, inclinado y estrecho, tiene que medir unas
- * 1,3 veces su alto para no parecer más pequeño (elegido comparando tamaños: 28px con la letra de naipe de
- * Aha, cuyas cifras miden 17px). Sparxie, en proporción a sus cifras de Courier (12px).
- */
-.card-total .icon {
-  width: 28px;
-  height: 28px;
-}
-/* Courier deja sus cifras altas en la línea: el ticket sube con ellas para quedar centrado. */
-:where(:root[data-skin='sparxie']) .card-total .icon {
-  position: relative;
-  top: -1.5px;
-  width: 20px;
-  height: 20px;
-}
-/* Aha: coste de cada tirada, balance y total de las cabeceras en letra de naipe (juntos, para que los tickets
- * sigan en la misma columna). */
-:where(:root[data-skin='aha']) :is(.pull-cost strong, .card-total) {
-  font-family: var(--font-card);
-  font-weight: 400;
-}
-/*
  * «Faltan» / «Sobran» del balance: palabra de etiqueta, no cifra. En la misma línea base que la cifra (no
  * centrada en su caja): con la letra de naipe, centrada quedaba 4,5px más alta y no se leía como una frase.
  * El ticket sigue centrado.
@@ -2714,14 +2584,9 @@ tfoot td {
 .pull-balance > :is(.pull-balance-label, strong) {
   align-self: baseline;
 }
-/* La cifra, del alto del ticket: así sigue centrada con él, como las de las filas de encima. */
+/* La cifra, del alto del ticket (size={26} en PlanFooter.tsx): así sigue centrada con él, como las de las filas de encima. */
 .pull-summary .pull-cost strong {
   line-height: 26px;
-}
-@media (max-width: 560px) {
-  .pull-summary .pull-cost strong {
-    line-height: 20px;
-  }
 }
 /*
  * Lo que devuelve la Cosmiluz, pegado al texto de su interruptor: una pastilla gris «🎫 +35» (suelta, el «+»
@@ -2790,8 +2655,13 @@ tfoot td {
   padding-top: 8px;
   padding-right: calc(var(--remove-w) + var(--pull-gap));
 }
-/* En el móvil, el interruptor arriba y el balance debajo, en la columna de los costes. */
-@media (max-width: 720px) {
+/*
+ * En pantallas estrechas, dos líneas por tirada: en una el nombre se quedaba en dos letras.
+ * Arriba, asa · miniatura · nombre entero; debajo del nombre, 50/50 · coste · quitar.
+ * Corta en 720px, como las demás filas que se parten (eventos, paquetes). En el pie, el interruptor arriba y
+ * el balance debajo, en la columna de los costes.
+ */
+@media (width <= 720px) {
   .pull-summary {
     flex-wrap: wrap;
     row-gap: 8px;
@@ -2799,13 +2669,6 @@ tfoot td {
   .pull-summary .pull-balance {
     margin-left: auto;
   }
-}
-/*
- * En pantallas estrechas, dos líneas por tirada: en una el nombre se quedaba en dos letras.
- * Arriba, asa · miniatura · nombre entero; debajo del nombre, 50/50 · coste · quitar.
- * Corta en 720px, como las demás filas que se parten (eventos, paquetes).
- */
-@media (max-width: 720px) {
   .pull-list {
     grid-template-columns: auto auto minmax(0, 1fr) auto auto;
   }
@@ -2818,14 +2681,14 @@ tfoot td {
   .pull-row .pull-field {
     grid-column: 3 / -1;
   }
-  /* Bajo el nombre, alineada con su borde (que se aparta --badge-room de la miniatura). */
+  /* Bajo el nombre, alineada con su borde (que se aparta --badge-out de la miniatura). */
   .pull-row .pull-win {
     grid-column: 3;
     justify-self: start;
-    margin-left: var(--badge-room);
+    margin-left: var(--badge-out);
   }
 }
-@media (max-width: 560px) {
+@media (width <= 560px) {
   .pull-cost {
     font-size: 1.125rem;
   }
@@ -2833,12 +2696,15 @@ tfoot td {
     width: 20px;
     height: 20px;
   }
+  .pull-summary .pull-cost strong {
+    line-height: 20px;
+  }
 }
 /*
  * En móviles estrechos (≤430px, el corte de las pestañas), la casilla del 50/50 empieza bajo la miniatura:
  * en su columna se quedaba en ~100px a 360px y «Garantizado» se montaba sobre el ticket del coste.
  */
-@media (max-width: 430px) {
+@media (width <= 430px) {
   .pull-row .pull-win {
     grid-column: 2 / 4;
     margin-left: 0;
@@ -2848,7 +2714,6 @@ tfoot td {
 
 /* == Sincronizar contenido (Configuración) == */
 .content-sync p.muted {
-  margin: 0;
   font-size: 0.875rem;
 }
 .content-sync-row {
@@ -2888,7 +2753,6 @@ tfoot td {
   }
 }
 .content-sync-error {
-  margin: 0;
   font-size: 0.875rem;
   color: var(--danger);
 }
@@ -2946,7 +2810,7 @@ tfoot td {
  * En una tarjeta estrecha (móvil) el filtro no cabe en una línea: sin el fondo de pastilla, que partido en dos se
  * deformaba, los botones bajan de línea como un grupo de etiquetas, cada uno con su aro al marcarlo.
  */
-@container account (max-width: 30rem) {
+@container account (width <= 30rem) {
   .account-tools .path-filter {
     padding: 0;
     background: none;
@@ -2987,8 +2851,12 @@ tfoot td {
   width: 2.625em;
   height: 2.625em;
   background-color: currentColor;
-  -webkit-mask: var(--path-icon) center / contain no-repeat;
   mask: var(--path-icon) center / contain no-repeat;
+}
+/* VT323 es más baja que su tamaño (17px): con la proporción de Aha, el icono de la vía la doblaba. */
+:where(:root[data-skin='sparxie']) .path-icon {
+  width: 2em;
+  height: 2em;
 }
 .account-path-count {
   margin-left: auto;
@@ -3024,11 +2892,15 @@ tfoot td {
   padding: 0;
   list-style: none;
 }
+/* Courier es más ancha: «Permansor Terrae» (16 letras) tiene que caber en una línea. */
+:where(:root[data-skin='sparxie']) .account-list {
+  --account-name-w: 8.75rem;
+}
 /*
  * Si solo cabe una columna (dos filas y su hueco: 2 × ~21rem + 1rem en Sparxie, algo menos en Aha), la fila
  * ocupa todo el ancho y los cristales van al borde derecho, bajo el contador, como la última columna en escritorio.
  */
-@container account (max-width: 44rem) {
+@container account (width <= 44rem) {
   .account-list {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -3083,7 +2955,7 @@ tfoot td {
  */
 .eidolon-badge {
   position: absolute;
-  right: -6px;
+  right: calc(-1 * var(--badge-out));
   bottom: -3px;
   padding: 0 4px;
   border: 2px solid var(--surface);
@@ -3154,6 +3026,7 @@ tfoot td {
   position: relative;
   flex: none;
   width: var(--shards-w);
+  /* El alto del dibujo: los sitios y la caja de cada cristal (PLACES y BOX en EidolonShards.tsx). */
   height: 39px;
 }
 .eidolon-shard {
@@ -3245,7 +3118,7 @@ tfoot td {
   gap: var(--space-2);
 }
 .patch-head .date-field {
-  width: 9.5rem;
+  width: var(--date-field-w);
 }
 .patch-head .input-version {
   width: 5rem;
@@ -3274,23 +3147,18 @@ tfoot td {
    * son las más anchas, y para la fecha más ancha con la fuente de cada tema; el resto es para el nombre.
    */
   --event-date-col: 8.125rem;
-  grid-template-columns: minmax(0, 1fr) var(--event-date-col) 5.375rem 5.375rem 1.5rem;
+  grid-template-columns: minmax(0, 1fr) var(--event-date-col) 5.375rem 5.375rem var(--remove-w);
   gap: 8px;
   align-items: center;
 }
-.event-row input[type='text'],
-.event-row input[type='number'] {
+.event-row input {
   padding: var(--field-compact-pad);
 }
 .event-row input[type='number'] {
   text-align: right;
 }
-.event-row .input-wrap.has-icon input {
-  padding-left: 32px;
-}
 /* Jades sin flechas de ±1; en los Pases se mantienen, separadas de la cifra. */
 .no-spin input {
-  -moz-appearance: textfield;
   appearance: textfield;
 }
 .no-spin input::-webkit-inner-spin-button,
@@ -3328,16 +3196,16 @@ tfoot td {
  * Hasta 720px, dos líneas por evento: arriba el nombre (entero) y quitar; debajo fecha, Jades y Pases.
  * Los Pases llegan hasta el borde (también bajo la columna de quitar) para que quepan sus cifras y flechas.
  */
-@media (max-width: 720px) {
+@media (width <= 720px) {
   .event-header {
     display: none;
   }
   .event-row {
-    grid-template-columns: var(--event-date-col) 5.375rem minmax(0, 1fr) 1.5rem;
+    grid-template-columns: var(--event-date-col) 5.375rem minmax(0, 1fr) var(--remove-w);
     padding-bottom: 8px;
     border-bottom: 1px dashed var(--grid);
   }
-  .event-row > input[type='text'] {
+  .event-row > input {
     grid-column: 1 / 4;
   }
   .event-row > .btn {
@@ -3361,11 +3229,11 @@ tfoot td {
  * En los móviles más estrechos (por debajo de ~380px) los Pases ya no caben al lado de la fecha y los Jades:
  * nombre, fecha y Jades · Pases, en tres líneas.
  */
-@media (max-width: 380px) {
+@media (width <= 380px) {
   .event-row {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 1.5rem;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) var(--remove-w);
   }
-  .event-row > input[type='text'] {
+  .event-row > input {
     grid-column: 1 / 3;
   }
   .event-row > .date-field {
@@ -3386,8 +3254,10 @@ tfoot td {
   }
 }
 /* == Previsión de suerte == */
-/* Probabilidades: cuatro cifras resumen (el % de cada objetivo va en su fila de la planificación). */
-/* Dos filas: probabilidad y objetivos (mitad y mitad), y debajo las tres cifras de singles. */
+/*
+ * Cinco cifras resumen (el % de cada objetivo va en su fila del plan), en dos filas: probabilidad y objetivos
+ * (mitad y mitad, .odds-stat-wide) y debajo las tres cifras de tiradas.
+ */
 .odds-stats {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -3397,7 +3267,7 @@ tfoot td {
 .odds-stats > div {
   grid-column: span 2;
 }
-.odds-stats > div:nth-child(-n + 2) {
+.odds-stats > .odds-stat-wide {
   grid-column: span 3;
 }
 /* Cifra siempre abajo, para que quede alineada aunque alguna etiqueta ocupe dos líneas. */
@@ -3443,7 +3313,6 @@ tfoot td {
 }
 /* Flechas separadas de la cifra. */
 .pack-row input[type='number'] {
-  padding: var(--field-compact-pad);
   text-align: right;
 }
 .pack-row input[type='number']::-webkit-inner-spin-button {
@@ -3557,7 +3426,7 @@ tfoot td {
  * sigue en la tabla para los lectores de pantalla.
  * Corta en 720px: por debajo, en seis columnas el nombre ya ocupaba dos o tres líneas.
  */
-@media (max-width: 720px) {
+@media (width <= 720px) {
   /* Columnas: nombre o cantidad · precio o ×2 · por compra o total. */
   .pack-list {
     grid-template-columns: auto auto minmax(0, 1fr);
@@ -3627,11 +3496,11 @@ tfoot td {
   .pack-shards {
     white-space: nowrap;
   }
-  .pack-footer > span:empty {
+  .pack-footer > .pack-gap {
     display: none;
   }
 }
-@media (max-width: 560px) {
+@media (width <= 560px) {
   .pack-count {
     width: 3.75rem;
   }
@@ -3663,7 +3532,7 @@ tfoot td {
 :where(:root[data-skin='aha']) .pack-total-value {
   min-width: 5.125rem;
 }
-@media (max-width: 560px) {
+@media (width <= 560px) {
   :where(:root[data-skin='aha']) .pack-total-value {
     min-width: 4rem;
   }
@@ -3672,7 +3541,7 @@ tfoot td {
  * En los móviles más estrechos «por compra» no cabe junto a la cifra (a 360px cabe; a 320px la tarjeta
  * desbordaba 19px): baja a una línea propia dentro de su celda, bajo la cifra (18px del icono + 6 de hueco).
  */
-@media (max-width: 350px) {
+@media (width <= 350px) {
   .pack-row > .pack-shards {
     flex-wrap: wrap;
     row-gap: 0;
@@ -3715,7 +3584,7 @@ tfoot td {
   max-width: min(32rem, calc(100vw - 48px));
   pointer-events: none;
 }
-@media (max-width: 560px) {
+@media (width <= 560px) {
   .toast-region {
     left: 16px;
     bottom: 16px;
@@ -3723,15 +3592,12 @@ tfoot td {
   }
 }
 .toast {
+  /* Lo que se baja la X del aviso (ver .toast .btn-remove; Sparxie, con su letra, lo cambia). */
+  --toast-x-nudge: 1px;
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 4px 6px 4px 14px;
-  background: var(--surface);
-  color: var(--text);
-  border: var(--border-pop-w) solid var(--border-pop);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-pop);
   font-size: 0.875rem;
   pointer-events: auto;
 }
@@ -3764,7 +3630,7 @@ tfoot td {
    * Corrección óptica: centrado al píxel, el ✕ parecía alto al lado de un texto casi todo en minúsculas,
    * cuyo centro queda más abajo que el de las mayúsculas. El padding baja el glifo sin mover el botón.
    */
-  padding-top: calc(2 * var(--toast-x-nudge, 1px));
+  padding-top: calc(2 * var(--toast-x-nudge));
 }
 /* Entra desde la izquierda con un pequeño rebote al frenar; sale acelerando hacia el mismo lado. */
 @media (prefers-reduced-motion: no-preference) {
@@ -3805,7 +3671,7 @@ tfoot td {
     var(--page);
   -webkit-font-smoothing: none;
 }
-@media (max-width: 560px) {
+@media (width <= 560px) {
   /* Las cifras en Courier son anchas: se aprietan un poco para que la segunda línea del paquete quepa. */
   :where(:root[data-skin='sparxie']) :is(.pack-price, .pack-shards, .pack-total) {
     letter-spacing: -0.06em;
@@ -3825,18 +3691,6 @@ tfoot td {
   letter-spacing: 0.03em;
   color: var(--text-secondary);
 }
-/* VT323 es más baja que su tamaño (17px): con la proporción de Aha, el icono de la vía la doblaba. */
-:where(:root[data-skin='sparxie']) .path-icon {
-  width: 2em;
-  height: 2em;
-}
-/* Courier es más ancha: «Permansor Terrae» (16 letras) tiene que caber en una línea. */
-:where(:root[data-skin='sparxie']) .account-list {
-  --account-name-w: 8.75rem;
-}
-:where(:root[data-skin='sparxie']) .app-header::after {
-  display: none;
-}
 /*
  * La letra de píxeles solo en etiquetas cortas (su papel en el diseño: texto de interfaz). En cifras no:
  * su 5 se confunde con una S. Todo lo demás va en máquina de escribir. Los nombres de paquete también van en
@@ -3850,12 +3704,12 @@ tfoot td {
   font-family: var(--font-type);
 }
 
-/* Selector de tema: una tira de celdas como la barra superior del escritorio; la activa, en negativo. */
+/* Controles segmentados: una tira de celdas como la barra superior del escritorio; la activa, en negativo. */
 /*
  * Sin overflow: hidden (recortaba el anillo de foco): las celdas de los extremos llevan su propio redondeo.
  * Del alto de los botones de al lado.
  */
-:where(:root[data-skin='sparxie']) .skin-switch {
+:where(:root[data-skin='sparxie']) .segmented {
   padding: 0;
   gap: 0;
   min-height: var(--control-h);
@@ -3863,7 +3717,7 @@ tfoot td {
   border-color: var(--border);
   border-radius: 4px;
 }
-:where(:root[data-skin='sparxie']) .skin-option {
+:where(:root[data-skin='sparxie']) .segment {
   padding: 5px 8px 3px;
   border-radius: 0;
   border-left: 1px solid var(--border);
@@ -3875,17 +3729,17 @@ tfoot td {
   color: var(--text);
   text-shadow: 0 1px 0 var(--bevel-hi);
 }
-:where(:root[data-skin='sparxie']) .skin-option:first-child {
+:where(:root[data-skin='sparxie']) .segment:first-child {
   border-left: 0;
   border-radius: 3px 0 0 3px;
 }
-:where(:root[data-skin='sparxie']) .skin-option:last-child {
+:where(:root[data-skin='sparxie']) .segment:last-child {
   border-radius: 0 3px 3px 0;
 }
-:where(:root[data-skin='sparxie']) .skin-option:hover {
+:where(:root[data-skin='sparxie']) .segment:hover {
   background: color-mix(in srgb, var(--surface-2) 88%, var(--text));
 }
-:where(:root[data-skin='sparxie']) .skin-option[aria-pressed='true'] {
+:where(:root[data-skin='sparxie']) .segment[aria-pressed='true'] {
   color: var(--surface-2);
   background: var(--text);
   box-shadow: none;
@@ -3939,8 +3793,6 @@ tfoot td {
   width: 9px;
   height: 9px;
   background: var(--text);
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 9'%3E%3Cpath d='M0 0h1v1h1v1h1v1h1v1h1V3h1V2h1V1h1V0h1v1H8v1H7v1H6v1H5v1h1v1h1v1h1v1h1v1H8V8H7V7H6V6H5V5H4v1H3v1H2v1H1v1H0V8h1V7h1V6h1V5h1V4H3V3H2V2H1V1H0z'/%3E%3C/svg%3E")
-    0 0 / 100% 100%;
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 9'%3E%3Cpath d='M0 0h1v1h1v1h1v1h1v1h1V3h1V2h1V1h1V0h1v1H8v1H7v1H6v1H5v1h1v1h1v1h1v1h1v1H8V8H7V7H6V6H5V5H4v1H3v1H2v1H1v1H0V8h1V7h1V6h1V5h1V4H3V3H2V2H1V1H0z'/%3E%3C/svg%3E")
     0 0 / 100% 100%;
 }
@@ -3975,6 +3827,7 @@ tfoot td {
 }
 /* Recuadros de cifras: paneles con marco y un labio de 1px debajo. */
 :where(:root[data-skin='sparxie']) :is(.hero-stats, .odds-stats) div {
+  padding: 8px 10px;
   border: 1px solid var(--border);
   border-radius: 4px;
   box-shadow:
@@ -4000,20 +3853,15 @@ tfoot td {
 }
 
 /* Campos: barras blancas con marco de tinta y letra de máquina de escribir. */
-:where(:root[data-skin='sparxie']) :is(input[type='number'], input[type='text'], select) {
+:where(:root[data-skin='sparxie']) :is(input[type='number'], input[type='text'], input[type='search'], select) {
   font-family: var(--font-type);
   background-color: var(--surface);
   border-color: var(--border);
   border-radius: 3px;
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text) 10%, transparent);
 }
-/* El nombre pintado encima del campo del planificador, con la misma letra que el campo. */
-:where(:root[data-skin='sparxie']) .combo-value {
-  font-family: var(--font-type);
-}
 /* Calendario: esquinas casi rectas, como las ventanas, y la misma letra de máquina de escribir. */
 :where(:root[data-skin='sparxie']) .air-datepicker {
-  --adp-font-family: var(--font-type);
   --adp-border-radius: 3px;
   --adp-cell-border-radius: 2px;
 }
@@ -4028,33 +3876,20 @@ tfoot td {
 :where(:root[data-skin='sparxie']) :is(input, select):focus {
   border-color: var(--border);
 }
-/* Foco punteado, como en los sistemas de la época: el turquesa apenas se ve sobre blanco. */
-:where(:root[data-skin='sparxie']) :is(input, select, button, .tip-trigger):focus-visible {
-  outline: 2px dotted var(--text);
-  outline-offset: 2px;
-}
-:where(:root[data-skin='sparxie']) input[type='checkbox'] {
-  accent-color: var(--text);
-}
 
 /* Botones biselados: luz arriba a la izquierda y sombra abajo a la derecha; al pulsar se invierten. */
 :where(:root[data-skin='sparxie']) :is(.btn, .chip) {
   font-family: var(--font-type);
   font-weight: 700;
   letter-spacing: -0.014em;
-  color: var(--text);
-  border-color: var(--border);
   border-radius: 3px;
 }
 :where(:root[data-skin='sparxie']) .btn {
-  background: var(--surface-2);
+  --btn-hover-bg: color-mix(in srgb, var(--surface-2) 88%, var(--text));
+  --btn-hover-border: var(--border);
   box-shadow:
     inset -1px -1px 0 var(--bevel-dark),
     inset 1px 1px 0 var(--bevel-hi);
-}
-:where(:root[data-skin='sparxie']) .btn:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--surface-2) 88%, var(--text));
-  border-color: var(--border);
 }
 :where(:root[data-skin='sparxie']) .btn:active:not(:disabled) {
   box-shadow:
@@ -4079,20 +3914,19 @@ tfoot td {
     inset -1px -1px 0 var(--bevel-hi);
 }
 :where(:root[data-skin='sparxie']) .btn-ghost {
-  background: transparent;
-  border-color: transparent;
+  --btn-hover-bg: var(--chip);
+  --btn-hover-border: transparent;
   box-shadow: none;
-}
-:where(:root[data-skin='sparxie']) .btn-ghost:hover:not(:disabled) {
-  background: var(--chip);
-  border-color: transparent;
 }
 :where(:root[data-skin='sparxie']) .btn-ghost:active:not(:disabled) {
   box-shadow: none;
 }
 @media (prefers-reduced-motion: no-preference) {
-  /* Solo se anima el tinte al pasar el ratón; el bisel cambia de golpe, como en un sistema de 1 bit. */
-  :where(:root[data-skin='sparxie']) :is(.btn, .chip, .tab, .skin-option) {
+  /*
+   * Solo se anima el tinte; el bisel cambia de golpe, como en un sistema de 1 bit. Al pasar el ratón por un
+   * botón o un atajo manda el fundido de entrada común (--fade-in); este, al salir y en pestañas y selectores.
+   */
+  :where(:root[data-skin='sparxie']) :is(.btn, .chip, .tab, .segment) {
     transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
@@ -4100,7 +3934,6 @@ tfoot td {
 /* Interruptor: pista cuadrada con marco y un botón cuadrado, también pintado como degradado. */
 /* Su pista apagada ya contrasta (fondo de chip con marco y botón de tinta): conserva su botón crema. */
 :where(:root[data-skin='sparxie']) .switch span {
-  --knob: inherit;
   border-radius: 3px;
   background-color: var(--chip);
   background-image: linear-gradient(var(--knob), var(--knob)), linear-gradient(var(--ink), var(--ink));
@@ -4112,14 +3945,9 @@ tfoot td {
     3px 50%;
   box-shadow: 0 0 0 1px var(--border);
 }
-:where(:root[data-skin='sparxie']) .switch input:focus-visible + span {
-  outline: 2px dotted var(--text);
-  outline-offset: 2px;
-}
-/* Sparxie conserva su turquesa encendido (no es color de alarma) y su botón crema. */
+/* Encendido, el mismo marco que apagado (la pista turquesa sin él se perdía sobre el blanco). */
 :where(:root[data-skin='sparxie']) .switch input:checked + span {
-  --knob: inherit;
-  background-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--border);
   background-position:
     right 4px center,
     right 3px center;

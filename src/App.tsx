@@ -16,11 +16,12 @@ import { Toast, type ToastMessage } from './components/Toast';
 import { usePlanOdds } from './components/usePlanOdds';
 import { SourcesPanel } from './components/SourcesPanel';
 import { calculate } from './engine/calculate';
-import { todayISO } from './engine/dates';
+import { FALLBACK_VERSION, withCatalogIds } from './engine/catalog';
 import { planCopies, planDupes, planLightCones } from './engine/dupes';
 import type { Skin, ThemeMode } from './engine/types';
 import { useCatalog } from './state/catalog';
 import { SKINS, useAppState, withSettings, type ChangeState } from './state/store';
+import { useToday } from './state/today';
 
 const SKIN_OPTIONS: Record<Skin, { label: string; title: string }> = {
   aha: { label: 'Aha', title: 'Tema Aha: rojo y máscaras de la Exultación' },
@@ -79,22 +80,25 @@ const TAB_ICONS: Record<Tab, ReactNode> = {
   ),
 };
 
-const TABS: { id: Tab; label: string; hash: string }[] = [
-  { id: 'main', label: 'Calculadora', hash: '' },
-  { id: 'account', label: 'Cuenta', hash: '#cuenta' },
-  { id: 'settings', label: 'Configuración', hash: '#configuracion' },
-];
+/** Cada pestaña con su nombre y su hash; TAB_ORDER, el orden en que se muestran. */
+const TABS: Record<Tab, { label: string; hash: string }> = {
+  main: { label: 'Calculadora', hash: '' },
+  account: { label: 'Cuenta', hash: '#cuenta' },
+  settings: { label: 'Configuración', hash: '#configuracion' },
+};
+const TAB_ORDER: Tab[] = ['main', 'account', 'settings'];
 // La pestaña vive en el hash de la URL: sobrevive a recargas y el botón Atrás vuelve a la anterior.
 const tabFromHash = (): Tab => {
   const hash = window.location.hash;
-  return TABS.find((t) => t.hash && t.hash === hash)?.id ?? 'main';
+  return TAB_ORDER.find((id) => TABS[id].hash && TABS[id].hash === hash) ?? 'main';
 };
 
 export default function App() {
-  const [state, setState] = useAppState();
-  const catalogSync = useCatalog();
-  const [today] = useState(todayISO);
   const [toast, setToast] = useState<ToastMessage | null>(null);
+  // Un cambio de otra pestaña también cierra el aviso de deshacer (ver `change`).
+  const [state, setState] = useAppState(() => setToast((t) => (t?.undo ? null : t)));
+  const catalogSync = useCatalog();
+  const today = useToday();
   // Cada aviso con su id: uno nuevo reinicia la cuenta atrás aunque repita el texto.
   const toastId = useRef(0);
   const notify = (message: Omit<ToastMessage, 'id'>) => setToast({ ...message, id: ++toastId.current });
@@ -107,17 +111,31 @@ export default function App() {
   // deshacer devolvía también lo quitado en medio.
   const latest = useRef(state);
   latest.current = state;
+  // Con un aviso de deshacer a la vista, cualquier otro cambio lo cierra: su foto es de antes de ese cambio, y
+  // deshacer se lo llevaría también.
   const change: ChangeState = (update, undo) => {
     if (undo) notify({ text: undo, undo: latest.current });
+    else setToast((t) => (t?.undo ? null : t));
     setState(update);
   };
   const undoLast = () => {
     if (toast?.undo) setState(toast.undo);
   };
 
+  // Las filas del plan siguen al catálogo: guardan su id y toman el nombre actual (lo beta, en inglés, cambia
+  // al traducirse). Sin pasar por `change`: no es un cambio del usuario ni se deshace.
+  const catalog = catalogSync.catalog;
+  useEffect(() => {
+    if (!catalog) return;
+    setState((s) => {
+      const plannedPulls = withCatalogIds(s.plannedPulls, catalog);
+      return plannedPulls === s.plannedPulls ? s : { ...s, plannedPulls };
+    });
+  }, [catalog, state.plannedPulls, setState]);
+
   // El título de la pestaña del navegador dice en qué sección se está.
   useEffect(() => {
-    const label = TABS.find((t) => t.id === tab)!.label;
+    const label = TABS[tab].label;
     document.title = tab === 'main' ? 'Dinero Rail' : `${label} · Dinero Rail`;
   }, [tab]);
 
@@ -128,7 +146,7 @@ export default function App() {
   }, []);
 
   const selectTab = (id: Tab) => {
-    const hash = TABS.find((t) => t.id === id)!.hash;
+    const hash = TABS[id].hash;
     if (hash) window.location.hash = hash;
     else history.pushState(null, '', window.location.pathname + window.location.search);
     setTab(id);
@@ -136,17 +154,17 @@ export default function App() {
 
   // Flechas izquierda/derecha para moverse entre pestañas (patrón de tablist accesible).
   const onTabKey = (e: KeyboardEvent) => {
-    const i = TABS.findIndex((t) => t.id === tab);
-    const next = e.key === 'ArrowRight' ? i + 1 : e.key === 'ArrowLeft' ? i - 1 : e.key === 'Home' ? 0 : e.key === 'End' ? TABS.length - 1 : null;
+    const i = TAB_ORDER.indexOf(tab);
+    const next = e.key === 'ArrowRight' ? i + 1 : e.key === 'ArrowLeft' ? i - 1 : e.key === 'Home' ? 0 : e.key === 'End' ? TAB_ORDER.length - 1 : null;
     if (next === null) return;
     e.preventDefault();
-    const id = TABS[(next + TABS.length) % TABS.length].id;
+    const id = TAB_ORDER[(next + TAB_ORDER.length) % TAB_ORDER.length];
     selectTab(id);
     tabRefs.current[id]?.focus();
   };
 
   const result = useMemo(() => calculate(state, today), [state, today]);
-  // Qué copia es cada fila (su dupe): lo usan la planificación, la previsión y la galería de dupes.
+  // Qué copia es cada fila (su dupe y la Cosmiluz de su 5★): lo usan la planificación, la previsión y la galería.
   const copies = useMemo(
     () => planCopies(state.plannedPulls, catalogSync.catalog?.character ?? null, state.account.characters),
     [state.plannedPulls, catalogSync.catalog, state.account.characters],
@@ -157,7 +175,7 @@ export default function App() {
     [state.plannedPulls, catalogSync.catalog],
   );
   // La simulación del plan, una vez: el % de cada fila de la planificación y las estadísticas de la previsión.
-  const planOdds = usePlanOdds(state, result);
+  const planOdds = usePlanOdds(state, result, copies);
   const totals = useMemo(() => new Map(result.bySource.map((t) => [t.sourceId, t])), [result]);
   const skin = state.settings.skin;
   const theme = state.settings.theme;
@@ -183,9 +201,10 @@ export default function App() {
     else root.dataset.theme = theme;
   }, [theme]);
 
-  // La barra del navegador en móvil (theme-color) con el fondo de la página del tema activo.
+  // La barra del navegador en móvil (theme-color) con el fondo de la página del tema activo. Del fondo ya
+  // calculado del <body> y no del token: --page es un light-dark(), que solo se resuelve al pintarse.
   useLayoutEffect(() => {
-    const page = getComputedStyle(document.documentElement).getPropertyValue('--page').trim();
+    const page = getComputedStyle(document.body).backgroundColor;
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', page);
   }, [skin, theme, systemDark]);
 
@@ -201,12 +220,12 @@ export default function App() {
           Dinero Rail
         </h1>
         <div className="header-actions">
-          <div className="skin-switch" role="group" aria-label="Tema">
+          <div className="segmented" role="group" aria-label="Tema">
             {SKINS.map((id) => (
               <button
                 key={id}
                 type="button"
-                className="skin-option"
+                className="segment"
                 aria-pressed={skin === id}
                 title={SKIN_OPTIONS[id].title}
                 onClick={() => setState(withSettings({ skin: id }))}
@@ -216,12 +235,12 @@ export default function App() {
               </button>
             ))}
           </div>
-          <div className="skin-switch" role="group" aria-label="Modo claro u oscuro">
+          <div className="segmented" role="group" aria-label="Modo claro u oscuro">
             {THEMES.map((t) => (
               <button
                 key={t.id}
                 type="button"
-                className="skin-option theme-option"
+                className="segment theme-option"
                 aria-pressed={activeTheme === t.id}
                 aria-label={t.title}
                 title={t.title}
@@ -234,7 +253,7 @@ export default function App() {
         </div>
       </header>
       <nav className="tabs" role="tablist" aria-label="Secciones" onKeyDown={onTabKey}>
-        {TABS.map((t) => (
+        {TAB_ORDER.map((id) => ({ id, ...TABS[id] })).map((t) => (
           <button
             key={t.id}
             ref={(el) => {
@@ -256,7 +275,7 @@ export default function App() {
       </nav>
       <Toast message={toast} onUndo={undoLast} onClose={() => setToast(null)} />
 
-      {tab === 'main' && <DupeGallery dupes={dupes} lightCones={lightCones} />}
+      {tab === 'main' && <DupeGallery dupes={dupes} lightCones={lightCones} version={catalogSync.catalog?.version ?? FALLBACK_VERSION} />}
       {/* Un solo <main> (destino del salto de teclado); dentro, el panel de la pestaña activa. */}
       <main ref={mainRef} tabIndex={-1} className="main">
         {tab === 'main' ? (

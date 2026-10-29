@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { calculate, PATCH_EVENTS_ID } from './calculate';
-import { addDays, toDayNum, weekdayOf } from './dates';
+import { calculate, eventTiming, PATCH_EVENTS_ID } from './calculate';
+import { addDays } from './dates';
 import { defaultState } from './defaults';
-import { canBePending, nextVersion, occurrences } from './sources';
-import { splitJades } from './rules';
 import type { AppState, Source } from './types';
 
 /** Estado con solo las fuentes indicadas activas y sin parches. */
@@ -19,45 +17,6 @@ function stateWith(ids: string[], targetDate: string, today: string): AppState {
 
 const total = (r: ReturnType<typeof calculate>) => r.final.jades;
 
-describe('dates', () => {
-  it('weekdayOf: 2026-10-05 es lunes y 2026-10-03 sábado', () => {
-    expect(weekdayOf(toDayNum('2026-10-05'))).toBe(0);
-    expect(weekdayOf(toDayNum('2026-10-03'))).toBe(5);
-  });
-});
-
-describe('occurrences', () => {
-  const from = toDayNum('2026-10-01');
-  const to = toDayNum('2026-10-31');
-
-  it('weekly: los lunes de octubre de 2026', () => {
-    expect(occurrences({ type: 'weekly', weekday: 0 }, from, to, []).length).toBe(4);
-  });
-
-  it('cycle: cuenta el ciclo que empieza justo el último día', () => {
-    // 20/09 + 42 = 01/11: fuera del periodo.
-    const days = occurrences({ type: 'cycle', anchor: '2026-09-20', periodDays: 42 }, from, to, []);
-    expect(days).toEqual([]);
-    const onEdge = occurrences({ type: 'cycle', anchor: '2026-10-31', periodDays: 42 }, from, to, []);
-    expect(onEdge).toEqual([to]);
-  });
-
-  it('cycle: ancla en el futuro lejano también genera ciclos hacia atrás', () => {
-    const days = occurrences({ type: 'cycle', anchor: '2027-01-01', periodDays: 42 }, from, to, []);
-    expect(days).toEqual([toDayNum('2026-10-09')]);
-  });
-
-  it('monthly: día 1', () => {
-    expect(occurrences({ type: 'monthly', day: 1 }, from, toDayNum('2026-12-15'), []).length).toBe(3);
-  });
-
-  it('por versión, en orden aunque las versiones no lo estén y con el desfase (negativo, antes del inicio)', () => {
-    const starts = ['2027-01-20', '2026-12-09'].map(toDayNum);
-    const days = occurrences({ type: 'perPatch', offsetDays: -10 }, from, toDayNum('2027-03-01'), starts);
-    expect(days).toEqual(['2026-11-29', '2027-01-10'].map(toDayNum));
-  });
-});
-
 describe('calculate', () => {
   const today = '2026-10-06'; // martes
 
@@ -72,8 +31,9 @@ describe('calculate', () => {
     const r = calculate(s, today);
     expect(r.final.jades).toBe(1060);
     expect(r.shards).toBe(60);
+    // 1060 Jades: 6 tiradas (y sobran 100) más 3 Pases.
     expect(r.wholeSingles).toBe(6 + 3);
-    expect(r.leftoverJades).toBe(100);
+    expect(r.jades).toBe(1000);
 
     s.settings = { ...s.settings, includeShards: false };
     expect(calculate(s, today).final.jades).toBe(1000);
@@ -87,7 +47,7 @@ describe('calculate', () => {
     expect(r.final.jades).toBe(1000 + 60 + 180);
     expect(r.shards).toBe(240);
     expect(r.shardsHeld).toBe(240);
-    expect(r.packShards).toBe(180);
+    expect(r.jades).toBe(1000);
 
     s.settings = { ...s.settings, includePacks: false };
     const off = calculate(s, today);
@@ -112,7 +72,8 @@ describe('calculate', () => {
     const s = stateWith([], today, today);
     s.inventory = { jades: 0, shards: 0, specialPasses: 3, starlight: 87 };
     const r = calculate(s, today);
-    expect(r.starlightPasses).toBe(4);
+    // 87 de Cosmiluz: 4 Pases (sumados a los 3) y sobran 7.
+    expect(r.final.specialPasses).toBe(3 + 4);
     expect(r.starlightLeftover).toBe(7);
     expect(r.wholeSingles).toBe(3 + 4);
   });
@@ -127,7 +88,7 @@ describe('calculate', () => {
   it('cruzar el día 1 del mes suma los 5 Pases Especiales de la Tienda de Ascuas', () => {
     const r = calculate(stateWith(['embers-shop'], '2026-11-01', today), today);
     expect(r.final.specialPasses).toBe(5);
-    expect(r.singles).toBe(5);
+    expect(r.wholeSingles).toBe(5);
   });
 
   it('desactivar una fuente pone su aportación a 0', () => {
@@ -159,6 +120,19 @@ describe('calculate', () => {
     expect(events?.count).toBe(1);
   });
 
+  it('eventos: cuentan de mañana a la fecha objetivo; los de hoy se dan por cobrados', () => {
+    expect(eventTiming('2026-10-05', today, '2026-12-31')).toBe('past');
+    expect(eventTiming(today, today, '2026-12-31')).toBe('today');
+    expect(eventTiming(addDays(today, 1), today, '2026-12-31')).toBe('counts');
+    expect(eventTiming('2026-12-31', today, '2026-12-31')).toBe('counts');
+    expect(eventTiming('2027-01-01', today, '2026-12-31')).toBe('late');
+
+    const s = stateWith([], '2026-12-31', today);
+    const ev = (id: string, date: string) => ({ id, name: id, date, jades: 100, specialPasses: 0 });
+    s.patches = [{ id: 'p', version: '4.7', start: today, events: [ev('hoy', today), ev('mañana', addDays(today, 1))] }];
+    expect(calculate(s, today).bySource.find((t) => t.sourceId === PATCH_EVENTS_ID)?.count).toBe(1);
+  });
+
   it('las fuentes por parche solo cuentan los parches de la tabla', () => {
     const s = stateWith(['maintenance'], '2026-12-31', today);
     s.patches = [{ id: 'p', version: '4.6', start: '2026-09-28', events: [] }];
@@ -180,26 +154,7 @@ describe('calculate', () => {
     const r = calculate(s, today);
     // 320 + 160 Jades = 3, 3 Pases y 50 de Cosmiluz = 2,5.
     expect(r.currentSingles).toBe(8.5);
-    expect(r.starlightPasses).toBe(2);
+    expect(r.final.specialPasses).toBe(3 + 2);
     expect(r.starlightLeftover).toBe(10);
-  });
-});
-
-describe('patches', () => {
-  it('nextVersion', () => {
-    expect(nextVersion('4.6')).toBe('4.7');
-    expect(nextVersion('4.9')).toBe('4.10');
-  });
-});
-
-describe('reglas sueltas', () => {
-  it('splitJades: tiradas enteras y lo que sobra', () => {
-    expect(splitJades(1000)).toEqual({ singles: 6, spare: 40 });
-    expect(splitJades(159)).toEqual({ singles: 0, spare: 159 });
-  });
-
-  it('canBePending: todas menos las de por versión', () => {
-    expect(canBePending({ type: 'daily' })).toBe(true);
-    expect(canBePending({ type: 'perPatch', offsetDays: 0 })).toBe(false);
   });
 });

@@ -7,7 +7,9 @@ import {
   STARLIGHT_PER_5_STAR,
   STARLIGHT_PER_AVERAGE_4_STAR,
   STARLIGHT_PER_PASS,
+  targetStarlight,
 } from './rules';
+import type { RowCopy } from './dupes';
 import type { Pity, PlannedPull, PullKind } from './types';
 
 /*
@@ -80,6 +82,22 @@ const STARLIGHT_PER_PULL_FROM_4_STARS: Record<PullKind, number> = {
   lightCone: FOUR_STAR_RATE * STARLIGHT_PER_AVERAGE_4_STAR.lightCone,
 };
 
+export interface OddsOptions {
+  /** Descontar la Cosmiluz que devuelven las tiradas. */
+  countStarlight?: boolean;
+  /** Banners en los que se perdió el último 50/50: su próximo 5★ es el destacado seguro. */
+  guaranteed?: Record<PullKind, boolean>;
+  /** Cosmiluz que ya se tiene sin cambiar (menos de 20): se junta con la que se saque. */
+  initialStarlight?: number;
+  /** Qué copia es cada fila (planCopies): decide la Cosmiluz de su 5★. Sin ella, cada personaje es nuevo. */
+  copies?: readonly (RowCopy | null)[];
+}
+
+const NOT_GUARANTEED: Record<PullKind, boolean> = { character: false, lightCone: false };
+
+/** Simulaciones de cada previsión: bastantes para un % estable, pocas para repetirla en cada tecla. */
+export const RUNS = 10000;
+
 /**
  * Simula el plan `runs` veces con presupuesto ilimitado y apunta cuántas singles hicieron falta
  * para cada objetivo. Con eso, la probabilidad de conseguir los i primeros con B singles es la
@@ -91,22 +109,16 @@ const STARLIGHT_PER_PULL_FROM_4_STARS: Record<PullKind, number> = {
  * Singles necesarias = el máximo de (tiradas hechas − singles que ya devolvía la Cosmiluz
  * obtenida antes), que se alcanza justo antes de cada 5★.
  */
-export interface OddsOptions {
-  /** Descontar la Cosmiluz que devuelven las tiradas. */
-  countStarlight?: boolean;
-  /** Banners en los que se perdió el último 50/50: su próximo 5★ es el destacado seguro. */
-  guaranteed?: Record<PullKind, boolean>;
-  /** Cosmiluz que ya se tiene sin cambiar (menos de 20): se junta con la que se saque. */
-  initialStarlight?: number;
-}
-
-const NOT_GUARANTEED: Record<PullKind, boolean> = { character: false, lightCone: false };
-
 export function simulatePlan(
-  plan: PlannedPull[],
+  plan: readonly Pick<PlannedPull, 'kind'>[],
   pity: Pity,
-  { countStarlight = true, guaranteed: startGuaranteed = NOT_GUARANTEED, initialStarlight = 0 }: OddsOptions = {},
-  runs = 10000,
+  {
+    countStarlight = true,
+    guaranteed: startGuaranteed = NOT_GUARANTEED,
+    initialStarlight = 0,
+    copies = [],
+  }: OddsOptions = {},
+  runs = RUNS,
   seed = 20261003,
 ): PlanSimulation {
   const rand = mulberry32(seed);
@@ -126,6 +138,7 @@ export function simulatePlan(
     for (let i = 0; i < plan.length; i++) {
       const kind = plan[i].kind;
       const perPull = STARLIGHT_PER_PULL_FROM_4_STARS[kind];
+      const own = targetStarlight(kind, copies[i]?.eidolon ?? null);
       for (;;) {
         const n = sampleFiveStar(kind, pity5[kind], rand());
         pity5[kind] = 0;
@@ -133,9 +146,10 @@ export function simulatePlan(
         // La tirada del 5★ se paga con lo que devolvía la Cosmiluz de antes de ella (4★ por su media).
         const before = pulls - refund(starlight + perPull * (n - 1));
         if (before > need) need = before;
-        starlight += perPull * n + STARLIGHT_PER_5_STAR;
         const featured = guaranteed[kind] || rand() < BANNERS[kind].featuredChance;
         guaranteed[kind] = !featured;
+        // El 5★ perdido (de la reserva estándar) se supone repetido; el buscado da según su copia.
+        starlight += perPull * n + (featured ? own : STARLIGHT_PER_5_STAR);
         if (featured) break;
       }
       needed[i][r] = need;
@@ -163,8 +177,8 @@ const percentile = (sorted: Float64Array, q: number) =>
 
 /**
  * Singles que garantizan conseguir los i primeros objetivos pase lo que pase (el peor caso absoluto):
- * cada 5★ en el pity duro, perdiendo todos los 50/50, y como Cosmiluz solo la mínima segura: 40 por
- * cada 5★ y solo el 4★ garantizado cada 10 tiradas, del tipo que menos da:
+ * cada 5★ en el pity duro, perdiendo todos los 50/50, y como Cosmiluz solo la mínima segura: la de cada 5★
+ * (40 el perdido; el buscado, según su copia) y solo el 4★ garantizado cada 10 tiradas, del tipo que menos da:
  * - Banner de conos: siempre cono (8).
  * - Banner de personaje: si sale un cono (no destacado), el siguiente 4★ es un personaje destacado
  *   seguro, así que lo peor es alternar cono (8) y personaje (20).
@@ -173,18 +187,20 @@ const percentile = (sorted: Float64Array, q: number) =>
 export function guaranteedNeeded(
   plan: PlannedPull[],
   pity: Pity,
-  { countStarlight = true, guaranteed = NOT_GUARANTEED, initialStarlight = 0 }: OddsOptions = {},
+  { countStarlight = true, guaranteed = NOT_GUARANTEED, initialStarlight = 0, copies = [] }: OddsOptions = {},
 ): number[] {
   const seen = new Set<PullKind>();
   let pulls = 0;
   let starlight = initialStarlight;
-  let fourStars = 0;
+  // El 4★ garantizado cuenta por banner, como en el juego: las tiradas de un banner no adelantan el del otro.
+  const bannerPulls: Record<PullKind, number> = { character: 0, lightCone: 0 };
+  const fourStars: Record<PullKind, number> = { character: 0, lightCone: 0 };
   let characterFeaturedNext = false;
   let need = 0;
 
-  // Apunta la Cosmiluz de los 4★ garantizados hasta la tirada `upTo` (incluida), en el banner `kind`.
+  // Apunta la Cosmiluz de los 4★ garantizados del banner `kind` hasta su tirada `upTo` (incluida).
   const creditFourStars = (upTo: number, kind: PullKind) => {
-    for (; fourStars < Math.floor(upTo / FOUR_STAR_PITY); fourStars++) {
+    for (; fourStars[kind] < Math.floor(upTo / FOUR_STAR_PITY); fourStars[kind]++) {
       if (kind === 'lightCone') {
         starlight += STARLIGHT_PER_4_STAR.lightCone;
       } else {
@@ -195,7 +211,7 @@ export function guaranteedNeeded(
   };
   const refund = () => (countStarlight ? Math.floor(starlight / STARLIGHT_PER_PASS) : 0);
 
-  return plan.map((p) => {
+  return plan.map((p, i) => {
     const hard = BANNERS[p.kind].hardPity;
     const isFirst = !seen.has(p.kind);
     const first = hard - (isFirst ? Math.min(hard - 1, pity[p.kind]) : 0);
@@ -203,12 +219,14 @@ export function guaranteedNeeded(
     // Dos 5★ por objetivo (el perdido y el bueno), cada uno pagado con la Cosmiluz de antes de él;
     // solo uno si es el primero de un banner con el garantizado.
     const segments = isFirst && guaranteed[p.kind] ? [first] : [first, hard];
-    for (const segment of segments) {
+    segments.forEach((segment, j) => {
       pulls += segment;
-      creditFourStars(pulls - 1, p.kind);
+      bannerPulls[p.kind] += segment;
+      creditFourStars(bannerPulls[p.kind] - 1, p.kind);
       need = Math.max(need, pulls - refund());
-      starlight += STARLIGHT_PER_5_STAR;
-    }
+      // El último 5★ es el buscado; el de antes, el perdido.
+      starlight += j === segments.length - 1 ? targetStarlight(p.kind, copies[i]?.eidolon ?? null) : STARLIGHT_PER_5_STAR;
+    });
     return need;
   });
 }

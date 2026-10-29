@@ -59,7 +59,7 @@ export function ResultSummary({ result, skin }: { result: Result; skin: Skin }) 
           <dt>Jades Estelares</dt>
           <dd>
             <Icon kind="jade" size={28} decorative />
-            {fmtInt(final.jades - result.shards)}
+            {fmtInt(result.jades)}
           </dd>
         </div>
         <div>

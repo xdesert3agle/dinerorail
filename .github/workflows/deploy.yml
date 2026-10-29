@@ -22,7 +22,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          # La misma versión que en local (.nvmrc): un LTS nuevo no rompe la publicación sin cambios propios.
+          node-version-file: .nvmrc
           cache: npm
       - run: npm ci
       - run: npm test

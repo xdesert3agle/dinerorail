@@ -4,10 +4,10 @@ import {
   fiveStarRate,
   FOUR_STAR_BASE_RATE,
   FOUR_STAR_RATE,
+  MAX_EIDOLON,
   STARLIGHT_PER_4_STAR,
-  STARLIGHT_PER_5_STAR,
-  STARLIGHT_PER_5_STAR_E6,
   STARLIGHT_PER_PASS,
+  targetStarlight,
 } from '../engine/rules';
 import { fmtRate } from './format';
 import { Icon } from './Icon';
@@ -20,14 +20,15 @@ import { TipTitle } from './Tip';
  * (una vez por tarjeta), dice lo mismo, y si cambia una regla del juego se cambia aquí.
  */
 
-/** Cosmiluz que devuelve cada cosa al salir (de las constantes de rules.ts). */
-const STARLIGHT_REFUNDS: { kind: PullKind; stars: 4 | 5; e6?: boolean; amount: number }[] = [
+/** Cosmiluz que devuelve cada cosa al salir (de las reglas de rules.ts). */
+const STARLIGHT_REFUNDS: { kind: PullKind; stars: 4 | 5; note?: string; amount: number }[] = [
   // Por rareza: los 4★ juntos y luego los 5★, cada personaje con su cono.
   { kind: 'character', stars: 4, amount: STARLIGHT_PER_4_STAR.character },
   { kind: 'lightCone', stars: 4, amount: STARLIGHT_PER_4_STAR.lightCone },
-  { kind: 'character', stars: 5, amount: STARLIGHT_PER_5_STAR },
-  { kind: 'character', stars: 5, e6: true, amount: STARLIGHT_PER_5_STAR_E6 },
-  { kind: 'lightCone', stars: 5, amount: STARLIGHT_PER_5_STAR },
+  { kind: 'character', stars: 5, note: 'nuevo', amount: targetStarlight('character', 0) },
+  { kind: 'character', stars: 5, note: 'E1–E6', amount: targetStarlight('character', 1) },
+  { kind: 'character', stars: 5, note: 'tras E6', amount: targetStarlight('character', MAX_EIDOLON + 1) },
+  { kind: 'lightCone', stars: 5, amount: targetStarlight('lightCone', null) },
 ];
 /** Probabilidad de cada rareza por tirada: la base y la consolidada. El 4★ es igual en los dos banners. */
 const ODDS_ROWS: { label: string; stars: 4 | 5; base: string; total: string }[] = [
@@ -46,9 +47,9 @@ const ODDS_ROWS: { label: string; stars: 4 | 5; base: string; total: string }[] 
     total: fmtRate(fiveStarRate('lightCone'), 2),
   },
 ];
-/** «Cono 4★», «Personaje 5★ E6»: el texto de cada fila, para la clave y los lectores de pantalla. */
-const refundLabel = ({ kind, stars, e6 }: (typeof STARLIGHT_REFUNDS)[number]) =>
-  `${KIND_LABEL[kind]} ${stars}★${e6 ? ' (E6)' : ''}`;
+/** «Cono 4★», «Personaje 5★ (nuevo)»: el texto de cada fila, para la clave y los lectores de pantalla. */
+const refundLabel = ({ kind, stars, note }: (typeof STARLIGHT_REFUNDS)[number]) =>
+  `${KIND_LABEL[kind]} ${stars}★${note ? ` (${note})` : ''}`;
 
 /**
  * Cosmiluz: su cambio en tiradas, lo que devuelve cada objeto y las probabilidades por tirada. La del campo de
@@ -71,7 +72,7 @@ export function StarlightDefinition() {
     <span className="with-icon with-icon-tight tip-rule">
       {`${STARLIGHT_PER_PASS} Cosmiluz`}
       <Icon kind="starlight" size={16} decorative />
-      {' = 1 tirada'}
+      {'\u00a0=\u00a01 tirada'}
       <Icon kind="pass" size={16} decorative />
       <span className="sr-only">. </span>
     </span>
@@ -87,13 +88,13 @@ export function StarlightDefinition() {
       <span className="tip-table">
         {STARLIGHT_REFUNDS.map((r) => (
           <span key={refundLabel(r)} className="tip-table-row">
-            {/* «(E6)» en tinta: es una condición de la fila, no parte de la rareza. */}
+            {/* «(nuevo)» en tinta: es una condición de la fila, no parte de la rareza. */}
             <span>
               <span className={`rarity-${r.stars}`}>
                 {`${KIND_LABEL[r.kind]} `}
                 <Rarity stars={r.stars} />
               </span>
-              {r.e6 && ' (E6)'}
+              {r.note && ` (${r.note})`}
             </span>
             <span className="with-icon with-icon-tight tip-table-value">
               {r.amount}

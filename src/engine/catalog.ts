@@ -1,5 +1,5 @@
 import { isPathId, type PathId } from './rules';
-import type { PullKind } from './types';
+import type { PlannedPull } from './types';
 import { isObj } from './util';
 
 /*
@@ -9,18 +9,8 @@ import { isObj } from './util';
  * El nombre en español sale de yatta.moe, por id. Lo que yatta aún no tiene (lo que está en beta) se queda en
  * inglés hasta que lo publique.
  */
-const NANOKA = 'https://static.nanoka.cc';
-export const MANIFEST_URL = `${NANOKA}/manifest.json`;
-/** Si el manifest no responde, la última versión conocida. */
+/** Si el manifest de nanoka no responde, la última versión conocida (las direcciones, en urls.ts). */
 export const FALLBACK_VERSION = '4.6.54';
-export const nanokaUrl = (version: string) => `${NANOKA}/hsr/${version}`;
-export const catalogUrl = (version: string, kind: PullKind) =>
-  `${nanokaUrl(version)}/${kind === 'character' ? 'character' : 'lightcone'}.json`;
-const YATTA = 'https://sr.yatta.moe/api/v2/es';
-export const YATTA_NAMES_URLS: Record<PullKind, string> = {
-  character: `${YATTA}/avatar`,
-  lightCone: `${YATTA}/equipment`,
-};
 
 export interface CatalogEntry {
   id: string;
@@ -147,6 +137,40 @@ export const fold = (s: string) =>
     .toLowerCase()
     .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .trim();
+
+/**
+ * La entrada de ese nombre: el mismo, sin contar mayúsculas ni espacios de los bordes (null si no hay). Es «el
+ * mismo nombre» en toda la app: el plan, el desplegable y la galería. Para buscar, en cambio, fold.
+ */
+export function findByName(entries: CatalogEntry[], name: string): CatalogEntry | null {
+  const k = name.trim().toLowerCase();
+  return k ? (entries.find((e) => e.name.toLowerCase() === k) ?? null) : null;
+}
+
+/**
+ * La entrada de una fila del plan: por su id del catálogo, que no cambia aunque cambie el nombre (lo beta va en
+ * inglés hasta que yatta lo traduce), y si no lo tiene, por su nombre.
+ */
+export function entryOf(row: { name: string; entryId?: string }, entries: CatalogEntry[]): CatalogEntry | null {
+  const byId = row.entryId ? entries.find((e) => e.id === row.entryId) : undefined;
+  return byId ?? findByName(entries, row.name);
+}
+
+/**
+ * Las filas del plan con el id y el nombre actuales de su entrada del catálogo (las elegidas sin catálogo, o
+ * guardadas antes de tener id, lo ganan; las de nombre beta toman el traducido). Las mismas, sin copiar, si no
+ * cambia nada.
+ */
+export function withCatalogIds(plan: PlannedPull[], catalog: Catalog): PlannedPull[] {
+  let changed = false;
+  const next = plan.map((row) => {
+    const entry = entryOf(row, catalog[row.kind]);
+    if (!entry || (row.entryId === entry.id && row.name === entry.name)) return row;
+    changed = true;
+    return { ...row, entryId: entry.id, name: entry.name };
+  });
+  return changed ? next : plan;
+}
 
 /**
  * Sugerencias para lo escrito: primero los nombres que empiezan así, luego los que tienen una palabra

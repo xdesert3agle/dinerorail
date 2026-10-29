@@ -1,6 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CatalogEntry } from '../engine/catalog';
 import type { PlannedPullResult } from '../engine/pulls';
 import type { PlannedPull } from '../engine/types';
@@ -86,14 +86,12 @@ export function PullRow({
     <div
       ref={setNodeRef}
       className={`pull-row ${row.affordable ? '' : 'is-short'} ${isDragging ? 'is-dragging' : ''} ${leaving ? 'is-leaving' : ''}`}
-      style={
-        {
-          transform: CSS.Translate.toString(transform),
-          transition,
-          filter: leaving ? `url(#${dustId})` : undefined,
-          '--dust-ms': `${DUST_MS}ms`,
-        } as CSSProperties
-      }
+      style={{
+        transform: CSS.Translate.toString(transform),
+        transition,
+        filter: leaving ? `url(#${dustId})` : undefined,
+        '--dust-ms': `${DUST_MS}ms`,
+      }}
     >
       {leaving && (
         <svg className="dust-filter" width="0" height="0" aria-hidden="true">
@@ -195,7 +193,7 @@ export function PullRow({
           value={pull.name}
           entries={suggestions}
           aria-label={`Nombre (${KIND_LABEL[pull.kind].toLowerCase()})`}
-          onChange={(name) => onUpdate({ name })}
+          onChange={(name, entry) => onUpdate({ name, entryId: entry?.id })}
           autoFocus={autoFocus}
         />
       </div>

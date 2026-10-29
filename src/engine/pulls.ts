@@ -4,7 +4,9 @@ import {
   STARLIGHT_PER_5_STAR,
   STARLIGHT_PER_AVERAGE_4_STAR,
   STARLIGHT_PER_PASS,
+  targetStarlight,
 } from './rules';
+import type { RowCopy } from './dupes';
 import type { Pity, PlannedPull, PullKind } from './types';
 
 export interface PlannedPullResult {
@@ -36,14 +38,27 @@ export interface PlannedPullResult {
  * La cuenta del plan: lo que cuestan las filas (sin la Cosmiluz), lo que la Cosmiluz devuelve y lo que sobra de
  * las tiradas disponibles (negativo: faltan). `available` es lo mismo que se pasó a planPulls.
  */
-export function planBalance(rows: PlannedPullResult[], available: number) {
+export interface PlanBalance {
+  gross: number;
+  refunded: number;
+  left: number;
+}
+
+export function planBalance(rows: PlannedPullResult[], available: number): PlanBalance {
   const net = rows.at(-1)?.cumulative ?? 0;
   const gross = rows.reduce((sum, r) => sum + r.cost, 0);
   return { gross, refunded: gross - net, left: available - net };
 }
 
-export const clampPity = (kind: PullKind, value: number, hardPity = DEFAULT_HARD_PITY) =>
-  Math.min(hardPity[kind] - 1, Math.max(0, Math.floor(value)));
+/**
+ * El pity que cuenta: el guardado (tal cual, aunque se haya bajado el máximo), limitado al máximo configurado
+ * menos uno: en la tirada del máximo sale seguro. El único sitio que lo limita: lo usan el campo, el plan y la
+ * previsión, así que todos ven el mismo valor.
+ */
+export function effectivePity(pity: Pity, hardPity = DEFAULT_HARD_PITY): Pity {
+  const limit = (kind: PullKind) => Math.min(hardPity[kind] - 1, Math.max(0, Math.floor(pity[kind])));
+  return { character: limit('character'), lightCone: limit('lightCone') };
+}
 
 export interface PlanOptions {
   /** Descontar la Cosmiluz que devuelven las tiradas. */
@@ -54,6 +69,8 @@ export interface PlanOptions {
   guaranteed?: Record<PullKind, boolean>;
   /** Cosmiluz que ya se tiene sin cambiar (menos de 20): se junta con la que se saque. */
   initialStarlight?: number;
+  /** Qué copia es cada fila (planCopies): decide la Cosmiluz de su 5★. Sin ella, cada personaje es nuevo. */
+  copies?: readonly (RowCopy | null)[];
 }
 
 /**
@@ -74,18 +91,20 @@ export function planPulls(
     hardPity = DEFAULT_HARD_PITY,
     guaranteed = { character: false, lightCone: false },
     initialStarlight = 0,
+    copies = [],
   }: PlanOptions = {},
 ): PlannedPullResult[] {
   const seen = new Set<PullKind>();
   let pulls = 0;
   let starlight = initialStarlight;
   let cumulative = 0;
+  const current = effectivePity(pity, hardPity);
 
-  return plan.map((pull) => {
+  return plan.map((pull, i) => {
     const base = hardPity[pull.kind];
     const usesPity = !seen.has(pull.kind);
     seen.add(pull.kind);
-    const progress = usesPity ? clampPity(pull.kind, pity[pull.kind], hardPity) : 0;
+    const progress = usesPity ? current[pull.kind] : 0;
     const isGuaranteed = usesPity && guaranteed[pull.kind];
     const wins = isGuaranteed || pull.winsFiftyFifty;
     const cost = base - progress + (wins ? 0 : base);
@@ -93,7 +112,7 @@ export function planPulls(
     // 4★ esperados en la fila (media, con decimales); la Cosmiluz se redondea solo al cambiarla por singles.
     const fourStars = cost / PULLS_PER_4_STAR;
     const duringRow = fourStars * STARLIGHT_PER_AVERAGE_4_STAR[pull.kind] + (wins ? 0 : STARLIGHT_PER_5_STAR);
-    const rowStarlight = duringRow + STARLIGHT_PER_5_STAR;
+    const rowStarlight = duringRow + targetStarlight(pull.kind, copies[i]?.eidolon ?? null);
     pulls += cost;
 
     // Singles que devuelve una cantidad de Cosmiluz (0 si no se cuenta).

@@ -1,11 +1,14 @@
 import { useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
-import { searchCatalog, type CatalogEntry } from '../engine/catalog';
+import { findByName, searchCatalog, type CatalogEntry } from '../engine/catalog';
 import { PLAIN_TEXT_INPUT } from './inputs';
 
 interface Props {
   value: string;
-  /** Nombre nuevo: el elegido del catálogo, vacío al borrar el campo o, sin catálogo, lo escrito. */
-  onChange: (value: string) => void;
+  /**
+   * Nombre nuevo: el elegido del catálogo (con su entrada), vacío al borrar el campo o, sin catálogo, lo
+   * escrito (sin entrada).
+   */
+  onChange: (value: string, entry?: CatalogEntry) => void;
   /** Nombres que se pueden elegir. Sin catálogo es un campo de texto libre. */
   entries: CatalogEntry[];
   inputClassName?: string;
@@ -49,7 +52,7 @@ export function NameCombobox({
   const suggestions = useMemo(() => (query ? searchCatalog(entries, query) : []), [entries, query]);
   const searching = !free && query !== null && query.trim() !== '';
   // Si lo escrito ya es exactamente la única sugerencia, no hace falta la lista.
-  const exact = suggestions.length === 1 && suggestions[0].name === query;
+  const exact = suggestions.length === 1 && findByName(suggestions, query ?? '') !== null;
   const shown = searching && !exact;
   // Con una sola sugerencia, ya va marcada: Intro la elige sin tener que bajar con la flecha.
   const highlighted = active >= 0 ? active : suggestions.length === 1 ? 0 : -1;
@@ -58,7 +61,7 @@ export function NameCombobox({
     setQuery(null);
     setActive(-1);
   };
-  const commit = (entry: CatalogEntry) => onChange(entry.name);
+  const commit = (entry: CatalogEntry) => onChange(entry.name, entry);
   const pick = (entry: CatalogEntry) => {
     commit(entry);
     reset();
@@ -68,10 +71,9 @@ export function NameCombobox({
   const onBlur = () => {
     setFocused(false);
     if (free || queryRef.current === null) return;
-    const typed = queryRef.current.trim().toLowerCase();
-    const entry = typed ? entries.find((e) => e.name.toLowerCase() === typed) : undefined;
+    const entry = findByName(entries, queryRef.current);
     if (entry) commit(entry);
-    else if (!typed && value) onChange('');
+    else if (!queryRef.current.trim() && value) onChange('');
     reset();
   };
 

@@ -99,6 +99,11 @@ export interface Pity {
 export interface PlannedPull {
   id: string;
   name: string;
+  /**
+   * Id del catálogo del elegido. Identifica la fila aunque el catálogo cambie el nombre (el contenido beta va
+   * en inglés hasta que yatta lo traduce); sin catálogo, o con nombre libre, no hay.
+   */
+  entryId?: string;
   kind: PullKind;
   /** Si gana el 50/50 cuesta un pity; si lo pierde, dos. */
   winsFiftyFifty: boolean;

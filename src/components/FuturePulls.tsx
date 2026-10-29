@@ -13,19 +13,13 @@ import {
 } from '@dnd-kit/core';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { useMemo, useRef, useState, type RefObject } from 'react';
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import type { Result } from '../engine/calculate';
-import type { Catalog, CatalogEntry } from '../engine/catalog';
-import {
-  characterPortraitUrl,
-  dupeOf,
-  lightConeIconUrl,
-  lightConeImageUrl,
-  resolve,
-  type RowCopy,
-} from '../engine/dupes';
+import { entryOf, type Catalog, type CatalogEntry } from '../engine/catalog';
+import { dupeOf, type RowCopy } from '../engine/dupes';
 import { planBalance, planPulls } from '../engine/pulls';
 import type { AppState, PlannedPull, PullKind } from '../engine/types';
+import { characterPortraitUrl, lightConeIconUrl, lightConeImageUrl } from '../engine/urls';
 import { newId } from '../engine/util';
 import type { ChangeState, Notice } from '../state/store';
 import { KIND_GLYPH, KIND_LABEL } from './kinds';
@@ -78,6 +72,7 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
     hardPity: state.settings.hardPity,
     guaranteed: state.guaranteed,
     initialStarlight: result.starlightLeftover,
+    copies,
   });
   // Las filas muestran el coste sin Cosmiluz; lo que devuelve solo se descuenta del total.
   const balance = planBalance(rows, result.wholeSingles);
@@ -101,14 +96,18 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
   // Miniatura de cada fila: el retrato del personaje o el icono del cono (null si no está en el catálogo).
   // Del cono, primero el de StarRailRes y, si no lo tiene, el de nanoka.
   const portraitOf = (pull: PlannedPull) => {
-    const entry = catalog ? resolve(pull.name, catalog[pull.kind]) : null;
+    const entry = catalog ? entryOf(pull, catalog[pull.kind]) : null;
     if (!entry) return null;
     return pull.kind === 'character'
       ? [characterPortraitUrl(entry.id)]
       : [lightConeIconUrl(entry.id), lightConeImageUrl(entry.id)];
   };
-  // La fila recién añadida enfoca su nombre para poder escribir directamente.
+  // La fila recién añadida enfoca su nombre para poder escribir directamente. Una sola vez: en cuanto aparece se
+  // olvida, así que si vuelve a montarse (al deshacer su borrado) no se lleva el foco.
   const [focusId, setFocusId] = useState<string | null>(null);
+  useEffect(() => {
+    if (focusId && plan.some((p) => p.id === focusId)) setFocusId(null);
+  }, [focusId, plan]);
   const add = (kind: PullKind) => {
     const id = newId('pull');
     setFocusId(id);
@@ -197,9 +196,11 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
             onDragCancel={() => (lastOver.current = null)}
             accessibility={{
               announcements,
+              // Instrucción de teclado solo para lectores: en imperativo y con las teclas en minúscula, como las
+              // pistas del propio lector (norma de voz); los avisos de estado, de arriba, van en impersonal.
               screenReaderInstructions: {
                 draggable:
-                  'Para mover una tirada: Espacio o Intro para cogerla, flechas arriba y abajo para moverla y otra vez Espacio o Intro para soltarla. Escape cancela.',
+                  'Para mover una tirada, pulsa espacio o intro para cogerla, muévela con las flechas arriba y abajo y vuelve a pulsar espacio o intro para soltarla. Pulsa escape para cancelar.',
               },
             }}
           >

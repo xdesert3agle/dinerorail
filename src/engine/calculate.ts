@@ -28,23 +28,22 @@ export interface Result {
   incomeSingles: number;
   /** Inventario + ingresos. Las Esquirlas ya van sumadas en `jades` si están incluidas. */
   final: Reward;
+  /** Jades Estelares que se tendrán, sin las Esquirlas sumadas a `final.jades`. */
+  jades: number;
   /**
    * Esquirlas Oníricas sumadas a `final.jades`: las del inventario si se convierten («Convertir Esquirlas en
    * Jades») más las de los paquetes si se cuentan («Usar paquetes en el plan»).
    */
   shards: number;
-  /** Esquirlas que se tendrán: las del inventario más las de los paquetes, se cuenten o no como Jades. */
+  /**
+   * Esquirlas que se tendrán: las del inventario (se cuenten o no como Jades) más las de los paquetes que cuentan
+   * (ninguna con «Usar paquetes en el plan» apagado).
+   */
   shardsHeld: number;
-  /** Esquirlas de los paquetes planificados (0 con «Usar paquetes en el plan» apagado). */
-  packShards: number;
-  /** Pases Especiales que salen de la Cosmiluz que ya se tiene (sumados a `final.specialPasses`). */
-  starlightPasses: number;
   /** Cosmiluz que sobra tras cambiarla (menos de 20): se junta con la que se saque al tirar. */
   starlightLeftover: number;
-  /** Singles exactas (con decimales). */
-  singles: number;
+  /** Tiradas enteras que se tendrán: las Jades (con las Esquirlas que cuentan) en tiradas, más los Pases. */
   wholeSingles: number;
-  leftoverJades: number;
   bySource: SourceTotal[];
 }
 
@@ -63,6 +62,17 @@ export function toSingles(r: Reward): number {
 /** Esquirlas de los paquetes planificados que cuentan: ninguna con «Usar paquetes en el plan» apagado. */
 export function plannedPackShards(state: AppState): number {
   return state.settings.includePacks ? packsTotal(state.shardPacks).shards : 0;
+}
+
+/**
+ * Si un evento de versión con esa fecha entra en el cálculo, y si no, por qué. El periodo va de mañana a la fecha
+ * objetivo: lo de hoy se da por cobrado (ya está en los recursos actuales).
+ */
+export type EventTiming = 'counts' | 'past' | 'today' | 'late';
+export function eventTiming(date: ISODate, today: ISODate, target: ISODate): EventTiming {
+  if (date < today) return 'past';
+  if (date === today) return 'today';
+  return date > target ? 'late' : 'counts';
 }
 
 /** Genera todos los cobros con fecha entre hoy y la fecha objetivo. */
@@ -88,8 +98,7 @@ export function buildEvents(state: AppState, today: ISODate): IncomeEvent[] {
   // Eventos de cada parche, cada uno en su fecha de cobro.
   for (const patch of patches) {
     for (const ev of patch.events) {
-      const day = toDayNum(ev.date);
-      if (day >= from && day <= to && (ev.jades || ev.specialPasses)) {
+      if (eventTiming(ev.date, today, state.targetDate) === 'counts' && (ev.jades || ev.specialPasses)) {
         events.push({ date: ev.date, sourceId: PATCH_EVENTS_ID, reward: { jades: ev.jades, specialPasses: ev.specialPasses } });
       }
     }
@@ -150,14 +159,11 @@ export function calculate(state: AppState, today: ISODate): Result {
     currentSingles: toSingles(start) + starlightLeftover / STARLIGHT_PER_PASS,
     incomeSingles: toSingles(income),
     final,
+    jades: final.jades - shards - packShards,
     shards: shards + packShards,
     shardsHeld: inv.shards + packShards,
-    packShards,
-    starlightPasses,
     starlightLeftover,
-    singles: toSingles(final),
     wholeSingles: splitJades(jades).singles + final.specialPasses,
-    leftoverJades: splitJades(jades).spare,
     bySource: [...totals.values()].sort((a, b) => b.singles - a.singles),
   };
 }

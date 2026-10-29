@@ -32,11 +32,14 @@ export function dayOfMonth(day: number): number {
   return new Date(day * MS_PER_DAY).getUTCDate();
 }
 
-/** Fecha local de hoy (la del usuario, no UTC). */
-export function todayISO(now = new Date()): ISODate {
+/** La fecha local (la del usuario, no UTC) de un momento, como ISODate. */
+export function localISO(date: Date): ISODate {
   const pad = (n: number) => String(n).padStart(2, '0');
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
+
+/** Fecha local de hoy. */
+export const todayISO = (): ISODate => localISO(new Date());
 
 export const WEEKDAYS = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
 

@@ -1,36 +1,13 @@
 import { ownedCopies } from './account';
-import type { Catalog, CatalogEntry } from './catalog';
+import { entryOf, type Catalog, type CatalogEntry } from './catalog';
 import { MAX_EIDOLON, MAX_SUPERIMPOSITION } from './rules';
 import type { OwnedCharacter, PlannedPull } from './types';
 
 /** Dupes que se muestran a la izquierda, como mucho. */
 export const MAX_DUPES = 6;
 
-/** Arte de cada Eidolón (dupe) de un personaje: 1…6. */
-export const dupeImageUrl = (characterId: string, dupe: number) =>
-  `https://static.nanoka.cc/assets/hsr/rank/_dependencies/textures/${characterId}/${characterId}_Rank_${dupe}.webp`;
-
-/** Retrato redondo de un personaje (128×128, centrado en la cara): para la miniatura de cada fila del plan. */
-export const characterPortraitUrl = (characterId: string) =>
-  `https://static.nanoka.cc/assets/hsr/avatarroundicon/${characterId}.webp`;
-
 /** Conos de luz que se muestran a la derecha, como mucho. */
 export const MAX_LIGHT_CONES = 6;
-
-/** Icono mediano de un cono de luz. */
-export const lightConeImageUrl = (lightConeId: string) =>
-  `https://static.nanoka.cc/assets/hsr/lightconemediumicon/${lightConeId}.webp`;
-
-/** Icono de una vía en StarRailRes (blanco sobre transparente: se usa como máscara con el color del texto). */
-export const pathIconUrl = (icon: string) => `https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/icon/path/${icon}.png`;
-
-/**
- * Icono de un cono de luz en el repo de assets StarRailRes (el raw de
- * https://github.com/Mar-7th/StarRailRes/blob/master/icon/light_cone/<id>.png, que sirve CORS).
- * Puede no tener aún el contenido beta: el planificador recurre entonces a lightConeImageUrl.
- */
-export const lightConeIconUrl = (lightConeId: string) =>
-  `https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/icon/light_cone/${lightConeId}.png`;
 
 export interface Dupe {
   characterId: string;
@@ -43,19 +20,6 @@ export interface RowCopy {
   characterId: string;
   /** Copias de ese personaje que hay antes (cuenta + filas anteriores): 0 es la primera, 1 su E1… */
   eidolon: number;
-}
-
-const key = (name: string) => name.trim().toLowerCase();
-
-/**
- * Personaje o cono del catálogo de un nombre: el mismo, sin contar mayúsculas ni espacios de los bordes. Los
- * nombres del plan salen del catálogo (el desplegable solo acepta uno de la lista); un texto libre de antes de
- * tener catálogo («Kafkaa») no se da por bueno.
- */
-export function resolve(name: string, entries: CatalogEntry[]): CatalogEntry | null {
-  const k = key(name);
-  if (!k) return null;
-  return entries.find((e) => key(e.name) === k) ?? null;
 }
 
 /**
@@ -73,7 +37,7 @@ export function planCopies(
   const copies = ownedCopies(owned);
   return plan.map((p) => {
     if (p.kind !== 'character') return null;
-    const entry = resolve(p.name, entries);
+    const entry = entryOf(p, entries);
     if (!entry) return null;
     const eidolon = copies.get(entry.id) ?? 0;
     copies.set(entry.id, eidolon + 1);
@@ -105,7 +69,7 @@ export function planLightCones(plan: PlannedPull[], catalog: Catalog | null): st
   const ids: string[] = [];
   for (const p of plan) {
     if (p.kind !== 'lightCone') continue;
-    const entry = resolve(p.name, catalog.lightCone);
+    const entry = entryOf(p, catalog.lightCone);
     if (entry) ids.push(entry.id);
     if (ids.length === MAX_LIGHT_CONES) break;
   }

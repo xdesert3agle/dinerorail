@@ -105,7 +105,7 @@ export function Tip({
         left,
         top: below ? r.bottom + GAP : Math.max(EDGE, r.top - GAP - height),
         '--arrow-x': `${arrowX}px`,
-      } as CSSProperties);
+      });
       setAbove(!below);
     };
     place();

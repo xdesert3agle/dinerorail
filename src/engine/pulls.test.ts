@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { planBalance, planPulls } from './pulls';
-import { PULLS_PER_4_STAR, STARLIGHT_PER_AVERAGE_4_STAR } from './rules';
+import { effectivePity, planBalance, planPulls, type PlanOptions } from './pulls';
 import type { PlannedPull } from './types';
 
 const pull = (id: string, kind: PlannedPull['kind'], winsFiftyFifty = false): PlannedPull => ({
@@ -9,6 +8,9 @@ const pull = (id: string, kind: PlannedPull['kind'], winsFiftyFifty = false): Pl
   kind,
   winsFiftyFifty,
 });
+
+// Personajes ya repetidos (de E1 a E6): su 5★ da 40 de Cosmiluz, como suponen las cuentas de estos tests.
+const repeated = { copies: Array.from({ length: 5 }, () => ({ characterId: 'x', eidolon: 1 })) };
 
 describe('planPulls', () => {
   it('el primer personaje descuenta el pity: 50 de pity y 50/50 perdido → 80 − 50 + 80 = 110', () => {
@@ -46,7 +48,12 @@ describe('planPulls', () => {
   });
 
   it('acumula, resta de las singles disponibles y marca lo que no llega', () => {
-    const rows = planPulls([pull('a', 'character'), pull('b', 'lightCone')], { character: 0, lightCone: 0 }, 200);
+    const rows = planPulls(
+      [pull('a', 'character'), pull('b', 'lightCone')],
+      { character: 0, lightCone: 0 },
+      200,
+      repeated,
+    );
     // Fila 1 (personaje): 160 tiradas → 20,8 4★ × 17,52 (364,4) + 2 5★ (80) = 444,4 de Cosmiluz → 22 singles.
     // Fila 2 (cono): 140 tiradas → 18,2 4★ × 9,06 (164,8) + 80 = 244,8 → 689,2 en total, 34 singles.
     expect(rows.map((r) => Math.round(r.starlight))).toEqual([444, 245]);
@@ -56,23 +63,12 @@ describe('planPulls', () => {
     expect(rows.map((r) => r.affordable)).toEqual([true, false]);
   });
 
-  it('un 4★ cada ~7,69 tiradas (13 %)', () => {
-    expect(PULLS_PER_4_STAR).toBeCloseTo(7.69, 2);
-  });
-
-  it('Cosmiluz media de un 4★: ~17,5 en el banner de personaje y ~9,06 en el de conos', () => {
-    // Personaje: 2/3 destacados (20) + 1/3 de la reserva sin ellos (19 personajes y 31 conos: 12,56).
-    expect(STARLIGHT_PER_AVERAGE_4_STAR.character).toBeCloseTo(13.333 + 12.56 / 3, 2);
-    // Conos: 4/5 destacados (8) + 1/5 de la reserva sin ellos (22 personajes y 28 conos: 13,28).
-    expect(STARLIGHT_PER_AVERAGE_4_STAR.lightCone).toBeCloseTo(6.4 + 13.28 / 5, 2);
-  });
-
   it('la Cosmiluz del 5★ buscado no paga su propia fila', () => {
     // 80 tiradas ganando el 50/50: 10,4 4★ × 17,52 = 182,2 (9 singles) antes del 5★; con sus 40, 222,2 (11 singles).
-    const [row] = planPulls([pull('a', 'character', true)], { character: 0, lightCone: 0 }, 71);
+    const [row] = planPulls([pull('a', 'character', true)], { character: 0, lightCone: 0 }, 71, repeated);
     expect(row.netCost).toBe(80 - 11);
     expect(row.affordable).toBe(true);
-    const [short] = planPulls([pull('a', 'character', true)], { character: 0, lightCone: 0 }, 70);
+    const [short] = planPulls([pull('a', 'character', true)], { character: 0, lightCone: 0 }, 70, repeated);
     expect(short.affordable).toBe(false);
   });
 
@@ -92,6 +88,7 @@ describe('planPulls', () => {
       [pull('a', 'character', true), pull('b', 'character')],
       { character: 55, lightCone: 0 },
       1000,
+      repeated,
     );
     expect(rows.map((r) => r.cost)).toEqual([25, 160]);
     expect(rows.map((r) => Math.round(r.starlight))).toEqual([97, 444]);
@@ -124,10 +121,26 @@ describe('planPulls', () => {
   it('la Cosmiluz que sobra en el inventario se junta con la de las tiradas', () => {
     // 80 tiradas ganando: 222,2 de Cosmiluz → 11 singles. Con 19 más de antes: 241,2 → 12.
     const plan = [pull('a', 'character', true)];
-    const without = planPulls(plan, { character: 0, lightCone: 0 }, 1000);
-    const withLeftover = planPulls(plan, { character: 0, lightCone: 0 }, 1000, { initialStarlight: 19 });
+    const without = planPulls(plan, { character: 0, lightCone: 0 }, 1000, repeated);
+    const withLeftover = planPulls(plan, { character: 0, lightCone: 0 }, 1000, { ...repeated, initialStarlight: 19 });
     expect(without[0].netCost).toBe(80 - 11);
     expect(withLeftover[0].netCost).toBe(80 - 12);
+  });
+
+  it('la Cosmiluz del 5★ buscado depende de su copia: nuevo 0, repetido 40, tras E6 100; un cono, siempre 40', () => {
+    // Personaje: 80 tiradas ganando el 50/50, 182,2 de los 4★ más la del 5★. Cono: 70 tiradas, 82,5 más 40.
+    const plan = [pull('a', 'character', true), pull('b', 'lightCone', true)];
+    const pity = { character: 0, lightCone: 0 };
+    const starlightOf = (copies?: PlanOptions['copies']) =>
+      planPulls(plan, pity, 1000, { copies }).map((r) => Math.round(r.starlight));
+    const copy = (eidolon: number) => [{ characterId: 'a', eidolon }, null];
+    expect(starlightOf(copy(0))).toEqual([182, 122]);
+    expect(starlightOf(copy(1))).toEqual([222, 122]);
+    expect(starlightOf(copy(6))).toEqual([222, 122]);
+    expect(starlightOf(copy(7))).toEqual([282, 122]);
+    // Sin saber qué copia es (sin catálogo o fuera de él), el personaje cuenta como nuevo: lo seguro.
+    expect(starlightOf([null, null])).toEqual([182, 122]);
+    expect(starlightOf()).toEqual([182, 122]);
   });
 
   it('el pity se limita al rango válido', () => {
@@ -139,9 +152,16 @@ describe('planPulls', () => {
 describe('planBalance', () => {
   it('coste de las filas, lo que devuelve la Cosmiluz y lo que sobra o falta', () => {
     const plan = [pull('a', 'character'), pull('b', 'lightCone')];
-    const rows = planPulls(plan, { character: 0, lightCone: 0 }, 200);
+    const rows = planPulls(plan, { character: 0, lightCone: 0 }, 200, repeated);
     // 160 + 140 de coste; la Cosmiluz devuelve 34 (ver el test de la acumulación): netas 266.
     expect(planBalance(rows, 200)).toEqual({ gross: 300, refunded: 34, left: -66 });
     expect(planBalance([], 50)).toEqual({ gross: 0, refunded: 0, left: 50 });
+  });
+});
+
+describe('effectivePity', () => {
+  it('el guardado, entero y entre 0 y el máximo configurado − 1', () => {
+    expect(effectivePity({ character: 85, lightCone: -2 })).toEqual({ character: 79, lightCone: 0 });
+    expect(effectivePity({ character: 85.6, lightCone: 30 }, { character: 90, lightCone: 80 })).toEqual({ character: 85, lightCone: 30 });
   });
 });

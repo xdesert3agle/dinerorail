@@ -1,7 +1,8 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent } from 'react';
 import { formatDesc, type Effect } from '../engine/details';
-import { dupeImageUrl, lightConeImageUrl, superimpositions, type Dupe } from '../engine/dupes';
-import { prefetchDetails, useDetails, type DetailsRef } from '../state/details';
+import { superimpositions, type Dupe } from '../engine/dupes';
+import { dupeImageUrl, lightConeImageUrl } from '../engine/urls';
+import { keyOf, prefetchDetails, useDetails, type DetailsRef } from '../state/details';
 import { reducedMotion } from './motion';
 
 interface Props {
@@ -9,6 +10,8 @@ interface Props {
   dupes: Dupe[];
   /** Ids de los conos del plan, hasta 6. */
   lightCones: string[];
+  /** Versión de nanoka del catálogo, para pedir los detalles que yatta no tiene. */
+  version: string;
 }
 
 /** Inclinación máxima al pasar el ratón, en grados (con el ratón en el borde de la imagen). */
@@ -212,7 +215,7 @@ function Side({ side, items }: { side: 'left' | 'right'; items: Item[] }) {
           <div
             key={i}
             className="dupe-slot"
-            style={{ '--dupe-index': i + (side === 'right' ? 0.5 : 0), '--dupe-src': `url("${item.src}")` } as CSSProperties}
+            style={{ '--dupe-index': i + (side === 'right' ? 0.5 : 0), '--dupe-src': `url("${item.src}")` }}
           >
             <span className="dupe-shadow dupe-shadow-contact" />
             <span className="dupe-shadow dupe-shadow-cast" />
@@ -267,7 +270,7 @@ function Side({ side, items }: { side: 'left' | 'right'; items: Item[] }) {
 }
 
 /** Mismo ancho mínimo que el @media de .dupes en styles.css: por debajo, la galería no se ve. */
-const GALLERY_MEDIA = '(min-width: 1480px)';
+const GALLERY_MEDIA = '(width >= 1480px)';
 
 /**
  * En los márgenes de la página: a la izquierda, el arte de los Eidolones de los dupes del plan (de
@@ -275,26 +278,26 @@ const GALLERY_MEDIA = '(min-width: 1480px)';
  * Se llenan en orden (los Eidolones por filas y los conos por columnas); ver la disposición en styles.css.
  * Solo se ve en pantallas lo bastante anchas para que haya margen.
  */
-export function DupeGallery({ dupes, lightCones }: Props) {
+export function DupeGallery({ dupes, lightCones, version }: Props) {
   const left: Item[] = dupes.map((d) => ({
     src: dupeImageUrl(d.characterId, d.eidolon),
-    ref: { kind: 'character', id: d.characterId },
+    ref: { kind: 'character', id: d.characterId, version },
     level: d.eidolon,
   }));
   const levels = superimpositions(lightCones);
   const right: Item[] = lightCones.map((id, i) => ({
     src: lightConeImageUrl(id),
-    ref: { kind: 'lightCone', id },
+    ref: { kind: 'lightCone', id, version },
     level: levels[i],
   }));
 
   // Los detalles se descargan de fondo en cuanto la imagen sale en la galería, para que el popover ya
   // los tenga al pasar el ratón; con la galería oculta (ventana estrecha) no se descarga nada.
-  const wanted = new Map([...left, ...right].map((it) => [`${it.ref.kind}:${it.ref.id}`, it.ref]));
-  const wantedKey = [...wanted.keys()].join(',');
+  const wanted = new Map([...left, ...right].map((it) => [keyOf(it.ref), it.ref]));
+  // Solo cuando cambia qué personajes y conos hay (o la versión del catálogo), no en cada render.
+  const wantedKey = `${version}|${[...wanted.keys()].join(',')}`;
   useEffect(() => {
     if (wanted.size > 0 && window.matchMedia(GALLERY_MEDIA).matches) prefetchDetails([...wanted.values()]);
-    // Solo cuando cambia qué personajes y conos hay, no en cada render.
   }, [wantedKey]);
 
   return (

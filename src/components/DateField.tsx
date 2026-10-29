@@ -1,7 +1,6 @@
 import AirDatepicker, { type AirDatepickerLocale } from 'air-datepicker';
-import 'air-datepicker/air-datepicker.css';
 import { useEffect, useId, useRef, useState } from 'react';
-import { formatDate, todayISO } from '../engine/dates';
+import { formatDate, localISO } from '../engine/dates';
 import type { ISODate } from '../engine/types';
 
 // Locale propio en vez del de la librería (que viene en CommonJS y sin tildes): semana de lunes a domingo.
@@ -69,13 +68,13 @@ export function DateField({ value, onChange, min, id, 'aria-label': ariaLabel, m
       // Días señalados: clase para el punto (CSS) y su nombre como título de la celda.
       onRenderCell: ({ date, cellType }) => {
         if (cellType !== 'day') return;
-        const iso = todayISO(date);
+        const iso = localISO(date);
         const names = marksRef.current?.filter((m) => m.date === iso).map((m) => m.label);
         if (names?.length) return { classes: 'is-key-date', attrs: { title: names.join(' · ') } };
       },
       onSelect: ({ date }) => {
         if (!(date instanceof Date)) return;
-        const iso = todayISO(date);
+        const iso = localISO(date);
         if (iso !== valueRef.current) onChangeRef.current(iso);
       },
     });
@@ -92,7 +91,7 @@ export function DateField({ value, onChange, min, id, 'aria-label': ariaLabel, m
     const picker = pickerRef.current;
     if (!picker) return;
     const selected = picker.selectedDates[0];
-    if (selected && todayISO(selected) === value) return;
+    if (selected && localISO(selected) === value) return;
     const date = toLocalDate(value);
     void picker.selectDate(date, { silent: true });
     picker.setViewDate(date);
@@ -115,8 +114,9 @@ export function DateField({ value, onChange, min, id, 'aria-label': ariaLabel, m
         aria-expanded={open}
         aria-describedby={hintId}
       />
+      {/* Instrucción de teclado solo para lectores: en imperativo, como las pistas del propio lector (norma de voz). */}
       <span id={hintId} className="sr-only">
-        Se abre un calendario: el día se elige con las flechas y se confirma con Intro.
+        Se abre un calendario: elige el día con las flechas y pulsa intro.
       </span>
       <svg
         className="date-field-icon"

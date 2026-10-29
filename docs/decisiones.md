@@ -13,19 +13,21 @@ volver a proponer y por qué.
     el balance en la columna de costes.
 - **Burbuja del balance y del coste de cada fila:** una cuenta escrita (`.tip-table`), no prosa.
 - **Pastilla del Eidolón en la miniatura:** sobresale 6px. Se rechazó meterla hacia dentro porque tapaba la cara;
-  en su lugar, el campo se aparta (`--badge-room`).
+  en su lugar, el campo se aparta (`--badge-out`).
 - **Burbujas quitadas:** el % de cada fila y la pastilla del dupe no tienen burbuja.
 - **Foto de la fila 1px más grande al arrastrar con el escalado al 125 %:** se probaron dos arreglos que no
   funcionaron, y se dejó sin trucos.
-- **Espaciado vertical de las tarjetas:** no aumentarlo.
+- **Cosmiluz del 5★ buscado (2026-10-29):** se propuso un selector por fila «nuevo / repetido / E6». Se descartó:
+  la copia ya sale del orden del plan y de la cuenta (`planCopies`, lo mismo que los dupes), así que se deduce
+  sola. Antes se contaban 40 siempre, también por un personaje nuevo, que en el juego da 0.
+- **Espaciado vertical de las tarjetas:** no aumentarlo. Se planteó hacer más alto el botón de añadir, pero
+  obligaba a subir el alto de la fila, y el usuario ve el espaciado actual justo como debe ser.
 
 ## Glosario e interruptores
 
-- **Términos de glosario** (2026-10-28): el término va subrayado y abre su definición, con un título como entrada
-  de diccionario.
-- **Subrayados:**
-  - un término se marca una sola vez por tarjeta;
-  - «garantizado» se marca solo en el del personaje.
+- **Subrayados del glosario** (2026-10-28): se planteó marcar «Cosmiluz» en todas las etiquetas y casillas; se
+  quedó en una vez por tarjeta, donde se decide algo (con demasiados subrayados dejan de avisar). Por lo mismo,
+  «garantizado» se marca solo en el del personaje.
 - **Definición de la Cosmiluz:** una sola, la del plan, con sus tablas; Recursos actuales usa la misma.
 - **Interruptores de Esquirlas:** cada uno manda solo en su tarjeta (2026-10-25). No gustó que uno pisara al otro.
 - **Pie de la tarjeta de paquetes:**
@@ -52,7 +54,7 @@ volver a proponer y por qué.
 
 - **Borde de las burbujas:** el acento al 90 %, de 2px (2026-10-27).
   - Se descartó un gris (tinta al 50 %, al 35 % y pura) y el acento del 100 al 40 %.
-  - Es la única excepción buscada a «el acento solo para problemas».
+  - Con el toast y «Deshacer», el acento fuera de problemas, selección y foco; ver la regla en CLAUDE.md.
 - **Rareza:** toda la etiqueta («Personaje 5✦ E6») va en el color de su rareza, no una estrella de color junto a
   palabras en tinta.
 - **Letra del cuerpo en Aha:** Figtree. Se descartaron Outfit, DM Sans y Plus Jakarta Sans.
@@ -66,3 +68,24 @@ volver a proponer y por qué.
 - **Estado completo:** sin exportar ni importar todo el estado (quitado a propósito).
 - **Planes antiguos con nombres en inglés:** no se mantienen (se aceptó perderlos).
 - **Temas Kafka y Grafito:** borrados (2026-10-28). Aha es la base.
+
+## Auditoría del 2026-10-28
+
+- **Pity:** el valor de «tiradas por 5★» de Configuración es el pity máximo, y el actual va de 0 a ese valor − 1. Se
+  descartó separar el pity real del juego (hasta 89) del máximo del peor caso.
+- **Regla del acento:** se escribió como es («problemas, selección y foco; nunca datos neutros ni controles en
+  reposo»). Se descartó quitar el acento de la pestaña, el foco, la fecha elegida, etc.
+- **«Deshacer»:** cualquier otro cambio cierra el aviso. Se descartó que deshacer devolviera solo lo borrado: más
+  código por cada tipo de borrado.
+- **Botones en Sparxie:** con los colores de Aha («Eliminar» en rojo; las ✕, el asa y «Ver N más» en gris), en
+  vez de todos en tinta.
+
+## Auditoría técnica del 2026-10-29
+
+- **Migraciones de datos guardados:** borradas todas. Los amigos ya tienen el formato nuevo, y lo guardado se
+  reescribe con el formato actual en cada visita.
+- **Campo numérico:** se queda `type="number"`, con la capa que pinta el punto de miles. Se descartó pasarlo a texto
+  con teclado numérico, que quitaba la capa pero también las flechas ▲▼ y subir o bajar con el teclado, que el
+  usuario usa en los paquetes.
+- **Fechas por defecto (versión 4.6 y sus eventos):** las mantiene el usuario a mano por ahora; no se derivan de
+  `KEY_DATES`.

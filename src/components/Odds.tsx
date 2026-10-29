@@ -1,10 +1,11 @@
+import { RUNS } from '../engine/odds';
 import { BANNERS, STARLIGHT_PER_4_STAR, type BannerModel } from '../engine/rules';
 import type { AppState, PullKind } from '../engine/types';
 import { fmtInt, fmtRate, fmtSingles } from './format';
 import { Icon } from './Icon';
 import { KIND_LABEL } from './kinds';
 import { Tip } from './Tip';
-import { RUNS, type PlanOddsView } from './usePlanOdds';
+import type { PlanOddsView } from './usePlanOdds';
 
 interface Props {
   state: AppState;
@@ -59,7 +60,7 @@ export function Odds({ state, view }: Props) {
         casillas grandes, al mover el ratón por la tarjeta iban saltando burbujas.
       */}
       <dl className="odds-stats">
-        <div>
+        <div className="odds-stat-wide">
           <dt>
             <Tip className="tip-term" content="Probabilidad de conseguir todos los objetivos del plan con las tiradas de la fecha objetivo">
               Conseguirlo todo
@@ -67,7 +68,7 @@ export function Odds({ state, view }: Props) {
           </dt>
           <dd>{pct.at(-1)}</dd>
         </div>
-        <div>
+        <div className="odds-stat-wide">
           <dt>
             <Tip className="tip-term" content="Cuántos objetivos del plan se consiguen de media, en orden">
               Objetivos esperados

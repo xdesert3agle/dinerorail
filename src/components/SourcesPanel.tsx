@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { SourceTotal } from '../engine/calculate';
 import { formatDate, fromDayNum, toDayNum, WEEKDAYS } from '../engine/dates';
 import { PATCH_LENGTH_DAYS } from '../engine/rules';
@@ -10,7 +10,7 @@ import { describeSchedule, fmtInt, fmtSingles, pendingLabel } from './format';
 import { Icon } from './Icon';
 import { DateField } from './DateField';
 import { NumberField } from './NumberField';
-import { Toggle } from './Toggle';
+import { SwitchInput, Toggle } from './Toggle';
 import { PLAIN_TEXT_INPUT } from './inputs';
 
 interface Props {
@@ -72,8 +72,12 @@ function RewardInline({ reward }: { reward: Reward }) {
 
 export function SourcesPanel({ state, today, totals, onChange }: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
-  // La fuente recién creada enfoca su nombre para poder escribirlo directamente.
+  // La fuente recién creada enfoca su nombre para poder escribirlo directamente. Una sola vez: en cuanto aparece
+  // se olvida, así que al volver a abrir su editor no se lleva el foco.
   const [addedId, setAddedId] = useState<string | null>(null);
+  useEffect(() => {
+    if (addedId && state.sources.some((s) => s.id === addedId)) setAddedId(null);
+  }, [addedId, state.sources]);
 
   // Próximo cobro de cada fuente (en el próximo año), para mostrarlo en la lista.
   const nextDates = useMemo(() => {
@@ -136,14 +140,11 @@ export function SourcesPanel({ state, today, totals, onChange }: Props) {
                 <div key={src.id} className={`source ${src.enabled ? '' : 'is-off'}`}>
                   <div className="source-row">
                     <label className="switch" title={src.enabled ? 'Desactivar' : 'Activar'}>
-                      <input
-                        type="checkbox"
-                        role="switch"
+                      <SwitchInput
                         checked={src.enabled}
-                        onChange={(e) => updateSource(src.id, { enabled: e.target.checked })}
+                        onChange={(enabled) => updateSource(src.id, { enabled })}
                         aria-label={`Activar ${src.name}`}
                       />
-                      <span aria-hidden="true" />
                     </label>
                     <div className="source-main">
                       <div className="source-name">{src.name}</div>
@@ -154,9 +155,10 @@ export function SourcesPanel({ state, today, totals, onChange }: Props) {
                       </div>
                     </div>
                     <div className="source-contrib">
-                      {src.enabled && total ? (
+                      {/* Activa sin cobros en el periodo: un cero real, «0»; «—» solo si está desactivada (no aplica). */}
+                      {src.enabled ? (
                         <>
-                          <strong>{fmtSingles(total.singles)}</strong> tiradas
+                          <strong>{total?.singles ? fmtSingles(total.singles) : '0'}</strong> tiradas
                         </>
                       ) : (
                         <span className="muted">—</span>
@@ -276,7 +278,7 @@ function SourceEditor({ source, today, focusName, onUpdate, onDelete }: EditorPr
             value={schedule.day}
             min={1}
             max={31}
-            onChange={(day) => onUpdate({ schedule: { ...schedule, day: Math.min(31, Math.max(1, day)) } })}
+            onChange={(day) => onUpdate({ schedule: { ...schedule, day } })}
           />
         )}
         {schedule.type === 'perPatch' && (
@@ -301,7 +303,7 @@ function SourceEditor({ source, today, focusName, onUpdate, onDelete }: EditorPr
             label="Cada cuántos días"
             value={schedule.periodDays}
             min={1}
-            onChange={(periodDays) => onUpdate({ schedule: { ...schedule, periodDays: Math.max(1, periodDays) } })}
+            onChange={(periodDays) => onUpdate({ schedule: { ...schedule, periodDays } })}
           />
         </div>
       )}
