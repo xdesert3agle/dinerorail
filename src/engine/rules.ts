@@ -46,7 +46,18 @@ export const DEFAULT_HARD_PITY: Record<PullKind, number> = { character: 80, ligh
  * que se ha medido en la comunidad):
  * - Personaje: 0,6 % por tirada; desde la 74 sube un 6 % por tirada; garantizado en la 90. 50/50.
  * - Cono: 0,8 % por tirada; desde la 66 sube un 7 % por tirada; garantizado en la 80. 75/25.
+ * `featuredChance`: probabilidad de que un 5★ sin garantizado sea el destacado.
  */
+
+/**
+ * 5★ que pueden salir al perder el 50/50 (o el 75/25): los 7 de la reserva estándar y el propio destacado, que
+ * así sale 1 de cada 8 veces aun perdiéndolo (sin gastar el garantizado). Con eso, el destacado sale el 56,25 %
+ * de las veces en personaje y el 78,125 % en cono, y sus consolidadas son las oficiales: 1,113 % y 1,534 %.
+ */
+export const FIFTY_FIFTY_POOL = 8;
+/** Probabilidad de destacado de un banner que anuncia `won` (0,5 o 0,75), contando que al perder también sale. */
+const featuredChance = (won: number) => won + (1 - won) / FIFTY_FIFTY_POOL;
+
 export interface BannerModel {
   base: number;
   softPityFrom: number;
@@ -56,8 +67,8 @@ export interface BannerModel {
 }
 
 export const BANNERS: Record<PullKind, BannerModel> = {
-  character: { base: 0.006, softPityFrom: 74, softPityStep: 0.06, hardPity: 90, featuredChance: 0.5 },
-  lightCone: { base: 0.008, softPityFrom: 66, softPityStep: 0.07, hardPity: 80, featuredChance: 0.75 },
+  character: { base: 0.006, softPityFrom: 74, softPityStep: 0.06, hardPity: 90, featuredChance: featuredChance(0.5) },
+  lightCone: { base: 0.008, softPityFrom: 66, softPityStep: 0.07, hardPity: 80, featuredChance: featuredChance(0.75) },
 };
 
 /** Probabilidad de 5★ en la tirada número `n` desde el último 5★ (empezando en 1). */
@@ -86,7 +97,8 @@ export function fiveStarRate(kind: PullKind): number {
  * Cosmiluz Inextinguible que se recupera al tirar. En la tienda, 20 de Cosmiluz = 1 Pase Especial.
  * - Cono 5★: 40, también el primero. Personaje 5★: nada si es nuevo, 40 si es repetido (de E1 a E6) y 100
  *   pasado E6 (targetStarlight). El del 50/50 perdido (uno de la reserva estándar) se supone repetido: 40.
- * - 4★: 13 % por tirada, la probabilidad consolidada oficial (5,1 % base con el garantizado cada 10).
+ * - 4★: 13 % por tirada en el banner de personaje y 14,8 % en el de conos, las consolidadas oficiales (5,1 % y
+ *   6,6 % base, con el garantizado cada 10).
  *   Personaje 4★ (siempre en E6): 20. Cono 4★: 8.
  * - Qué 4★ sale: uno de los 3 destacados (personajes en su banner, conos en el de conos) con un
  *   50 % / 75 %, y si no sale, el siguiente lo es seguro. Si no es destacado, es cualquiera de la
@@ -108,17 +120,16 @@ export function targetStarlight(kind: PullKind, copiesBefore: number | null): nu
   return copiesBefore <= MAX_EIDOLON ? STARLIGHT_PER_5_STAR : STARLIGHT_PER_5_STAR_E6;
 }
 
-export const FOUR_STAR_RATE = 0.13;
-/** Probabilidad base de 4★ por tirada, sin contar el garantizado cada 10 (la publicada por el juego). */
-export const FOUR_STAR_BASE_RATE = 0.051;
+/** Probabilidad consolidada de 4★ por tirada en cada banner, contando el garantizado cada 10. */
+export const FOUR_STAR_RATE: Record<PullKind, number> = { character: 0.13, lightCone: 0.148 };
+/** Probabilidad base de 4★ por tirada en cada banner, sin contar el garantizado (la publicada por el juego). */
+export const FOUR_STAR_BASE_RATE: Record<PullKind, number> = { character: 0.051, lightCone: 0.066 };
 /** Probabilidad de que el 4★ sea el destacado, en cada banner (sin contar el garantizado). */
 export const FOUR_STAR_FEATURED_CHANCE: Record<PullKind, number> = { character: 0.5, lightCone: 0.75 };
 /** Reserva total de 4★ y cuántos están destacados en cada banner (y no salen como no destacados). */
 export const FOUR_STAR_POOL = { characters: 22, lightCones: 31 } as const;
 export const FEATURED_4_STARS = 3;
 
-/** Tiradas que hacen falta de media para cada 4★ (≈ 7,69). */
-export const PULLS_PER_4_STAR = 1 / FOUR_STAR_RATE;
 /** Un 4★ seguro cada 10 tiradas, como mínimo (el peor caso de la previsión). */
 export const FOUR_STAR_PITY = 10;
 

@@ -9,7 +9,7 @@ export function TipSumRow({ label, sign, value, total }: { label: string; sign?:
   return (
     <span className={total ? 'tip-table-row tip-table-total' : 'tip-table-row'}>
       <span>{label}</span>
-      <span className="tip-table-sign">{value !== null && sign}</span>
+      <span>{value !== null && sign}</span>
       <span className="with-icon with-icon-tight tip-table-value">
         {value === null ? '—' : fmtInt(value)}
         <span className={value === null ? 'with-icon invisible' : 'with-icon'}>

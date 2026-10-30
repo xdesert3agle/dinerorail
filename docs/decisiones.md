@@ -37,6 +37,9 @@ volver a proponer y por qué.
   quedó en una vez por tarjeta, donde se decide algo (con demasiados subrayados dejan de avisar). Por lo mismo,
   «garantizado» se marca solo en el del personaje.
 - **Definición de la Cosmiluz:** una sola, la del plan, con sus tablas; Recursos actuales usa la misma.
+- **Definición del pity (2026-10-30):** en «Pity de personaje», con los máximos de los dos banners; el de cono de
+  luz, sin burbuja (como «garantizado»). Remite a «Configuración › Pity» en texto. Se descartó un enlace dentro de
+  la burbuja: con el teclado no se llega a él y para los lectores es solo una descripción.
 - **Interruptores de Esquirlas:** cada uno manda solo en su tarjeta (2026-10-25). No gustó que uno pisara al otro.
 - **Pie de la tarjeta de paquetes:**
   - «Usar paquetes en el plan», alineado a la derecha, bajo el total que decide; a la izquierda parecía pegado
@@ -63,6 +66,12 @@ volver a proponer y por qué.
 - **Borde de las burbujas:** el acento al 90 %, de 2px (2026-10-27).
   - Se descartó un gris (tinta al 50 %, al 35 % y pura) y el acento del 100 al 40 %.
   - Con el toast y «Deshacer», el acento fuera de problemas, selección y foco; ver la regla en CLAUDE.md.
+- **Tablas en las burbujas (2026-10-30):** no parten filas; la burbuja crece lo justo para ellas, sin pasar del
+  ancho de la pantalla, y el texto corrido sigue cortado a 20rem. Se descartó ensanchar solo la burbuja de la
+  Cosmiluz.
+- **Probabilidades de la Cosmiluz:** agrupadas por banner, su 5★ y debajo, sangrado, su 4★. Se descartaron una
+  nota por fila, «(banner de personaje)» (ensanchaba la columna y alejaba las cifras) o abreviada, «(b.
+  personaje)», y una columna por banner, que perdía la probabilidad base.
 - **Rareza:** toda la etiqueta («Personaje 5✦ E6») va en el color de su rareza, no una estrella de color junto a
   palabras en tinta.
 - **Letra del cuerpo en Aha:** Figtree. Se descartaron Outfit, DM Sans y Plus Jakarta Sans.

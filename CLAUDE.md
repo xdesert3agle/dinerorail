@@ -128,7 +128,7 @@ React hooks and browser storage.
   - Each target costs the maximum, and losing the 50/50 doubles that.
   - The first row of a kind subtracts the current pity, or wins outright if `guaranteed[kind]` is set.
   - Rows return their pieces (`hardPity`, `pityDiscount`, `losesFiftyFifty`) for the cost tip.
-  - **Starlight refund (`countStarlight`):** what each 5★ gives plus the expected 4★ refund (13 % per pull).
+  - **Starlight refund (`countStarlight`):** what each 5★ gives plus the expected 4★ refund (13 % per pull on the character banner, 14.8 % on the light cone one).
     - The target's 5★ gives `targetStarlight` by its copy (from `planCopies`): a light cone 40; a character 0 if new, 40 from E1 to E6, 100 past E6. A row without a known copy (no catalog, or a name outside it) counts as new, the safe side.
     - The 5★ lost to the 50/50 (a standard one) is assumed repeated: 40.
     - The plan, the simulation and the «Peor caso» all take `copies`, so they agree.
@@ -137,6 +137,7 @@ React hooks and browser storage.
 - **Odds (Monte Carlo):** official consolidated rates (tests check them).
   - Characters: 0.6 % base, soft pity from 74, hard at 90, 50/50.
   - Light cones: 0.8 % base, soft pity from 66, hard at 80, 75/25.
+  - Losing the 50/50 or 75/25 can still give the featured 5★ (1 in 8, `FIFTY_FIFTY_POOL`), so the featured one comes 56.25 % / 78.125 % of the time, which gives the official 1.113 % / 1.534 %.
   - `simulatePlan` runs 10,000 seeded runs from a precomputed CDF. It must stay cheap enough for every keystroke.
   - `guaranteedNeeded` is the «Peor caso». Its guaranteed 4★ count per banner, as in the game.
 - **Plan rows and dupes:** a row stores the catalog name and, once known, its `entryId`. With a catalog, `App` keeps every row's id and name current (`withCatalogIds`): a beta name in English becomes the Spanish one when yatta publishes it. The dupe is never stored: `planCopies` derives each row's copy from the plan order, after the owned copies (Eidolon + 1).

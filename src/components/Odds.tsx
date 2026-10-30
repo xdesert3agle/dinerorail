@@ -15,11 +15,12 @@ interface Props {
 
 // Los textos de ayuda salen de las reglas (rules.ts), para que no se desfasen si cambian.
 
-/** "Personaje: 0,6 %, sube desde la tirada 74, seguro en la 90; 50/50". */
-const describeBanner = (label: string, b: BannerModel) => {
-  const featured = Math.round(b.featuredChance * 100);
-  return `${label}: ${fmtRate(b.base)}, sube desde la tirada ${b.softPityFrom}, seguro en la ${b.hardPity}; ${featured}/${100 - featured}`;
-};
+/**
+ * "Personaje: 0,6 %, sube desde la tirada 74, seguro en la 90; destacado el 56,25 %". No es el 50/50 ni el 75/25
+ * redondos (ver FIFTY_FIFTY_POOL): escritos así harían creer que se simula otra cosa.
+ */
+const describeBanner = (label: string, b: BannerModel) =>
+  `${label}: ${fmtRate(b.base)}, sube desde la tirada ${b.softPityFrom}, seguro en la ${b.hardPity}; destacado el ${fmtRate(b.featuredChance, 2)}`;
 
 const MODEL_HELP = [
   `Simulación de ${fmtInt(RUNS)} intentos con las probabilidades reales:`,

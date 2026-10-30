@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { guaranteedNeeded, planOdds, shownChances, simulatePlan } from './odds';
-import { fiveStarChance, fiveStarRate } from './rules';
+import { BANNERS, fiveStarChance, fiveStarRate } from './rules';
 import type { PlannedPull, PullKind } from './types';
 
 const pull = (id: string, kind: PullKind): PlannedPull => ({ id, name: id, kind, winsFiftyFifty: false });
@@ -9,6 +9,15 @@ describe('probabilidades', () => {
   it('el modelo reproduce las tasas consolidadas oficiales (1,6 % personaje, 1,87 % cono)', () => {
     expect(fiveStarRate('character')).toBeCloseTo(0.016, 3);
     expect(fiveStarRate('lightCone')).toBeCloseTo(0.0187, 3);
+  });
+
+  it('el destacado da las consolidadas oficiales (1,113 % personaje, 1,534 % cono): al perder también puede salir', () => {
+    // Con garantizado, la parte de 5★ que son el destacado es 1 / (2 − p).
+    const featuredRate = (kind: PullKind) => fiveStarRate(kind) / (2 - BANNERS[kind].featuredChance);
+    expect(BANNERS.character.featuredChance).toBe(0.5625);
+    expect(BANNERS.lightCone.featuredChance).toBe(0.78125);
+    expect(featuredRate('character')).toBeCloseTo(0.01113, 4);
+    expect(featuredRate('lightCone')).toBeCloseTo(0.01534, 4);
   });
 
   it('el pity duro garantiza el 5★', () => {

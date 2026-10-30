@@ -30,23 +30,24 @@ const STARLIGHT_REFUNDS: { kind: PullKind; stars: 4 | 5; note?: string; amount: 
   { kind: 'character', stars: 5, note: 'tras E6', amount: targetStarlight('character', MAX_EIDOLON + 1) },
   { kind: 'lightCone', stars: 5, amount: targetStarlight('lightCone', null) },
 ];
-/** Probabilidad de cada rareza por tirada: la base y la consolidada. El 4★ es igual en los dos banners. */
-const ODDS_ROWS: { label: string; stars: 4 | 5; base: string; total: string }[] = [
-  // «Cualquier»: la del 4★ cuenta cualquier 4★ (personaje o cono de luz) y es igual en los dos banners.
-  { label: 'Cualquier', stars: 4, base: fmtRate(FOUR_STAR_BASE_RATE), total: fmtRate(FOUR_STAR_RATE) },
+/**
+ * Probabilidad por tirada, la base y la consolidada, agrupada por banner: su 5★ y debajo, sangrado, su 4★. El sitio
+ * dice de qué banner es el 4★; con una nota («banner de personaje») la columna se ensanchaba y alejaba las cifras.
+ * `banner`: lo que el sangrado no dice a los lectores de pantalla.
+ */
+const ODDS_ROWS: { label: string; stars: 4 | 5; banner?: string; base: string; total: string }[] = (
+  ['character', 'lightCone'] as const
+).flatMap((kind) => [
+  { label: KIND_LABEL[kind], stars: 5 as const, base: fmtRate(BANNERS[kind].base), total: fmtRate(fiveStarRate(kind), 2) },
+  // «Cualquier»: la del 4★ cuenta cualquier 4★ (personaje o cono de luz).
   {
-    label: 'Personaje',
-    stars: 5,
-    base: fmtRate(BANNERS.character.base),
-    total: fmtRate(fiveStarRate('character'), 2),
+    label: 'Cualquier',
+    stars: 4 as const,
+    banner: kind === 'character' ? 'banner de personaje' : 'banner de conos',
+    base: fmtRate(FOUR_STAR_BASE_RATE[kind]),
+    total: fmtRate(FOUR_STAR_RATE[kind]),
   },
-  {
-    label: 'Cono de luz',
-    stars: 5,
-    base: fmtRate(BANNERS.lightCone.base),
-    total: fmtRate(fiveStarRate('lightCone'), 2),
-  },
-];
+]);
 /** «Cono 4★», «Personaje 5★ (nuevo)»: el texto de cada fila, para la clave y los lectores de pantalla. */
 const refundLabel = ({ kind, stars, note }: (typeof STARLIGHT_REFUNDS)[number]) =>
   `${KIND_LABEL[kind]} ${stars}★${note ? ` (${note})` : ''}`;
@@ -115,10 +116,11 @@ export function StarlightDefinition() {
     <span className="sr-only">: </span>
     <span className="tip-table tip-table-3 tip-lines-last">
       {ODDS_ROWS.map((row) => (
-        <span key={row.label} className="tip-table-row">
-          <span className={`rarity-${row.stars}`}>
+        <span key={`${row.label}${row.banner ?? ''}`} className="tip-table-row">
+          <span className={row.banner ? `rarity-${row.stars} tip-table-sub` : `rarity-${row.stars}`}>
             {`${row.label} `}
             <Rarity stars={row.stars} />
+            {row.banner && <span className="sr-only">{` (${row.banner})`}</span>}
           </span>
           <span className="tip-table-value">{row.base}</span>
           <span className="tip-table-value">({row.total})</span>

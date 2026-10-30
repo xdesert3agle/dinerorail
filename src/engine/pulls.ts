@@ -1,6 +1,6 @@
 import {
   DEFAULT_HARD_PITY,
-  PULLS_PER_4_STAR,
+  FOUR_STAR_RATE,
   STARLIGHT_PER_5_STAR,
   STARLIGHT_PER_AVERAGE_4_STAR,
   STARLIGHT_PER_PASS,
@@ -123,7 +123,7 @@ export function planPulls(
     const cost = base - progress + (wins ? 0 : base);
 
     // 4★ esperados en la fila (media, con decimales); la Cosmiluz se redondea solo al cambiarla por singles.
-    const fourStars = cost / PULLS_PER_4_STAR;
+    const fourStars = cost * FOUR_STAR_RATE[pull.kind];
     const duringRow = fourStars * STARLIGHT_PER_AVERAGE_4_STAR[pull.kind] + (wins ? 0 : STARLIGHT_PER_5_STAR);
     const rowStarlight = duringRow + targetStarlight(pull.kind, copies[i]?.eidolon ?? null);
     pulls += cost;

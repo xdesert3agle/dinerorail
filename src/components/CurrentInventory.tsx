@@ -104,7 +104,15 @@ export function CurrentInventory({ state, result, onChange }: Props) {
               value={effectivePity(state.pity, hardPity)[kind]}
               min={0}
               max={hardPity[kind] - 1}
-              info={`Tiradas desde el último 5★. Llega hasta ${hardPity[kind] - 1}: con el máximo de Configuración (${hardPity[kind]}), la siguiente lo da seguro. Si se llevan más, subir allí el máximo.`}
+              // «Pity» se explica una vez por tarjeta (glosario), como «garantizado»: en el primero, con los dos banners.
+              info={
+                i === 0 && (
+                  <>
+                    <TipTitle>Pity</TipTitle>
+                    {`Tiradas desde el último 5★ de ese banner. Puede llegar hasta una menos que el máximo definido en Configuración › Pity (${hardPity.character - 1} de personaje, ${hardPity.lightCone - 1} de cono de luz): la tirada que alcanza el máximo da el 5★ seguro.`}
+                  </>
+                )
+              }
               onChange={(v) =>
                 onChange((s) => ({ ...s, pity: { ...s.pity, [kind]: v } }))
               }
@@ -117,7 +125,7 @@ export function CurrentInventory({ state, result, onChange }: Props) {
                 i === 0 && (
                   <>
                     <TipTitle>Garantizado</TipTitle>
-                    Último 50/50 perdido: el próximo 5★ será el destacado seguro
+                    El último 5★ de ese banner no fue el destacado (se perdió el 50/50): el próximo 5★ será el destacado seguro.
                   </>
                 )
               }

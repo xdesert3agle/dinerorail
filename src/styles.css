@@ -1556,13 +1556,21 @@ select:focus {
   text-decoration-thickness: 1px;
   text-underline-offset: 0.2em;
 }
-/* La burbuja: como el popover de la galería (borde de las burbujas y sombra de lo que flota), en pequeño. */
+/*
+ * La burbuja: como el popover de la galería (borde de las burbujas y sombra de lo que flota), en pequeño.
+ * El texto corrido se corta a 20rem, para leerse bien; una tabla no se parte (.tip-table) y, si es más ancha,
+ * la burbuja crece lo justo para ella (min-width gana a max-width), sin pasar del ancho de la pantalla.
+ * --tip-room: lo más ancha que puede ser (la pantalla menos 8px a cada lado, el EDGE de Tip.tsx).
+ */
 .tip {
+  --tip-room: calc(100vw - 16px);
+  --tip-pad-x: 10px;
   position: fixed;
   z-index: var(--z-tip);
   width: max-content;
-  max-width: min(20rem, calc(100vw - 16px));
-  padding: 8px 10px;
+  max-width: min(20rem, var(--tip-room));
+  min-width: min-content;
+  padding: 8px var(--tip-pad-x);
   font-size: 0.8125rem;
   font-weight: 400;
   line-height: 1.45;
@@ -1591,6 +1599,8 @@ select:focus {
  * Equivalencias en columnas (qué · cifra con su icono; .tip-table-3 añade una tercera): las cifras alineadas a la
  * derecha, en cifras tabulares, para compararlas de un vistazo. Sin «=»: la etiqueta en color y la cifra cerca
  * bastan para leer cada fila, y el único «=» queda para la conversión, que sí es una ecuación.
+ * Sin partir filas: a su ancho entero, y la burbuja se ensancha por ella (ver .tip). Solo si no cabe en la
+ * pantalla (un móvil estrecho, la Courier de Sparxie) se queda en el hueco y parte la etiqueta.
  */
 .tip-table {
   --tip-col-gap: 6px;
@@ -1601,6 +1611,8 @@ select:focus {
   align-items: center;
   /* Columnas a su medida, sin repartir el ancho que sobra de la burbuja. */
   justify-content: start;
+  width: max-content;
+  max-width: calc(var(--tip-room) - 2 * (var(--tip-pad-x) + var(--border-pop-w)));
 }
 .tip-table-3 {
   grid-template-columns: auto auto auto;
@@ -1620,9 +1632,16 @@ select:focus {
 .tip-table-total {
   font-weight: 700;
 }
-/* La columna de los signos, con más aire respecto al concepto (12px en total): pegada, «reinvertida +» se leía junto. */
-.tip-table-sign {
-  margin-left: calc(var(--space-3) - var(--tip-col-gap));
+/*
+ * El concepto, con más aire respecto a lo que le sigue (12px en total): pegado, «reinvertida +» se leía junto, y
+ * una nota larga («(banner de personaje)») parecía unida a su cifra.
+ */
+.tip-table-row > :first-child {
+  margin-right: calc(var(--space-3) - var(--tip-col-gap));
+}
+/* Una fila que depende de la de encima (el 4★ de cada banner, bajo su 5★): sangrada, sin nota que lo diga. */
+.tip-table-sub {
+  padding-left: var(--space-3);
 }
 /* Una tabla que cierra la burbuja: aire arriba, como .tip-lines, pero no abajo. */
 .tip-lines-last {
@@ -1652,7 +1671,7 @@ select:focus {
  * temas: con 20rem, «Probabilidad por tirada (con garantizado)» se partía en dos líneas.
  */
 :where(:root[data-skin='sparxie']) .tip {
-  max-width: min(22rem, calc(100vw - 16px));
+  max-width: min(22rem, var(--tip-room));
 }
 /* Sparxie: la serif de sus títulos de tarjeta, sin estrechar (en la burbuja no le falta sitio). */
 :where(:root[data-skin='sparxie']) .tip-title {

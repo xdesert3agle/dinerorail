@@ -14,7 +14,7 @@ import type { Pity, PlannedPull, PullKind } from './types';
 
 /*
  * Simulación con las probabilidades reales de los banners limitados (BANNERS, en rules.ts).
- * Los 4★ se cuentan por su media: 13 % por tirada con la Cosmiluz media de cada banner.
+ * Los 4★ se cuentan por su media: la probabilidad consolidada de cada banner por su Cosmiluz media.
  */
 
 /** Generador pseudoaleatorio con semilla: los resultados no cambian de un render a otro. */
@@ -76,10 +76,10 @@ function sampleFiveStar(kind: PullKind, pity: number, u: number): number {
   return lo - pity;
 }
 
-/** Cosmiluz media de los 4★ por tirada en cada banner: 13 % de 4★ por la Cosmiluz media de uno. */
+/** Cosmiluz media de los 4★ por tirada en cada banner: su probabilidad de 4★ por la Cosmiluz media de uno. */
 const STARLIGHT_PER_PULL_FROM_4_STARS: Record<PullKind, number> = {
-  character: FOUR_STAR_RATE * STARLIGHT_PER_AVERAGE_4_STAR.character,
-  lightCone: FOUR_STAR_RATE * STARLIGHT_PER_AVERAGE_4_STAR.lightCone,
+  character: FOUR_STAR_RATE.character * STARLIGHT_PER_AVERAGE_4_STAR.character,
+  lightCone: FOUR_STAR_RATE.lightCone * STARLIGHT_PER_AVERAGE_4_STAR.lightCone,
 };
 
 export interface OddsOptions {
