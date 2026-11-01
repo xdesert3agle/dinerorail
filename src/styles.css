@@ -1617,6 +1617,13 @@ select:focus {
 .tip-table-3 {
   grid-template-columns: auto auto auto;
 }
+/*
+ * Columnas de datos con cabecera (una por banner, como en el modelo de la previsión): el aire de un concepto entre
+ * todas, para que las cabeceras no se junten. El concepto sigue a 12px (su margen se queda en 0).
+ */
+.tip-table-spaced {
+  --tip-col-gap: var(--space-3);
+}
 .tip-table-row {
   display: contents;
 }
@@ -1646,6 +1653,21 @@ select:focus {
 /* Una tabla que cierra la burbuja: aire arriba, como .tip-lines, pero no abajo. */
 .tip-lines-last {
   margin-top: var(--space-1);
+}
+/*
+ * Notas sueltas de una burbuja, una por viñeta: se recorren mejor que un párrafo. Con spans (la burbuja es un
+ * span) que hacen de elementos de lista; la viñeta, en el tono de las notas para no competir con el texto.
+ */
+.tip-list {
+  display: grid;
+  gap: 2px;
+  padding-left: 1.1em;
+}
+.tip-list > * {
+  display: list-item;
+}
+.tip-list > *::marker {
+  color: var(--text-muted);
 }
 .tip-table-value {
   justify-self: end;

@@ -221,7 +221,7 @@ React hooks and browser storage.
 - **Explanations:**
   - **`Tip`** explains a value on hover, focus or tap, linked with `aria-describedby`. `control` wraps a button.
   - **No `title`** for explanations; it is allowed only on controls with an accessible name.
-  - **Glossary:** a dotted-underlined term opens its definition. A `Toggle`'s `tip` or a `NumberField`'s `info` is opened by the `Term` in its label, which marks only the defined word («Pity» in «Pity de personaje»), or the whole label when it is the term. Mark a term once per card, where something is decided. A term has one definition, shared through `glossary.tsx`.
+  - **Glossary:** a dotted-underlined term opens its definition, headed by the term itself (`TipTitle`). A bubble under a card title is headed by what it explains, never by that title («Simulación» under «Previsión de suerte»). Explanations of a setting or a value («Precios de los paquetes», a cost) have no heading. A `Toggle`'s `tip` or a `NumberField`'s `info` is opened by the `Term` in its label, which marks only the defined word («Pity» in «Pity de personaje»), or the whole label when it is the term. Mark a term once per card, where something is decided. A term has one definition, shared through `glossary.tsx`.
 - **Controls:**
   - **`NumberField`** delivers clamped integers, so parents do not clamp again. Emptied, it delivers 0. While focused, the typed text is left alone; the clamped value shows on blur.
   - **The segmented control** (`.segmented` with `.segment` buttons) serves the theme and mode selectors, the store and the Path filter.
