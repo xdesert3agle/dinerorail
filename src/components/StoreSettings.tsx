@@ -33,7 +33,7 @@ export function StoreSettings({ state, onChange }: Props) {
           <Tip
             className="tip-term"
             side="above"
-            content={`Japón suele salir más barato; los ¥ se pasan a € a ${YEN_RATE}`}
+            content={`Los precios de Japón se convierten a euros a ${YEN_RATE}, con la comisión del cambio incluida.`}
           >
             Precios de los paquetes
           </Tip>

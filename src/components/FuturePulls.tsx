@@ -183,7 +183,7 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
       </header>
 
       {plan.length === 0 ? (
-        <p className="muted">Aún no hay nada planificado. Los personajes y conos de luz se añaden en el orden en que se quieren sacar.</p>
+        <p className="muted">Aún no hay nada planificado. Los personajes y conos de luz se añaden en el orden en que se quieren conseguir.</p>
       ) : (
         <div className="pull-list">
           <DndContext

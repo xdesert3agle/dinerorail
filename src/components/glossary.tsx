@@ -67,13 +67,14 @@ export function StarlightDefinition() {
       datos quedaba encajonada.
     */}
     {/*
-      Con nombre e icono, como la de las Esquirlas (espacios del «=» fijos: en flex se recortan). El punto,
+      Con nombre e icono, como la de las Esquirlas (espacios del «=» fijos: en flex se recortan). Un tipo de
+      cambio es entre objetos: el Pase Especial que da la tienda, no «tirada», que es la acción. El punto,
       solo para los lectores: sin él juntarían la equivalencia con el rótulo.
     */}
     <span className="with-icon with-icon-tight tip-rule">
       {`${STARLIGHT_PER_PASS} Cosmiluz`}
       <Icon kind="starlight" size={16} decorative />
-      {'\u00a0=\u00a01 tirada'}
+      {'\u00a0=\u00a01 Pase Especial'}
       <Icon kind="pass" size={16} decorative />
       <span className="sr-only">. </span>
     </span>

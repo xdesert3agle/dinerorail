@@ -177,7 +177,7 @@ const percentile = (sorted: Float64Array, q: number) =>
 
 /**
  * Singles que garantizan conseguir los i primeros objetivos pase lo que pase (el peor caso absoluto):
- * cada 5★ en el pity duro, perdiendo todos los 50/50, y como Cosmiluz solo la mínima segura: la de cada 5★
+ * cada 5★ en el límite del juego, perdiendo todos los 50/50, y como Cosmiluz solo la mínima segura: la de cada 5★
  * (40 el perdido; el buscado, según su copia) y solo el 4★ garantizado cada 10 tiradas, del tipo que menos da:
  * - Banner de conos: siempre cono (8).
  * - Banner de personaje: si sale un cono (no destacado), el siguiente 4★ es un personaje destacado
@@ -258,7 +258,7 @@ export function planOdds(sim: PlanSimulation, budget: number): PlanOdds {
 /** La probabilidad de un objetivo para enseñarla: la simulada, salvo en los dos casos en que se sabe seguro. */
 export interface ShownChance {
   p: number;
-  /** Llega aunque todo salga en el pity duro (guaranteedNeeded): el único caso en que se dice 100 %. */
+  /** Llega aunque todo salga en el límite del juego (guaranteedNeeded): el único caso en que se dice 100 %. */
   certain: boolean;
   /** Ni siquiera hay una tirada por objetivo: el único caso en que se dice 0 %. */
   impossible: boolean;

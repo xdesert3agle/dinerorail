@@ -46,6 +46,7 @@ export const DEFAULT_HARD_PITY: Record<PullKind, number> = { character: 80, ligh
  * que se ha medido en la comunidad):
  * - Personaje: 0,6 % por tirada; desde la 74 sube un 6 % por tirada; garantizado en la 90. 50/50.
  * - Cono: 0,8 % por tirada; desde la 66 sube un 7 % por tirada; garantizado en la 80. 75/25.
+ * `featuredWin`: lo que anuncia el banner (el 0,5 del 50/50, el 0,75 del 75/25).
  * `featuredChance`: probabilidad de que un 5★ sin garantizado sea el destacado.
  */
 
@@ -63,12 +64,24 @@ export interface BannerModel {
   softPityFrom: number;
   softPityStep: number;
   hardPity: number;
+  featuredWin: number;
   featuredChance: number;
 }
 
+const banner = (model: Omit<BannerModel, 'featuredChance'>): BannerModel => ({
+  ...model,
+  featuredChance: featuredChance(model.featuredWin),
+});
+
 export const BANNERS: Record<PullKind, BannerModel> = {
-  character: { base: 0.006, softPityFrom: 74, softPityStep: 0.06, hardPity: 90, featuredChance: featuredChance(0.5) },
-  lightCone: { base: 0.008, softPityFrom: 66, softPityStep: 0.07, hardPity: 80, featuredChance: featuredChance(0.75) },
+  character: banner({ base: 0.006, softPityFrom: 74, softPityStep: 0.06, hardPity: 90, featuredWin: 0.5 }),
+  lightCone: banner({ base: 0.008, softPityFrom: 66, softPityStep: 0.07, hardPity: 80, featuredWin: 0.75 }),
+};
+
+/** El nombre de la apuesta de cada banner, como lo dicen los jugadores: «50/50», «75/25». */
+export const fiftyFiftyName = (kind: PullKind) => {
+  const won = Math.round(BANNERS[kind].featuredWin * 100);
+  return `${won}/${100 - won}`;
 };
 
 /** Probabilidad de 5★ en la tirada número `n` desde el último 5★ (empezando en 1). */

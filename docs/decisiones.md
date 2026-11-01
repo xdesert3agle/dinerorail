@@ -36,10 +36,17 @@ volver a proponer y por qué.
 - **Subrayados del glosario** (2026-10-28): se planteó marcar «Cosmiluz» en todas las etiquetas y casillas; se
   quedó en una vez por tarjeta, donde se decide algo (con demasiados subrayados dejan de avisar). Por lo mismo,
   «garantizado» se marca solo en el del personaje.
-- **Definición de la Cosmiluz:** una sola, la del plan, con sus tablas; Recursos actuales usa la misma.
+- **Definición de la Cosmiluz:** una sola, la del plan, con sus tablas; Recursos actuales usa la misma. Su cambio
+  es «20 Cosmiluz = 1 Pase Especial», no «= 1 tirada» (2026-11-01): un tipo de cambio va entre objetos, como
+  el de las Esquirlas; «tirada» es la acción y sirve para contar (los totales).
 - **Definición del pity (2026-10-30):** en «Pity de personaje», con los máximos de los dos banners; el de cono de
-  luz, sin burbuja (como «garantizado»). Remite a «Configuración › Pity» en texto. Se descartó un enlace dentro de
+  luz, sin burbuja (como «garantizado»). Subrayada solo la palabra «Pity» (2026-11-01): con la etiqueta entera
+  parecía que definía solo el de personaje. Remite a «Configuración › Pity» en texto. Se descartó un enlace dentro de
   la burbuja: con el teclado no se llega a él y para los lectores es solo una descripción.
+- **Definición de las Esquirlas (2026-11-01):** en «Convertir Esquirlas en Jades», no en el campo «Esquirlas
+  Oníricas» aunque salga antes: lo que explica (1 = 1 Jade) es lo que decide el interruptor.
+- **«75/25» en el banner de conos (2026-11-01):** se planteó usar «50/50» como término general para los dos
+  banners; se prefirió el nombre exacto de cada uno, también en la casilla de cada fila del plan.
 - **Interruptores de Esquirlas:** cada uno manda solo en su tarjeta (2026-10-25). No gustó que uno pisara al otro.
 - **Pie de la tarjeta de paquetes:**
   - «Usar paquetes en el plan», alineado a la derecha, bajo el total que decide; a la izquierda parecía pegado

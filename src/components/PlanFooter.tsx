@@ -6,9 +6,9 @@ import { withSettings, type ChangeState } from '../state/store';
 import { fmtDayMonth, fmtInt } from './format';
 import { StarlightDefinition } from './glossary';
 import { Icon } from './Icon';
-import { Tip } from './Tip';
+import { Term, Tip } from './Tip';
 import { TipSumRow } from './TipSumRow';
-import { Toggle, ToggleTerm } from './Toggle';
+import { Toggle } from './Toggle';
 
 interface Props {
   result: Result;
@@ -42,7 +42,7 @@ export function PlanFooter({ result, countStarlight, balance, onChange, footRef 
           <span>
             Reinvertir{' '}
             <span className="refund-word">
-              <ToggleTerm>Cosmiluz</ToggleTerm>
+              <Term>Cosmiluz</Term>
               <Icon kind="starlight" size={20} decorative />
             </span>{' '}
             de las tiradas

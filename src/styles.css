@@ -1845,7 +1845,7 @@ select:focus {
   .check::after {
     height: max(100%, 36px);
   }
-  /* El término con explicación de la etiqueta (ToggleTerm), por encima de esa zona: si no, el toque cambiaba el interruptor. */
+  /* El término con explicación de la etiqueta (Term), por encima de esa zona: si no, el toque cambiaba el interruptor. */
   .check .tip-term {
     position: relative;
     z-index: 1;

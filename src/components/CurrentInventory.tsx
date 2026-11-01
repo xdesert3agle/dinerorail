@@ -1,13 +1,14 @@
 import type { Result } from '../engine/calculate';
 import { effectivePity } from '../engine/pulls';
+import { fiftyFiftyName } from '../engine/rules';
 import type { AppState, Inventory, PullKind } from '../engine/types';
 import { withSettings, type ChangeState } from '../state/store';
-import { fmtInt, floorSingles } from './format';
+import { fmtInt, fmtSettingsPath, floorSingles } from './format';
 import { StarlightDefinition } from './glossary';
 import { Icon } from './Icon';
 import { NumberField } from './NumberField';
-import { TipTitle } from './Tip';
-import { Toggle, ToggleTerm } from './Toggle';
+import { Term, TipTitle } from './Tip';
+import { Toggle } from './Toggle';
 
 interface Props {
   state: AppState;
@@ -16,9 +17,9 @@ interface Props {
 }
 
 const PITY_FIELDS: { kind: PullKind; label: string; guaranteedLabel: string }[] = [
-  // «… garantizado»: la palabra es el término con explicación (ToggleTerm).
-  { kind: 'character', label: 'Pity de personaje', guaranteedLabel: 'Siguiente personaje' },
-  { kind: 'lightCone', label: 'Pity de cono de luz', guaranteedLabel: 'Siguiente cono de luz' },
+  // «Pity …» y «… garantizado»: la palabra es el término con explicación (Term).
+  { kind: 'character', label: 'de personaje', guaranteedLabel: 'Siguiente personaje' },
+  { kind: 'lightCone', label: 'de cono de luz', guaranteedLabel: 'Siguiente cono de luz' },
 ];
 
 export function CurrentInventory({ state, result, onChange }: Props) {
@@ -54,8 +55,8 @@ export function CurrentInventory({ state, result, onChange }: Props) {
           <NumberField icon="shard" label="Esquirlas Oníricas" value={inv.shards} min={0} onChange={(shards) => setInv({ shards })} />
           <NumberField
             icon="starlight"
-            label="Cosmiluz Inextinguible"
-            // La misma definición que el interruptor del plan (un término, una definición: ver glossary.tsx).
+            // Toda la etiqueta es el término. La misma definición que el interruptor del plan (ver glossary.tsx).
+            label={<Term>Cosmiluz Inextinguible</Term>}
             info={<StarlightDefinition />}
             value={inv.starlight}
             min={0}
@@ -86,7 +87,7 @@ export function CurrentInventory({ state, result, onChange }: Props) {
           <span className="with-icon with-icon-tight shards-as-jades">
             {/* En un solo trozo, para que el espacio entre las dos palabras no se recorte (flex). */}
             <span>
-              Convertir <ToggleTerm>Esquirlas</ToggleTerm>
+              Convertir <Term>Esquirlas</Term>
             </span>
             <Icon kind="shard" size={16} decorative />
             {'\u00a0en Jades'}
@@ -99,7 +100,12 @@ export function CurrentInventory({ state, result, onChange }: Props) {
         {PITY_FIELDS.map(({ kind, label, guaranteedLabel }, i) => (
           <div key={kind} className="pity-field">
             <NumberField
-              label={label}
+              // Sin Term en el de cono de luz (no lleva explicación): ahí es texto normal.
+              label={
+                <>
+                  <Term>Pity</Term> {label}
+                </>
+              }
               // El que cuenta (effectivePity): hasta el máximo de Configuración − 1, como el plan y la previsión.
               value={effectivePity(state.pity, hardPity)[kind]}
               min={0}
@@ -109,7 +115,8 @@ export function CurrentInventory({ state, result, onChange }: Props) {
                 i === 0 && (
                   <>
                     <TipTitle>Pity</TipTitle>
-                    {`Tiradas desde el último 5★ de ese banner. Puede llegar hasta una menos que el máximo definido en Configuración › Pity (${hardPity.character - 1} de personaje, ${hardPity.lightCone - 1} de cono de luz): la tirada que alcanza el máximo da el 5★ seguro.`}
+                    {/* Límite: el de Configuración (80); máximo: el pity más alto (79). La tirada que sigue al máximo es la del límite. */}
+                    {`Tiradas realizadas desde el último 5★ de ese banner. Puede alcanzar un máximo de una menos que el límite definido en ${fmtSettingsPath('Pity')} (${hardPity.character - 1} en personaje y ${hardPity.lightCone - 1} en cono de luz). Al llegar a ese máximo, la siguiente tirada garantiza un 5★.`}
                   </>
                 )
               }
@@ -125,14 +132,14 @@ export function CurrentInventory({ state, result, onChange }: Props) {
                 i === 0 && (
                   <>
                     <TipTitle>Garantizado</TipTitle>
-                    El último 5★ de ese banner no fue el destacado (se perdió el 50/50): el próximo 5★ será el destacado seguro.
+                    {`El último 5★ de ese banner no fue el destacado (se perdió el ${fiftyFiftyName('character')} o el ${fiftyFiftyName('lightCone')}). El próximo 5★ será el destacado con total seguridad.`}
                   </>
                 )
               }
             >
               {/* «Siguiente»: solo el próximo 5★ de ese banner es seguro. En un trozo: la etiqueta es flex. */}
               <span>
-                {guaranteedLabel} <ToggleTerm>garantizado</ToggleTerm>
+                {guaranteedLabel} <Term>garantizado</Term>
               </span>
             </Toggle>
           </div>

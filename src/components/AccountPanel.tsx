@@ -87,7 +87,7 @@ export function AccountPanel({ state, catalog, onChange }: Props) {
       const imported = fiveStarOnly(parseProfile(await file.text()), entries);
       const text = `${countLabel(imported.length)} ${imported.length === 1 ? 'importado' : 'importados'}.`;
       // Sustituye la lista (y lo marcado a mano): el aviso de abajo permite deshacerlo.
-      setCharacters(() => imported, Date.now(), `Perfil importado: ${text}`);
+      setCharacters(() => imported, Date.now(), `Perfil importado con ${countLabel(imported.length)}.`);
       setMessage({ text, error: false });
     } catch (e) {
       setMessage({ text: e instanceof Error ? e.message : 'No se ha podido leer el archivo.', error: true });
@@ -105,7 +105,7 @@ export function AccountPanel({ state, catalog, onChange }: Props) {
           <p className="muted">
             {importedAt
               ? `Importado el ${fmtMoment(importedAt)}.`
-              : 'Importar el perfil marca los personajes de la cuenta y sus Eidolones, en lugar de lo marcado a mano.'}
+              : 'Al importar el perfil, se marcan los personajes de la cuenta con sus Eidolones. Sustituye lo marcado a mano.'}
           </p>
           {/* El botón y su resultado juntos: vacío, el aviso no suma el hueco de la tarjeta bajo el botón. */}
           <div className="account-action">
@@ -144,8 +144,8 @@ export function AccountPanel({ state, catalog, onChange }: Props) {
           {!entries && (
             <p className="warning">
               {characters.length > 0
-                ? 'Sin el contenido sincronizado solo se ven los importados, y no se distinguen los 4★. Se sincroniza en Configuración.'
-                : 'Para marcar personajes hay que sincronizar el contenido (en Configuración) o importar el perfil.'}
+                ? 'Sin el contenido sincronizado, solo se muestran los personajes importados. El contenido se sincroniza en Configuración.'
+                : 'Se puede importar el perfil, o sincronizar el contenido en Configuración para marcar los personajes a mano.'}
             </p>
           )}
           {all.length > 0 && (

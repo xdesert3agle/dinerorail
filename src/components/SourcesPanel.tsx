@@ -285,7 +285,7 @@ function SourceEditor({ source, today, focusName, onUpdate, onDelete }: EditorPr
           <NumberField
             compact
             label="Días desde el inicio"
-            hint="Negativo = antes"
+            hint="Negativo si es antes del inicio"
             value={schedule.offsetDays}
             onChange={(offsetDays) => onUpdate({ schedule: { ...schedule, offsetDays } })}
           />
@@ -295,12 +295,12 @@ function SourceEditor({ source, today, focusName, onUpdate, onDelete }: EditorPr
       {schedule.type === 'cycle' && (
         <div className="grid-2">
           <label className="field field-compact">
-            <span className="field-label">Fecha de un reinicio (referencia)</span>
+            <span className="field-label">Fecha de cualquier reinicio</span>
             <DateField value={schedule.anchor} onChange={(anchor) => onUpdate({ schedule: { ...schedule, anchor } })} />
           </label>
           <NumberField
             compact
-            label="Cada cuántos días"
+            label="Días por ciclo"
             value={schedule.periodDays}
             min={1}
             onChange={(periodDays) => onUpdate({ schedule: { ...schedule, periodDays } })}

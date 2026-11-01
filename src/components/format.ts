@@ -22,7 +22,7 @@ export const fmtRate = (p: number, digits: 1 | 2 = 1) => (digits === 1 ? pct1 : 
 /** El cambio fijo de los precios de Japón, «174,25 ¥/€». */
 export const YEN_RATE = `${new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2 }).format(JPY_PER_EUR)} ¥/€`;
 /** Precios de Japón: se eligen en Configuración (Tienda); en la tarjeta de paquetes solo se avisa. */
-export const YEN_PRICES_TIP = `Precios de Japón (¥) pasados a euros a ${YEN_RATE}`;
+export const YEN_PRICES_TIP = `Precios de Japón convertidos a euros a ${YEN_RATE}`;
 export const fmtSingles = (n: number, digits: 1 | 2 = 2) => (digits === 1 ? dec1 : dec2).format(n);
 /** Singles enteras, las que se pueden tirar: 81,5 son 81 (el margen salva los errores de coma flotante). */
 export const floorSingles = (n: number) => Math.floor(n + 1e-9);
@@ -30,6 +30,9 @@ export const floorSingles = (n: number) => Math.floor(n + 1e-9);
 const timeFmt = new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digit' });
 // A mano y no con Intl: según el navegador, es-ES sale con punto ("nov.") o sin él ("nov").
 const MONTHS = ['ene.', 'feb.', 'mar.', 'abr.', 'may.', 'jun.', 'jul.', 'ago.', 'sept.', 'oct.', 'nov.', 'dic.'];
+
+/** Dónde se cambia algo, «Configuración › Pity»: sin partirse en el «›» (espacios de no separación). */
+export const fmtSettingsPath = (card: string) => `Configuración › ${card}`;
 
 /** Cuánto falta para un día: "hoy", "mañana" o "en 19 días" (va entre paréntesis tras la fecha o el día). */
 export const fmtCountdown = (days: number) => (days === 0 ? 'hoy' : days === 1 ? 'mañana' : `en ${fmtInt(days)} días`);

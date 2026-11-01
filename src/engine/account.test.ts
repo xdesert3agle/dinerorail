@@ -28,7 +28,7 @@ describe('parseProfile', () => {
 
   it('avisa si no es un JSON o no tiene la lista de personajes', () => {
     expect(() => parseProfile('{nope')).toThrow('no es un JSON válido');
-    expect(() => parseProfile(JSON.stringify({ version: 1 }))).toThrow('lista de personajes');
+    expect(() => parseProfile(JSON.stringify({ version: 1 }))).toThrow('no es un perfil válido');
   });
 });
 

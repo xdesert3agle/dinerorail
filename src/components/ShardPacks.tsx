@@ -2,11 +2,11 @@ import { emptyPurchase, MAX_PACK_COUNT, packPrice, packShards, packsTotal, SHARD
 import { splitJades } from '../engine/rules';
 import type { AppState, ShardPackPurchase } from '../engine/types';
 import { withSettings, type ChangeState } from '../state/store';
-import { fmtEuros, fmtInt, YEN_PRICES_TIP } from './format';
+import { fmtEuros, fmtInt, fmtSettingsPath, YEN_PRICES_TIP } from './format';
 import { Icon } from './Icon';
 import { NumberField } from './NumberField';
-import { Tip, TipTitle } from './Tip';
-import { Toggle, ToggleTerm } from './Toggle';
+import { Term, Tip, TipTitle } from './Tip';
+import { Toggle } from './Toggle';
 
 interface Props {
   state: AppState;
@@ -21,7 +21,7 @@ export function ShardPacks({ state, onChange }: Props) {
   // Por qué no suman, si no suman: solo depende de «Usar paquetes en el plan» (aquí); «Convertir Esquirlas en Jades»
   // (Recursos actuales) es solo para las del inventario.
   const counted = state.settings.includePacks;
-  const notCounted = counted ? '' : 'Ahora no suman: «Usar paquetes en el plan» está apagado.';
+  const notCounted = counted ? '' : 'No se tienen en cuenta en el plan. «Usar paquetes en el plan» está desactivado.';
 
   const update = (id: string, patch: Partial<ShardPackPurchase>) =>
     onChange((s) => ({
@@ -41,8 +41,8 @@ export function ShardPacks({ state, onChange }: Props) {
           className={`card-total${total.shards > 0 ? '' : ' invisible'}${notCounted ? ' is-off' : ''}`}
           content={[
             spareJades > 0
-              ? `Las Esquirlas dan ${fmtInt(packSingles)} tiradas y ${fmtInt(spareJades)} Jades más`
-              : `Las Esquirlas dan ${fmtInt(packSingles)} tiradas`,
+              ? `Equivalen a ${fmtInt(packSingles)} tiradas y ${fmtInt(spareJades)} Jades más.`
+              : `Equivalen a ${fmtInt(packSingles)} tiradas.`,
             notCounted,
           ]
             .filter(Boolean)
@@ -112,7 +112,7 @@ export function ShardPacks({ state, onChange }: Props) {
               </span>
               <span role="cell" className="pack-first">
                 {/* Con la cifra real: el ×2 dobla la base del paquete, no lo que da cada compra (Por compra). */}
-                <Tip control content={`Primera compra: ${fmtInt(pack.base * 2)} en vez de ${fmtInt(perPack)}`}>
+                <Tip control content={`La primera compra da ${fmtInt(pack.base * 2)} en lugar de ${fmtInt(perPack)}.`}>
                   {(describedBy) => (
                     <label className="check">
                       <input
@@ -151,7 +151,7 @@ export function ShardPacks({ state, onChange }: Props) {
             Total
             <Tip
               className="tip-term swap pack-store"
-              content={`${inYen ? YEN_PRICES_TIP : 'Precios de España'}. Se cambia en Configuración › Tienda`}
+              content={`${inYen ? YEN_PRICES_TIP : 'Precios de España'}. Se cambia en ${fmtSettingsPath('Tienda')}.`}
             >
               <span className={inYen ? 'invisible' : undefined} aria-hidden={inYen}>
                 España
@@ -187,13 +187,14 @@ export function ShardPacks({ state, onChange }: Props) {
         tip={
           <>
             <TipTitle>Paquetes</TipTitle>
-            Apagado, no suman nada y se ve si basta sin pagar (las cantidades se quedan)
+            Compras de Esquirlas Oníricas con dinero real. Al desactivarlo, los paquetes no se tienen en cuenta en el
+            plan, pero sus cantidades se conservan.
           </>
         }
       >
         {/* En un trozo: la etiqueta es flex, y el término con explicación partiría la frase con huecos. */}
         <span>
-          Usar <ToggleTerm>paquetes</ToggleTerm> en el plan
+          Usar <Term>paquetes</Term> en el plan
         </span>
       </Toggle>
     </section>

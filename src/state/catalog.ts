@@ -106,7 +106,7 @@ export function useCatalog(): CatalogSync {
       setCatalog(next);
       write(CATALOG_KEY, next);
     } catch {
-      setError('No se ha podido descargar el contenido. Se puede volver a intentar en un rato.');
+      setError('No se ha podido descargar el contenido. Se puede volver a intentar después de la espera.');
     } finally {
       inFlight.current = false;
       setSyncing(false);

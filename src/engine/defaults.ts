@@ -33,7 +33,7 @@ export function defaultSources(today = todayISO()): Source[] {
     {
       id: 'express-pass',
       name: 'Pase de Suministros del Expreso',
-      description: 'La bendición: 90 Jades cada día al iniciar sesión.',
+      description: '90 Jades al día. Se calcula como si se renovara sin interrupción.',
       category: 'diario',
       enabled: true,
       schedule: { type: 'daily' },
@@ -43,7 +43,7 @@ export function defaultSources(today = todayISO()): Source[] {
     {
       id: 'weekly',
       name: 'Recompensa semanal',
-      description: 'Se puede hacer cualquier día; se considera cobrada el lunes.',
+      description: 'Se puede completar cualquier día de la semana. Se cuenta el lunes, con el reinicio semanal.',
       category: 'semanal',
       enabled: true,
       schedule: { type: 'weekly', weekday: 0 },
@@ -92,7 +92,7 @@ export function defaultSources(today = todayISO()): Source[] {
     {
       id: 'livestream-codes',
       name: 'Códigos del directo',
-      description: 'El directo es unos 12 días antes de la versión.',
+      description: 'Se publican en el directo de presentación de la nueva versión, unos 12 días antes de su inicio.',
       category: 'parche',
       enabled: true,
       schedule: { type: 'perPatch', offsetDays: -12 },
@@ -132,9 +132,9 @@ export function defaultSources(today = todayISO()): Source[] {
     {
       id: 'gift-of-odyssey',
       name: 'Regalo de Odisea',
-      description: 'Evento de inicio de sesión de 7 días. No sale en todas las versiones.',
+      description: 'Evento de inicio de sesión de 7 días.',
       category: 'parche',
-      enabled: false,
+      enabled: true,
       schedule: { type: 'perPatch', offsetDays: 0 },
       reward: reward(0, 10),
       pendingNow: false,
@@ -152,7 +152,7 @@ export function defaultSources(today = todayISO()): Source[] {
     {
       id: 'hoyolab-checkin',
       name: 'Check-in de HoYoLAB',
-      description: 'Aproximado: el calendario cambia cada mes.',
+      description: 'Cantidad aproximada. El calendario de recompensas cambia cada mes. Se cuenta entera el día 1.',
       category: 'mensual',
       enabled: false,
       schedule: { type: 'monthly', day: 1 },

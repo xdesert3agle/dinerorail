@@ -1,7 +1,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { fmtInt } from './format';
 import { Icon, type IconKind } from './Icon';
-import { Tip } from './Tip';
+import { TermProvider } from './Tip';
 
 /** Lo que la capa de la cifra con puntos copia del input para que su texto caiga en el mismo sitio. */
 const OVERLAY_PROPS = [
@@ -22,7 +22,7 @@ const OVERLAY_PROPS = [
 ] as const;
 
 interface Props {
-  label: string;
+  label: ReactNode;
   value: number;
   onChange: (value: number) => void;
   min?: number;
@@ -34,7 +34,11 @@ interface Props {
   /** Icono dentro del campo, a la izquierda. */
   icon?: IconKind;
   className?: string;
-  /** Texto de ayuda de la etiqueta (punteada): sale al pasar el ratón, al enfocarla o al tocarla. */
+  /**
+   * Explicación del campo, como una entrada de glosario (igual que la de un interruptor): la abre el término de la
+   * etiqueta, que tiene que ir marcado con Term (la etiqueta entera, si toda ella es el término), y es la
+   * descripción del input para los lectores de pantalla. Solo con la etiqueta a la vista.
+   */
   info?: ReactNode;
 }
 
@@ -110,30 +114,22 @@ export function NumberField({
     };
   }, [masked]);
 
-  const infoId = info ? `${id}-info` : undefined;
+  // La descripción de la explicación es su propia burbuja (siempre en el DOM, aunque cerrada), como en los interruptores.
+  const infoId = `${id}-info`;
   const hintId = hint ? `${id}-hint` : undefined;
-  const describedBy = [infoId, hintId].filter(Boolean).join(' ') || undefined;
+  const describedBy = [info && infoId, hintId].filter(Boolean).join(' ') || undefined;
 
   return (
     <div className={['field', compact && 'field-compact', className].filter(Boolean).join(' ')}>
       {/*
-        Con ayuda, la propia etiqueta la explica (punteada, como en la previsión): sin icono (i), cabe en una línea.
-        Con el ratón, su clic sigue enfocando el campo; al tocarla, abre la explicación sin sacar el teclado.
+        Con explicación, la abre el término de la etiqueta (punteado, como en la previsión): sin icono (i), cabe en
+        una línea. Con el ratón, su clic sigue enfocando el campo; al tocarlo, abre la explicación sin sacar el teclado.
       */}
-      <label htmlFor={id} className={hideLabel ? 'sr-only' : 'field-label'}>
-        {info && !hideLabel ? (
-          <Tip className="tip-term" content={info}>
-            {label}
-          </Tip>
-        ) : (
-          label
-        )}
-      </label>
-      {info && (
-        <span id={infoId} className="sr-only">
-          {info}
-        </span>
-      )}
+      <TermProvider tip={info} id={infoId}>
+        <label htmlFor={id} className={hideLabel ? 'sr-only' : 'field-label'}>
+          {label}
+        </label>
+      </TermProvider>
       <span className={icon ? 'input-wrap has-icon' : 'input-wrap'}>
         {icon && <Icon kind={icon} size={compact ? 20 : 24} decorative />}
         <input

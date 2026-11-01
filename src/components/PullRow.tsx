@@ -3,6 +3,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useEffect, useRef, useState } from 'react';
 import type { CatalogEntry } from '../engine/catalog';
 import type { PlannedPullResult } from '../engine/pulls';
+import { fiftyFiftyName } from '../engine/rules';
 import type { PlannedPull } from '../engine/types';
 import { fmtInt } from './format';
 import { Icon } from './Icon';
@@ -81,6 +82,8 @@ export function PullRow({
     transition: reducedMotion() ? null : SNAP_TRANSITION,
   });
   const label = pull.name || KIND_LABEL[pull.kind];
+  // «50/50» o «75/25», el de su banner; mismo ancho, así la columna no cambia entre filas.
+  const bet = fiftyFiftyName(pull.kind);
 
   return (
     <div
@@ -182,7 +185,7 @@ export function PullRow({
         </span>
         {/*
           Su probabilidad, en la línea del tipo, a la derecha: la respuesta a «¿llego?» junto al objetivo.
-          Con las probabilidades reales (no usa la casilla «50/50 ganado»).
+          Con las probabilidades reales (no usa la casilla «50/50 ganado» o «75/25 ganado»).
         */}
         <span className="pull-chance">
           <span className="sr-only">Probabilidad: </span>
@@ -208,12 +211,12 @@ export function PullRow({
           type="checkbox"
           checked={row.guaranteed || pull.winsFiftyFifty}
           disabled={row.guaranteed}
-          aria-label={row.guaranteed ? `${label}: garantizado, se gana seguro` : `${label}: 50/50 ganado`}
+          aria-label={row.guaranteed ? `${label}: garantizado` : `${label}: ${bet} ganado`}
           onChange={(e) => onUpdate({ winsFiftyFifty: e.target.checked })}
         />
         <span className="swap">
           <span className={row.guaranteed ? undefined : 'invisible'}>Garantizado</span>
-          <span className={row.guaranteed ? 'invisible' : undefined}>50/50 ganado</span>
+          <span className={row.guaranteed ? 'invisible' : undefined}>{bet} ganado</span>
         </span>
       </label>
 
@@ -223,14 +226,15 @@ export function PullRow({
         content={
           <>
             {/*
-              La cuenta del coste, como la del balance: el pity duro, menos el pity actual (solo en la primera fila
-              de su tipo; en las demás «—», no aplica) y otra vez el pity duro si se pierde el 50/50.
+              La cuenta del coste, como la del balance: el límite de pity (el de Configuración; el del juego va en
+              la previsión), menos el pity actual (solo en la primera fila de su tipo; en las demás
+              «—», no aplica) y otra vez el límite si se pierde el 50/50 (o el 75/25).
             */}
             <span className="tip-table tip-table-3" aria-hidden="true">
-              <TipSumRow label="Pity duro" value={row.hardPity} />
+              <TipSumRow label="Límite de pity" value={row.hardPity} />
               <TipSumRow label="Pity actual" sign="−" value={row.usesPity ? row.pityDiscount : null} />
               <TipSumRow
-                label={row.guaranteed ? 'Garantizado' : row.losesFiftyFifty ? '50/50 perdido' : '50/50 ganado'}
+                label={row.guaranteed ? 'Garantizado' : `${bet} ${row.losesFiftyFifty ? 'perdido' : 'ganado'}`}
                 sign="+"
                 value={row.losesFiftyFifty ? row.hardPity : 0}
               />
@@ -238,13 +242,13 @@ export function PullRow({
               <TipSumRow label="Coste" value={row.cost} total />
             </span>
             <span className="sr-only">
-              {`${fmtInt(row.hardPity)} del pity duro`}
+              {`${fmtInt(row.hardPity)} del límite de pity`}
               {row.usesPity && `, menos ${fmtInt(row.pityDiscount)} del pity actual`}
               {row.losesFiftyFifty
-                ? `, más ${fmtInt(row.hardPity)} por perder el 50/50`
+                ? `, más ${fmtInt(row.hardPity)} por perder el ${bet}`
                 : row.guaranteed
                   ? ', con el garantizado'
-                  : ', con el 50/50 ganado'}
+                  : `, con el ${bet} ganado`}
               {`: ${fmtInt(row.cost)} tiradas.`}
             </span>
           </>

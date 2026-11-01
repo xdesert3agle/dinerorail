@@ -1,5 +1,7 @@
 import {
   cloneElement,
+  createContext,
+  useContext,
   useEffect,
   useId,
   useLayoutEffect,
@@ -37,8 +39,8 @@ interface Props {
    */
   side?: 'below' | 'above';
   /**
-   * Id de la burbuja, si lo pone quien la usa: un interruptor lo lleva también en su input, como descripción,
-   * aunque el disparador sea el término de su etiqueta (ToggleTerm).
+   * Id de la burbuja, si lo pone quien la usa: un interruptor o un campo lo llevan también en su input, como
+   * descripción, aunque el disparador sea el término de su etiqueta (Term).
    */
   id?: string;
 }
@@ -258,5 +260,31 @@ export function TipTitle({ children }: { children: ReactNode }) {
       {children}
       <span className="sr-only">. </span>
     </span>
+  );
+}
+
+const TermContext = createContext<{ tip: ReactNode; id: string } | null>(null);
+
+/**
+ * La explicación de un control (un interruptor o un campo), para el Term de su etiqueta. `id` es el de la burbuja,
+ * que el control pone también en su input como descripción. Sin `tip`, los Term de dentro son texto normal.
+ */
+export function TermProvider({ tip, id, children }: { tip: ReactNode; id: string; children: ReactNode }) {
+  return <TermContext.Provider value={tip ? { tip, id } : null}>{children}</TermContext.Provider>;
+}
+
+/**
+ * El término de una etiqueta que lleva la explicación de su control, como una entrada de glosario (subrayado de
+ * puntos): solo la palabra que se define («Pity» en «Pity de personaje»), no la etiqueta entera. Se abre al pasar
+ * el ratón, al llegar con el teclado o al tocarlo; el toque no cambia el interruptor ni enfoca el campo, y un clic
+ * con el ratón hace lo mismo que en el resto de la etiqueta.
+ */
+export function Term({ children }: { children: ReactNode }) {
+  const term = useContext(TermContext);
+  if (!term) return children;
+  return (
+    <Tip id={term.id} className="tip-term" content={term.tip}>
+      {children}
+    </Tip>
   );
 }

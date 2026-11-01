@@ -95,7 +95,7 @@ React hooks and browser storage.
 - **Cards:** one per card, named after it. The planner is split into `FuturePulls` (list and drag), `PullRow` and `PlanFooter`.
 - **Shared controls:**
   - `NumberField`, `DateField` (air-datepicker) and `NameCombobox`;
-  - `Toggle`/`ToggleTerm` and `SwitchInput` (the bare switch), `Tip`/`TipTitle` and `TipSumRow`;
+  - `Toggle` and `SwitchInput` (the bare switch), `Tip`/`TipTitle`, `Term`/`TermProvider` and `TipSumRow`;
   - `RemoveGlyph`, `Icon`, `Rarity` and `Toast`.
 - **Helpers:**
   - `glossary.tsx`: shared definitions;
@@ -114,6 +114,9 @@ React hooks and browser storage.
 - **Vocabulary:**
   - A game version is **«versión»** in the UI («4.7 · 1.ª parte»), but `Patch` in code. Keep `Patch`, because `version` already names schema versions and a patch's number.
   - The planner card is «Plan de tiradas», and texts say «el plan».
+  - The pity: its **«límite»** is the value in Configuración › Pity (80/70); the game's own (90/80) is «el límite del juego». Never «pity duro», which named both.
+  - The bet is «50/50» on the character banner and «75/25» on the light cone one: texts take it from `fiftyFiftyName(kind)` (`rules.ts`, from `BANNERS[kind].featuredWin`). "fiftyFifty" stays in code for both.
+  - An exchange rate names the items («20 Cosmiluz = 1 Pase Especial»); «tirada» is the action and counts totals.
 - **Income (`buildEvents`):** dated events from **tomorrow through the target date**. Today's income is assumed to be already in the current resources.
   - A source with `pendingNow` also counts today (`canBePending`; never for per-patch sources).
   - Patch events follow `eventTiming`.
@@ -174,6 +177,7 @@ React hooks and browser storage.
 - **Voice:** neutral, never «tú».
   - Actions use the infinitive, states use nominal phrases, and explanations and instructions are impersonal.
   - **Exception:** keyboard instructions that only screen readers hear are imperative, with keys in lowercase («elige el día con las flechas y pulsa intro»), like the reader's own hints.
+  - **Register:** explanations and definitions are formal, not the players' colloquial speech: «la siguiente tirada garantiza un 5★», not «la tirada da el 5★ seguro»; «será el destacado con total seguridad», not «será el destacado seguro». Cause and consequence go in separate sentences, not joined by a colon.
 - **Tabs:** chosen by URL hash: none is Calculadora, `#cuenta` and `#configuracion` the others.
 - **Skins:** `aha` (the default and the CSS base) and `sparxie`, set as `data-skin` on `<html>`.
   - Light/dark is separate: `settings.theme` becomes `data-theme`, with no attribute for `system`.
@@ -217,7 +221,7 @@ React hooks and browser storage.
 - **Explanations:**
   - **`Tip`** explains a value on hover, focus or tap, linked with `aria-describedby`. `control` wraps a button.
   - **No `title`** for explanations; it is allowed only on controls with an accessible name.
-  - **Glossary:** a dotted-underlined term (`ToggleTerm` on a `Toggle`) opens its definition. Mark a term once per card. A term has one definition, shared through `glossary.tsx`.
+  - **Glossary:** a dotted-underlined term opens its definition. A `Toggle`'s `tip` or a `NumberField`'s `info` is opened by the `Term` in its label, which marks only the defined word («Pity» in «Pity de personaje»), or the whole label when it is the term. Mark a term once per card, where something is decided. A term has one definition, shared through `glossary.tsx`.
 - **Controls:**
   - **`NumberField`** delivers clamped integers, so parents do not clamp again. Emptied, it delivers 0. While focused, the typed text is left alone; the clamped value shows on blur.
   - **The segmented control** (`.segmented` with `.segment` buttons) serves the theme and mode selectors, the store and the Path filter.

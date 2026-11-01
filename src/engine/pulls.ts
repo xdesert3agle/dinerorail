@@ -13,7 +13,7 @@ export interface PlannedPullResult {
   id: string;
   /** Tiradas que hacen falta en el peor caso. */
   cost: number;
-  /** Las piezas del coste: pity duro − pity descontado + pity duro otra vez si se pierde el 50/50. */
+  /** Las piezas del coste: el límite de pity − pity descontado + el límite otra vez si se pierde el 50/50. */
   hardPity: number;
   /** Pity actual que se descuenta (0 si no es la primera fila de su tipo). */
   pityDiscount: number;
@@ -86,7 +86,7 @@ export interface PlanOptions {
 }
 
 /**
- * Calcula el coste de cada tirada planificada en el peor caso (siempre al pity duro).
+ * Calcula el coste de cada tirada planificada en el peor caso (siempre en el límite de pity de Configuración).
  * La primera de cada tipo descuenta el pity actual, y si se tiene el garantizado no puede perder
  * el 50/50; las siguientes empiezan de cero.
  *

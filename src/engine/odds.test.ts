@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { guaranteedNeeded, planOdds, shownChances, simulatePlan } from './odds';
-import { BANNERS, fiveStarChance, fiveStarRate } from './rules';
+import { BANNERS, fiftyFiftyName, fiveStarChance, fiveStarRate } from './rules';
 import type { PlannedPull, PullKind } from './types';
 
 const pull = (id: string, kind: PullKind): PlannedPull => ({ id, name: id, kind, winsFiftyFifty: false });
@@ -20,7 +20,12 @@ describe('probabilidades', () => {
     expect(featuredRate('lightCone')).toBeCloseTo(0.01534, 4);
   });
 
-  it('el pity duro garantiza el 5★', () => {
+  it('cada banner nombra su apuesta: 50/50 en personaje y 75/25 en cono', () => {
+    expect(fiftyFiftyName('character')).toBe('50/50');
+    expect(fiftyFiftyName('lightCone')).toBe('75/25');
+  });
+
+  it('el límite del juego garantiza el 5★', () => {
     expect(fiveStarChance('character', 90)).toBe(1);
     expect(fiveStarChance('lightCone', 80)).toBe(1);
     expect(fiveStarChance('character', 10)).toBe(0.006);
@@ -57,7 +62,7 @@ describe('probabilidades', () => {
     expect(withStarlight.p90Needed).toBeGreaterThanOrEqual(withStarlight.medianNeeded);
   });
 
-  it('singles que lo garantizan todo: pity duro y 50/50 perdidos, descontando el pity actual', () => {
+  it('singles que lo garantizan todo: límite del juego y 50/50 perdidos, descontando el pity actual', () => {
     const plan = [pull('a', 'character'), pull('b', 'character'), pull('c', 'lightCone')];
     // Sin Cosmiluz: 90 − 50 + 90, + 180, + 160 − 20.
     expect(guaranteedNeeded(plan, { character: 50, lightCone: 20 }, { countStarlight: false })).toEqual([130, 310, 450]);

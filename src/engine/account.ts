@@ -24,7 +24,7 @@ export function parseProfile(text: string): OwnedCharacter[] {
     throw new Error('El archivo no es un JSON válido.');
   }
   if (!isObj(raw) || !Array.isArray(raw.characters)) {
-    throw new Error('El archivo no es un perfil válido: no tiene la lista de personajes.');
+    throw new Error('El archivo no es un perfil válido.');
   }
   const byId = new Map<string, OwnedCharacter>();
   for (const c of raw.characters) {
