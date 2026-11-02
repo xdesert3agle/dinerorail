@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { splitJades, STARLIGHT_PER_AVERAGE_4_STAR, targetStarlight } from './rules';
+import { STARLIGHT_PER_AVERAGE_4_STAR, targetStarlight, wholeSinglesOf } from './rules';
 
 describe('reglas', () => {
   it('Cosmiluz media de un 4★: ~17,5 en el banner de personaje y ~9,06 en el de conos', () => {
@@ -15,8 +15,9 @@ describe('reglas', () => {
     expect(targetStarlight('lightCone', null)).toBe(40);
   });
 
-  it('splitJades: tiradas enteras y lo que sobra', () => {
-    expect(splitJades(1000)).toEqual({ singles: 6, spare: 40 });
-    expect(splitJades(159)).toEqual({ singles: 0, spare: 159 });
+  it('wholeSinglesOf: solo las tiradas enteras', () => {
+    expect(wholeSinglesOf(1000)).toBe(6);
+    expect(wholeSinglesOf(159)).toBe(0);
+    expect(wholeSinglesOf(160)).toBe(1);
   });
 });

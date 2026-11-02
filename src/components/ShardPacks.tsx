@@ -1,5 +1,5 @@
 import { emptyPurchase, MAX_PACK_COUNT, packPrice, packShards, packsTotal, SHARD_PACKS } from '../engine/packs';
-import { splitJades } from '../engine/rules';
+import { wholeSinglesOf } from '../engine/rules';
 import type { AppState, ShardPackPurchase } from '../engine/types';
 import { withSettings, type ChangeState } from '../state/store';
 import { fmtEuros, fmtInt, fmtSettingsPath, YEN_PRICES_TIP } from './format';
@@ -16,12 +16,18 @@ interface Props {
 export function ShardPacks({ state, onChange }: Props) {
   const inYen = state.settings.packsInYen;
   const total = packsTotal(state.shardPacks, inYen);
-  // Las Esquirlas se cambian 1:1 por Jades: en la cabecera, solo las tiradas enteras; lo que sobra, en la explicación.
-  const { singles: packSingles, spare: spareJades } = splitJades(total.shards);
-  // Por qué no suman, si no suman: solo depende de «Usar paquetes en el plan» (aquí); «Convertir Esquirlas en Jades»
-  // (Recursos actuales) es solo para las del inventario.
+  // Las Esquirlas se cambian 1:1 por Jades: en la cabecera, solo las tiradas enteras.
+  const packSingles = wholeSinglesOf(total.shards);
+  // Si suman o no solo depende de «Usar paquetes en el plan» (aquí); «Convertir Esquirlas en Jades» (Recursos
+  // actuales) es solo para las del inventario.
   const counted = state.settings.includePacks;
-  const notCounted = counted ? '' : 'No se tienen en cuenta en el plan. «Usar paquetes en el plan» está desactivado.';
+  const packTotal = (
+    <>
+      <Icon kind="pass" size={28} decorative />
+      <span className="sr-only">Tiradas de los paquetes: </span>
+      {fmtInt(packSingles)}
+    </>
+  );
 
   const update = (id: string, patch: Partial<ShardPackPurchase>) =>
     onChange((s) => ({
@@ -37,21 +43,20 @@ export function ShardPacks({ state, onChange }: Props) {
           Las tiradas que dan, como el total de las otras tarjetas; lo que cuestan va en la fila Total.
           Siempre presente (oculto si no hay nada) para que la cabecera no cambie de alto al aparecer.
         */}
-        <Tip
-          className={`card-total${total.shards > 0 ? '' : ' invisible'}${notCounted ? ' is-off' : ''}`}
-          content={[
-            spareJades > 0
-              ? `Equivalen a ${fmtInt(packSingles)} tiradas y ${fmtInt(spareJades)} Jades más.`
-              : `Equivalen a ${fmtInt(packSingles)} tiradas.`,
-            notCounted,
-          ]
-            .filter(Boolean)
-            .join('\n')}
-        >
-          <Icon kind="pass" size={28} decorative />
-          <span className="sr-only">Tiradas de los paquetes: </span>
-          {fmtInt(packSingles)}
-        </Tip>
+        {/*
+          Sin explicación, como el de Recursos actuales: las Esquirlas ya están en la fila Total y se suman al resto
+          de Jades. Solo explica por qué sale apagado (no se deja al color).
+        */}
+        {counted ? (
+          <span className={`card-total${total.shards > 0 ? '' : ' invisible'}`}>{packTotal}</span>
+        ) : (
+          <Tip
+            className={`card-total is-off${total.shards > 0 ? '' : ' invisible'}`}
+            content="No se tienen en cuenta en el plan. «Usar paquetes en el plan» está desactivado."
+          >
+            {packTotal}
+          </Tip>
+        )}
       </header>
 
       {/*

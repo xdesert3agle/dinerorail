@@ -63,6 +63,10 @@
   --field-compact-h: calc(1rem * 1.45 + 14px);
   /* Relleno de un campo compacto (6px arriba y abajo, con el ajuste de --input-nudge; 8px a los lados). */
   --field-compact-pad: calc(6px - var(--input-nudge)) 8px calc(6px + var(--input-nudge));
+  /* Esquinas de los campos (y de lo que va dentro de su borde, como las flechas de NumberField). */
+  --field-radius: 8px;
+  /* Ancho de las flechas de ±1 de NumberField, dentro del borde del campo. */
+  --stepper-w: 20px;
   /* Relleno a los lados de .btn: los botones que alinean su texto con una columna lo compensan (más su borde de 1px). */
   --btn-pad-x: 12px;
   /* Ancho del botón de quitar (✕): el pie del plan y la columna de los eventos dejan su hueco. */
@@ -198,6 +202,7 @@
   --dither: 3%;
   --shadow-win: 0 50px 80px -50px rgba(0, 0, 0, 0.34);
   --radius: 6px;
+  --field-radius: 3px;
   --input-nudge: -1px;
   --font-display: 'Instrument Serif', Georgia, serif;
   --font-body: 'Pixelify Sans', system-ui, sans-serif;
@@ -1402,7 +1407,7 @@ p {
   color: var(--text);
   background: var(--page);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--field-radius);
   /*
    * --input-nudge: cuánto sube el texto de los campos (menos relleno arriba que abajo), según la letra de cada
    * tema: Figtree (Aha) ya queda centrada (0); Courier Prime (Sparxie) se ve 1px alta (-1px).
@@ -1470,6 +1475,64 @@ select {
 }
 .field-compact .input-wrap.has-icon input {
   padding-left: 32px;
+}
+/* Sin las flechas nativas en ningún campo numérico: NumberField pone las suyas (.stepper) o ninguna. */
+.input-wrap input[type='number'] {
+  appearance: textfield;
+}
+.input-wrap input[type='number']::-webkit-inner-spin-button,
+.input-wrap input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+/*
+ * Flechas de ±1 (NumberField): un bloque dentro del borde del campo, a la derecha, partido en dos. Solo con
+ * ratón: en pantallas táctiles no llegarían a los 44px de toque (y los móviles tampoco enseñan las nativas), así
+ * que allí no salen ni reservan sitio.
+ */
+.stepper {
+  display: none;
+}
+@media (pointer: fine) {
+  .input-wrap.has-stepper input {
+    padding-right: calc(var(--stepper-w) + 8px);
+  }
+  .stepper {
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    bottom: 1px;
+    display: flex;
+    flex-direction: column;
+    width: var(--stepper-w);
+    border-left: 1px solid var(--border);
+    border-radius: 0 calc(var(--field-radius) - 1px) calc(var(--field-radius) - 1px) 0;
+    overflow: hidden;
+  }
+}
+.stepper-btn {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.stepper-btn + .stepper-btn {
+  border-top: 1px solid var(--border);
+}
+/* El mismo tinte que los botones fantasma, sobre el fondo del campo de cada tema. */
+.stepper-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+  color: var(--text);
+}
+/* En el mínimo o el máximo: atenuada y sin cursor de mano. */
+.stepper-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 /* Campo de fecha (air-datepicker): solo lectura, se abre el calendario al pulsarlo; icono a la derecha. */
 .date-field input {
@@ -1703,6 +1766,26 @@ select:focus {
   line-height: 1.1;
   letter-spacing: 0;
 }
+/*
+ * Una igualdad con iconos (TipEquation): a su ancho entero, y la burbuja se ensancha por ella como por una tabla
+ * (ver .tip). Si no cabe en la pantalla, salta de línea entre términos, nunca dentro de uno; el hueco entre
+ * términos, el de un espacio.
+ */
+.tip-equation {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 0.25em;
+  width: max-content;
+  max-width: calc(var(--tip-room) - 2 * (var(--tip-pad-x) + var(--border-pop-w)));
+}
+/* El espacio de Courier, monoespaciada, es el de cualquier letra: 0,6em. */
+:where(:root[data-skin='sparxie']) .tip-equation {
+  column-gap: 0.6em;
+}
+.tip-equation-term {
+  white-space: nowrap;
+}
 /* La regla que abre la burbuja (la conversión a tiradas): una línea propia, con el aire de un bloque debajo. */
 .tip-rule {
   display: flex;
@@ -1796,13 +1879,13 @@ select:focus {
 }
 /* El cambio entra y sale como las burbujas (--fade-in al entrar, --fade-out al salir), también en los atajos. */
 @media (prefers-reduced-motion: no-preference) {
-  :is(.btn, .chip) {
+  :is(.btn, .chip, .stepper-btn) {
     transition:
       background-color var(--fade-out) ease-in,
       border-color var(--fade-out) ease-in,
       color var(--fade-out) ease-in;
   }
-  :is(.btn:hover:not(:disabled), .chip:hover) {
+  :is(.btn:hover:not(:disabled), .chip:hover, .stepper-btn:hover:not(:disabled)) {
     transition-duration: var(--fade-in);
     transition-timing-function: ease-out;
   }
@@ -3218,19 +3301,6 @@ tfoot td {
 .event-row input[type='number'] {
   text-align: right;
 }
-/* Jades sin flechas de ±1; en los Pases se mantienen, separadas de la cifra. */
-.no-spin input {
-  appearance: textfield;
-}
-.no-spin input::-webkit-inner-spin-button,
-.no-spin input::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-/* Solo donde hay flechas: en los Jades (.no-spin) el margen seguiría ocupando sitio y cortaría la cifra. */
-.event-row .field:not(.no-spin) input[type='number']::-webkit-inner-spin-button {
-  margin-left: 6px;
-}
 .event-row.is-ignored > :not(.event-status):not(.btn) {
   opacity: 0.5;
 }
@@ -3374,12 +3444,8 @@ tfoot td {
   gap: 6px;
   font-variant-numeric: var(--num-variant);
 }
-/* Flechas separadas de la cifra. */
 .pack-row input[type='number'] {
   text-align: right;
-}
-.pack-row input[type='number']::-webkit-inner-spin-button {
-  margin-left: 6px;
 }
 /*
  * Dos pesos en la tarjeta: 400 para los datos de cada paquete y 700 para los resultados (el total de cada fila
@@ -3920,7 +3986,6 @@ tfoot td {
   font-family: var(--font-type);
   background-color: var(--surface);
   border-color: var(--border);
-  border-radius: 3px;
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text) 10%, transparent);
 }
 /* Calendario: esquinas casi rectas, como las ventanas, y la misma letra de máquina de escribir. */

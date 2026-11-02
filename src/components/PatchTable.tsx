@@ -134,7 +134,8 @@ export function PatchTable({ state, today, onChange }: Props) {
                   <NumberField
                     compact
                     hideLabel
-                    className="no-spin event-jades"
+                    noStepper
+                    className="event-jades"
                     icon="jade"
                     label={`Jades de ${evName}`}
                     value={ev.jades}

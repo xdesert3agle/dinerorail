@@ -1,4 +1,13 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent,
+  type ReactNode,
+} from 'react';
 import { fmtInt } from './format';
 import { Icon, type IconKind } from './Icon';
 import { TermProvider } from './Tip';
@@ -33,6 +42,11 @@ interface Props {
   hideLabel?: boolean;
   /** Icono dentro del campo, a la izquierda. */
   icon?: IconKind;
+  /**
+   * Sin flechas de ±1: para las cantidades que van por miles y se escriben (Jades, Esquirlas). Las demás (paquetes,
+   * Pases, Cosmiluz, pity, días) las llevan.
+   */
+  noStepper?: boolean;
   className?: string;
   /**
    * Explicación del campo, como una entrada de glosario (igual que la de un interruptor): la abre el término de la
@@ -60,6 +74,7 @@ export function NumberField({
   icon,
   className,
   info,
+  noStepper,
 }: Props) {
   // Entero y dentro del rango: el padre ya no tiene que recortar lo que llega.
   const accept = (n: number) => Math.min(max ?? Infinity, Math.max(min ?? -Infinity, Math.trunc(n)));
@@ -74,6 +89,41 @@ export function NumberField({
     // toca aunque el padre recorte lo escrito: el recorte se ve al salir, sea cual sea el valor de antes.
     if (!focused) setText((t) => (Number(t) === value && t !== '' ? t : String(value)));
   }, [value, focused]);
+
+  /*
+   * Flechas de ±1 propias (las nativas son diminutas y no se dejan dar estilo). Como las nativas: al mantenerlas
+   * pulsadas repiten, y no se llevan el foco (con el teclado ya están las flechas, y el lector de pantalla ya
+   * anuncia el campo como un número que sube y baja).
+   */
+  const current = useRef(value);
+  const repeat = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    current.current = value;
+  }, [value]);
+  const stopRepeat = () => window.clearTimeout(repeat.current);
+  useEffect(() => stopRepeat, []);
+  const step = (delta: number) => {
+    const next = accept(current.current + delta);
+    // En el límite, para: el botón se desactiva y ya no recibiría el soltar.
+    if (next === current.current) return false;
+    current.current = next;
+    setText(String(next));
+    onChange(next);
+    return true;
+  };
+  const startStep = (delta: number) => (e: PointerEvent<HTMLButtonElement>) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    stopRepeat();
+    if (!step(delta)) return;
+    // La espera y el ritmo de las nativas: medio segundo y luego seguido.
+    const tick = (delay: number) => {
+      repeat.current = window.setTimeout(() => {
+        if (step(delta)) tick(50);
+      }, delay);
+    };
+    tick(500);
+  };
 
   /*
    * Sin foco, las cifras de 4 o más llevan su punto de miles («12.480», como el resto de la app). Un input
@@ -130,7 +180,7 @@ export function NumberField({
           {label}
         </label>
       </TermProvider>
-      <span className={icon ? 'input-wrap has-icon' : 'input-wrap'}>
+      <span className={['input-wrap', icon && 'has-icon', !noStepper && 'has-stepper'].filter(Boolean).join(' ')}>
         {icon && <Icon kind={icon} size={compact ? 20 : 24} decorative />}
         <input
           ref={inputRef}
@@ -160,6 +210,37 @@ export function NumberField({
         {overlay && (
           <span className="num-mask" style={overlay} aria-hidden="true">
             {fmtInt(value)}
+          </span>
+        )}
+        {!noStepper && (
+          // Solo para el ratón (sin foco ni nombre): el teclado y el lector de pantalla ya tienen el campo.
+          <span className="stepper" aria-hidden="true">
+            {([1, -1] as const).map((delta) => (
+              <button
+                key={delta}
+                type="button"
+                tabIndex={-1}
+                className="stepper-btn"
+                disabled={delta > 0 ? max !== undefined && value >= max : min !== undefined && value <= min}
+                onPointerDown={startStep(delta)}
+                // El pointerdown cancelado no siempre evita el mousedown, que se llevaría el foco del campo.
+                onMouseDown={(e) => e.preventDefault()}
+                onPointerUp={stopRepeat}
+                onPointerLeave={stopRepeat}
+                onPointerCancel={stopRepeat}
+              >
+                <svg width="10" height="6" viewBox="0 0 10 6" focusable="false">
+                  <path
+                    d={delta > 0 ? 'M1 5l4-4 4 4' : 'M1 1l4 4 4-4'}
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    fill="none"
+                  />
+                </svg>
+              </button>
+            ))}
           </span>
         )}
       </span>

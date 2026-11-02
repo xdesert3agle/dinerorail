@@ -1,6 +1,6 @@
 import { fromDayNum, toDayNum } from './dates';
 import { packsTotal } from './packs';
-import { JADES_PER_PULL, splitJades, STARLIGHT_PER_PASS } from './rules';
+import { JADES_PER_PULL, STARLIGHT_PER_PASS, wholeSinglesOf } from './rules';
 import { canBePending, occurrences } from './sources';
 import type { AppState, ISODate, IncomeEvent, Reward } from './types';
 
@@ -163,7 +163,7 @@ export function calculate(state: AppState, today: ISODate): Result {
     shards: shards + packShards,
     shardsHeld: inv.shards + packShards,
     starlightLeftover,
-    wholeSingles: splitJades(jades).singles + final.specialPasses,
+    wholeSingles: wholeSinglesOf(jades) + final.specialPasses,
     bySource: [...totals.values()].sort((a, b) => b.singles - a.singles),
   };
 }

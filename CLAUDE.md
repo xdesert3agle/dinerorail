@@ -61,7 +61,7 @@ Pure, framework-free logic. Business logic belongs here, not in components. Test
 
 - **`rules.ts`:** every game rule.
   - `JADES_PER_PULL`, `DEFAULT_HARD_PITY`, `FOUR_STAR_PITY`, `PATCH_LENGTH_DAYS`, the Starlight constants and the banner model (`BANNERS`).
-  - `splitJades` and `PATHS`, the 9 Paths in game order. Memory is «Reminiscencia».
+  - `wholeSinglesOf` and `PATHS`, the 9 Paths in game order. Memory is «Reminiscencia».
   - Put new game constants here and build help texts from them.
 - **`calculate.ts`:** `calculate(state, today)` returns the `Result`. Also `eventTiming`: whether a dated event counts.
 - **`sources.ts`:** schedule occurrences and `canBePending`.
@@ -95,7 +95,7 @@ React hooks and browser storage.
 - **Cards:** one per card, named after it. The planner is split into `FuturePulls` (list and drag), `PullRow` and `PlanFooter`.
 - **Shared controls:**
   - `NumberField`, `DateField` (air-datepicker) and `NameCombobox`;
-  - `Toggle` and `SwitchInput` (the bare switch), `Tip`/`TipTitle`, `Term`/`TermProvider` and `TipSumRow`;
+  - `Toggle` and `SwitchInput` (the bare switch), `Tip`/`TipTitle`, `Term`/`TermProvider`, `TipSumRow` and `TipEquation` (every «=» with icons in a bubble);
   - `RemoveGlyph`, `Icon`, `Rarity` and `Toast`.
 - **Helpers:**
   - `glossary.tsx`: shared definitions;
@@ -207,7 +207,7 @@ React hooks and browser storage.
 - **Tokens:**
   - spacing `--space-1…5` (4/8/12/16/20; 6px for repeating row pitch);
   - type scale 12/13/14/16/18/20/24/56px;
-  - controls: `--control-h`, `--field-compact-h`, `--field-compact-pad`, `--btn-pad-x`, `--remove-w`, `--date-field-w`, `--badge-out`, `--focus-ring`;
+  - controls: `--control-h`, `--field-compact-h`, `--field-compact-pad`, `--field-radius`, `--stepper-w`, `--btn-pad-x`, `--remove-w`, `--date-field-w`, `--badge-out`, `--focus-ring`;
   - floating surfaces: `--shadow-pop`, `--border-pop`;
   - accent mixes: `--accent-frame`, `--accent-hover`;
   - layers, bottom to top: `--z-raised`, `--z-list`, `--z-popover`, `--z-tip`, `--z-toast` (the loose −1/1/2 only order pieces inside a component);
@@ -224,6 +224,7 @@ React hooks and browser storage.
   - **Glossary:** a dotted-underlined term opens its definition, headed by the term itself (`TipTitle`). A bubble under a card title is headed by what it explains, never by that title («Simulación» under «Previsión de suerte»). Explanations of a setting or a value («Precios de los paquetes», a cost) have no heading. A `Toggle`'s `tip` or a `NumberField`'s `info` is opened by the `Term` in its label, which marks only the defined word («Pity» in «Pity de personaje»), or the whole label when it is the term. Mark a term once per card, where something is decided. A term has one definition, shared through `glossary.tsx`.
 - **Controls:**
   - **`NumberField`** delivers clamped integers, so parents do not clamp again. Emptied, it delivers 0. While focused, the typed text is left alone; the clamped value shows on blur.
+    - It draws its own ±1 arrows inside the field (`.stepper`; the native ones are hidden everywhere), only under `pointer: fine`. Amounts in the thousands, typed rather than counted (Jades, Esquirlas), pass `noStepper`; the rest keep them (packs, Pases, Cosmiluz, pity, days).
   - **The segmented control** (`.segmented` with `.segment` buttons) serves the theme and mode selectors, the store and the Path filter.
   - **`Toggle`** is for on/off settings. Per-row choices stay checkboxes (the 50/50, the ×2). The sources' bare `role="switch"` has no visible label, so it is not a `Toggle`.
   - **Remove buttons** are `btn btn-ghost btn-remove` with `<RemoveGlyph />`, never ✕.

@@ -8,11 +8,8 @@ import type { PullKind } from './types';
 /** Jades que cuesta una tirada (1 single). */
 export const JADES_PER_PULL = 160;
 
-/** Unos Jades en tiradas enteras y los que sobran (no llegan a otra). */
-export const splitJades = (jades: number) => ({
-  singles: Math.floor(jades / JADES_PER_PULL),
-  spare: jades % JADES_PER_PULL,
-});
+/** Las tiradas enteras que dan unos Jades (los que no llegan a otra no cuentan). */
+export const wholeSinglesOf = (jades: number) => Math.floor(jades / JADES_PER_PULL);
 
 /** Eidolón máximo de un personaje: E6 (la 7.ª copia). */
 export const MAX_EIDOLON = 6;

@@ -52,6 +52,17 @@ volver a proponer y por qué.
   - «Usar paquetes en el plan», alineado a la derecha, bajo el total que decide; a la izquierda parecía pegado
     bajo la tabla;
   - el Resumen se queda limpio.
+- **Total de la cabecera de paquetes (2026-11-02):** sin burbuja, como el de Recursos actuales; solo explica por
+  qué sale apagado con «Usar paquetes en el plan» desactivado. Se descartaron «Equivalen a X tiradas y Y Jades
+  (más)» y la igualdad «29.240 Esquirlas = 182 tiradas + 120 Jades»: repetían el Total y la cabecera, y los
+  Jades que sobran no se pierden, se suman al resto en el Resumen.
+- **Flechas de los campos numéricos (2026-11-02):** propias, dentro del campo (un bloque a la derecha partido en
+  dos), porque las nativas eran pequeñas e incómodas. Se descartaron botones +1/−1 al lado del campo: duplicaban las
+  flechas. No en Jades ni Esquirlas, que van por miles: no se ponen solo por homogeneidad. La Cosmiluz sí
+  las lleva: va por decenas y sirve para sumar lo que da un 4★ (+8). Solo con ratón: en táctil no llegarían a los 44px.
+- **Punto de miles al editar un campo numérico (2026-11-02):** se descartó. Con la capa actual el cursor no
+  cuadraría con las cifras, y pasar el campo a texto con formato en vivo no compensa: al escribir, el número sin
+  punto se lee bien, como en Excel.
 - **Interruptor encendido en Aha:** verde musgo (#4f8a5f / #56966a). Se descartaron salvia, pino, jade y
   esmeralda (2026-10-24).
 

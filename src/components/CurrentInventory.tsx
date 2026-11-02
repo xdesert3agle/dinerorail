@@ -8,6 +8,7 @@ import { StarlightDefinition } from './glossary';
 import { Icon } from './Icon';
 import { NumberField } from './NumberField';
 import { Term, TipTitle } from './Tip';
+import { TipEquation } from './TipEquation';
 import { Toggle } from './Toggle';
 
 interface Props {
@@ -51,8 +52,22 @@ export function CurrentInventory({ state, result, onChange }: Props) {
             min={0}
             onChange={(specialPasses) => setInv({ specialPasses })}
           />
-          <NumberField icon="jade" label="Jades Estelares" value={inv.jades} min={0} onChange={(jades) => setInv({ jades })} />
-          <NumberField icon="shard" label="Esquirlas Oníricas" value={inv.shards} min={0} onChange={(shards) => setInv({ shards })} />
+          <NumberField
+            noStepper
+            icon="jade"
+            label="Jades Estelares"
+            value={inv.jades}
+            min={0}
+            onChange={(jades) => setInv({ jades })}
+          />
+          <NumberField
+            noStepper
+            icon="shard"
+            label="Esquirlas Oníricas"
+            value={inv.shards}
+            min={0}
+            onChange={(shards) => setInv({ shards })}
+          />
           <NumberField
             icon="starlight"
             // Toda la etiqueta es el término. La misma definición que el interruptor del plan (ver glossary.tsx).
@@ -70,16 +85,11 @@ export function CurrentInventory({ state, result, onChange }: Props) {
           tip={
             <>
               <TipTitle>Esquirlas Oníricas</TipTitle>
-              {/*
-                La equivalencia con nombre e icono, cada icono pegado a su palabra (como en el texto del interruptor).
-                Los espacios del «=», fijos: en flex se recortan.
-              */}
-              <span className="with-icon with-icon-tight">
-                1 Esquirla Onírica
-                <Icon kind="shard" size={18} decorative />
-                {'\u00a0=\u00a01 Jade Estelar'}
-                <Icon kind="jade" size={18} decorative />
-              </span>
+              {/* La equivalencia con nombre e icono, cada icono pegado a su palabra (como en el texto del interruptor). */}
+              <TipEquation
+                left={{ text: '1 Esquirla Onírica', icon: 'shard' }}
+                right={[{ text: '1 Jade Estelar', icon: 'jade' }]}
+              />
             </>
           }
         >

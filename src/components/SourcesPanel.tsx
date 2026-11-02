@@ -246,7 +246,15 @@ function SourceEditor({ source, today, focusName, onUpdate, onDelete }: EditorPr
       )}
 
       <div className="grid-3">
-        <NumberField compact icon="jade" label="Jades" value={reward.jades} min={0} onChange={(jades) => setReward({ jades })} />
+        <NumberField
+          compact
+          noStepper
+          icon="jade"
+          label="Jades"
+          value={reward.jades}
+          min={0}
+          onChange={(jades) => setReward({ jades })}
+        />
         <NumberField
           compact
           icon="pass"

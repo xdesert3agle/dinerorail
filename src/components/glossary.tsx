@@ -14,6 +14,7 @@ import { Icon } from './Icon';
 import { KIND_LABEL } from './kinds';
 import { Rarity } from './Rarity';
 import { TipTitle } from './Tip';
+import { TipEquation } from './TipEquation';
 
 /*
  * Glosario: las definiciones que se repiten en más de una tarjeta. Un término, una definición: donde se marque
@@ -67,17 +68,17 @@ export function StarlightDefinition() {
       datos quedaba encajonada.
     */}
     {/*
-      Con nombre e icono, como la de las Esquirlas (espacios del «=» fijos: en flex se recortan). Un tipo de
-      cambio es entre objetos: el Pase Especial que da la tienda, no «tirada», que es la acción. El punto,
-      solo para los lectores: sin él juntarían la equivalencia con el rótulo.
+      Con nombre e icono, como la de las Esquirlas. Un tipo de cambio es entre objetos: el Pase Especial que da
+      la tienda, no «tirada», que es la acción. El punto, solo para los lectores: sin él juntarían la
+      equivalencia con el rótulo.
     */}
-    <span className="with-icon with-icon-tight tip-rule">
-      {`${STARLIGHT_PER_PASS} Cosmiluz`}
-      <Icon kind="starlight" size={16} decorative />
-      {'\u00a0=\u00a01 Pase Especial'}
-      <Icon kind="pass" size={16} decorative />
+    <TipEquation
+      className="tip-rule"
+      left={{ text: `${STARLIGHT_PER_PASS} Cosmiluz`, icon: 'starlight' }}
+      right={[{ text: '1 Pase Especial', icon: 'pass' }]}
+    >
       <span className="sr-only">. </span>
-    </span>
+    </TipEquation>
     Por objeto obtenido
     {/* Rótulo sin puntuación a la vista; los lectores, que no ven el salto de línea, hacen la pausa. */}
     <span className="sr-only">: </span>
