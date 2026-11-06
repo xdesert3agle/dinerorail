@@ -100,6 +100,14 @@ volver a proponer y por qué.
 - **Rareza:** toda la etiqueta («Personaje 5✦ E6») va en el color de su rareza, no una estrella de color junto a
   palabras en tinta.
 - **Letra del cuerpo en Aha:** Figtree. Se descartaron Outfit, DM Sans y Plus Jakarta Sans.
+- **Títulos y cifras grandes en Sparxie (2026-11-06):** la Chicago del Mac clásico, en su copia de dominio
+  público ChicagoFLF, a 16px en los títulos de ventana (a 18 y 20px se veían grandes). Se descartaron:
+  - Instrument Serif, la del diseño original (estrechada al 86 % y con trazo, imitando una Garamond condensada),
+    que no gustaba;
+  - Micro 5, píxel, que se llegó a aplicar a 28px; se cambió por Chicago;
+  - la Chicago de píxeles (Chicago Kare y otras copias): ninguna indica licencia, y la de Apple no es libre;
+  - Workbench, Sixtyfour y Silkscreen (cifras grandes ilegibles o muy separadas), Jersey 15, Tiny5, Handjet, Big
+    Shoulders Display, DM Serif Display, Gloock y Bungee.
 
 ## Otros
 

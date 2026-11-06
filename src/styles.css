@@ -163,8 +163,9 @@
 
 /*
  * Tema Sparxie (de flavors.design/f/droolsuite): un escritorio de 1987. Ventanas con marco de tinta de 1px
- * sobre un rosa tramado, botones biselados y tres voces: serif para títulos y cifras, máquina de escribir
- * para campos y botones, y letra de píxeles para el resto. El turquesa es el único acento.
+ * sobre un rosa tramado, botones biselados y tres voces: la Chicago del Mac clásico para títulos y cifras
+ * grandes, máquina de escribir para campos y botones, y letra de píxeles para el resto. El turquesa es el único
+ * acento.
  * El diseño solo trae el esquema claro; el oscuro ("Night Swim") es una piscina de noche con las mismas reglas.
  */
 :root[data-skin='sparxie'] {
@@ -206,7 +207,8 @@
   --radius: 6px;
   --field-radius: 3px;
   --input-nudge: -1px;
-  --font-display: 'Instrument Serif', Georgia, serif;
+  /* Títulos de ventana y cifras grandes: la Chicago del Mac clásico (ChicagoFLF, de dominio público). */
+  --font-display: 'ChicagoFLF', 'Pixelify Sans', system-ui, sans-serif;
   --font-body: 'Pixelify Sans', system-ui, sans-serif;
   --font-type: 'Courier Prime', 'Courier New', monospace;
   --font-mono: 'VT323', ui-monospace, monospace;
@@ -234,6 +236,15 @@
 @font-face {
   font-family: 'Card Characters';
   src: url('./assets/fonts/card-characters.ttf') format('truetype');
+  font-display: swap;
+}
+/*
+ * La Chicago del Mac clásico para los títulos y cifras grandes de Sparxie: ChicagoFLF, una copia de dominio
+ * público (ver chicago-flf-LICENSE.txt). La de Apple no tiene licencia libre.
+ */
+@font-face {
+  font-family: 'ChicagoFLF';
+  src: url('./assets/fonts/chicago-flf.woff') format('woff');
   font-display: swap;
 }
 
@@ -1144,16 +1155,19 @@ p {
   min-width: 0;
 }
 /*
- * Títulos de las tarjetas en mayúsculas, con letra de naipe. Sin negrita: la fuente solo tiene un peso y se
- * vería falseada. En claro, rojo de naipe (--card-title); en oscuro, el color del texto.
+ * Títulos de las tarjetas con letra de naipe. Sin negrita: la fuente solo tiene un peso y se vería falseada. En
+ * claro, rojo de naipe (--card-title); en oscuro, el color del texto.
  */
 .card-header h2 {
   color: var(--card-title);
   font-family: var(--font-card);
   font-weight: 400;
   font-size: 1.125rem;
-  text-transform: uppercase;
   letter-spacing: 0.02em;
+}
+/* En Aha, en mayúsculas, los de tarjeta y los de burbuja. Sparxie los deja como se escriben. */
+:where(:root[data-skin='aha']) :is(.card-header h2, .tip-title) {
+  text-transform: uppercase;
 }
 /* En móvil, un poco más pequeños: la letra de naipe es ancha y el total o los botones tienen que caber al lado. */
 @media (width <= 560px) {
@@ -1758,7 +1772,6 @@ select:focus {
   font-family: var(--font-card);
   font-size: 1rem;
   font-weight: 400;
-  text-transform: uppercase;
   letter-spacing: 0.02em;
 }
 /*
@@ -1768,10 +1781,10 @@ select:focus {
 :where(:root[data-skin='sparxie']) .tip {
   max-width: min(22rem, var(--tip-room));
 }
-/* Sparxie: la serif de sus títulos de tarjeta, sin estrechar (en la burbuja no le falta sitio). */
+/* Sparxie: la letra y el tamaño de sus títulos de tarjeta. */
 :where(:root[data-skin='sparxie']) .tip-title {
   font-family: var(--font-display);
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 400;
   line-height: 1.1;
   letter-spacing: 0;
@@ -2156,8 +2169,8 @@ select:focus {
   font-weight: 400;
 }
 /*
- * En Sparxie, la cifra en máquina de escribir, como el resto de números del tema (en su serif grande el «11» se
- * leía «ll»), y esquinas casi rectas, como sus ventanas.
+ * En Sparxie, la cifra en máquina de escribir, como el resto de números del tema (en la serif que tuvo en sus
+ * títulos, el «11» se leía «ll»), y esquinas casi rectas, como sus ventanas.
  */
 :where(:root[data-skin='sparxie']) .key-date-leaf {
   border-radius: 2px;
@@ -3938,25 +3951,21 @@ tfoot td {
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 9'%3E%3Cpath d='M0 0h1v1h1v1h1v1h1v1h1V3h1V2h1V1h1V0h1v1H8v1H7v1H6v1H5v1h1v1h1v1h1v1h1v1H8V8H7V7H6V6H5V5H4v1H3v1H2v1H1v1H0V8h1V7h1V6h1V5h1V4H3V3H2V2H1V1H0z'/%3E%3C/svg%3E")
     0 0 / 100% 100%;
 }
-/* Título a la derecha, en serif estrechada (así imita la Garamond condensada del original). */
+/* Título a la derecha, en la Chicago de los títulos, a 16px (a 22px «Plan de tiradas» llenaba la barra). */
 :where(:root[data-skin='sparxie']) .card-header h2 {
   order: 2;
   margin-left: auto;
   font-family: var(--font-display);
-  font-size: 1.375rem;
+  font-size: 1rem;
   font-weight: 400;
   line-height: 1;
-  letter-spacing: -0.027em;
-  transform: scaleX(0.86);
-  transform-origin: right center;
-  -webkit-text-stroke: 0.5px var(--text);
 }
 :where(:root[data-skin='sparxie']) .card-header .btn {
   padding: 3px 10px 2px;
   font-size: 0.8125rem;
 }
 
-/* La principal es la ventana amarilla de bienvenida, con la cifra en serif grande. */
+/* La principal es la ventana amarilla de bienvenida, con la cifra grande en la letra de los títulos. */
 :where(:root[data-skin='sparxie']) .hero {
   background: var(--tertiary);
 }

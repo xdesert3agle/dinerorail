@@ -184,11 +184,11 @@ React hooks and browser storage.
   - Use tokens and never hard-code colors.
   - Sparxie comes from `designs/droolsuite.DESIGN.md`.
   - Aha uses Figtree, plus Card Characters (`--font-card`, a single weight of 400) for card titles and result figures.
-  - In Sparxie, Pixelify Sans is only for labels without digits; numbers use Courier Prime.
+  - In Sparxie, Pixelify Sans is only for labels without digits; numbers use Courier Prime. Window titles, bubble headings and the big figures use ChicagoFLF (`--font-display`), a public-domain copy of the classic Mac's Chicago, self-hosted in `src/assets/fonts/` with its license.
 - **CSS organization (`styles.css`):**
   - The header has an index; sections are marked `/* == Name == */`.
   - Color tokens are `light-dark(light, dark)`. The dark blocks hold only `color-scheme` and non-color tokens, written twice: once in the media query and once under `[data-theme='dark']`.
-  - The base is Aha. Sparxie overrides it, and `:where(:root[data-skin='aha'])` is kept only for Aha extras that Sparxie must not inherit (the card font on figures, the page decoration). Skin rules sit next to their component under `:where()`, so they keep base specificity.
+  - The base is Aha. Sparxie overrides it, and `:where(:root[data-skin='aha'])` is kept only for Aha extras that Sparxie must not inherit (the card font on figures, uppercase card and bubble titles, the page decoration). Skin rules sit next to their component under `:where()`, so they keep base specificity.
   - The field base rule is under `:where()`, so components need no `[type]`.
   - Variants set variables instead of undoing rules: buttons set `--btn-hover-bg`/`--btn-hover-border` (one `.btn:hover` rule), switches use `--switch-on`/`--switch-knob-on`/`--switch-knob-off`, focus uses `--focus-ring`. Floating surfaces (`.dupe-pop`, `.tip`, `.toast`) share one rule.
   - Width queries use range syntax (`width <= 720px`, `width > 720px`): with display scaling the width can be fractional, and a 1179/1180 pair left a gap.
