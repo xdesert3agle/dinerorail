@@ -14,7 +14,8 @@ volver a proponer y por qué.
 - **Burbuja del balance y del coste de cada fila:** una cuenta escrita (`.tip-table`), no prosa.
 - **Pastilla del Eidolón en la miniatura:** sobresale 6px. Se rechazó meterla hacia dentro porque tapaba la cara;
   en su lugar, el campo se aparta (`--badge-out`).
-- **Burbujas quitadas:** el % de cada fila y la pastilla del dupe no tienen burbuja.
+- **Burbujas quitadas:** el % de cada fila, la pastilla del dupe y la fecha del Resumen (solo repetía la fecha
+  completa) no tienen burbuja.
 - **Foto de la fila 1px más grande al arrastrar con el escalado al 125 %:** se probaron dos arreglos que no
   funcionaron, y se dejó sin trucos.
 - **Cosmiluz del 5★ buscado (2026-10-29):** se propuso un selector por fila «nuevo / repetido / E6». Se descartó:
@@ -30,6 +31,12 @@ volver a proponer y por qué.
     erróneo.
 - **Espaciado vertical de las tarjetas:** no aumentarlo. Se planteó hacer más alto el botón de añadir, pero
   obligaba a subir el alto de la fila, y el usuario ve el espaciado actual justo como debe ser.
+  - **Excepción aprobada, el plan (2026-11-06):** 12px arriba y abajo de cada fila, y la primera a 16px de la
+    cabecera (no a `--card-gap`), como el pie. Con 8px el plan se veía apretado, y en oscuro sus botones de
+    añadir quedaban pegados al campo de la primera fila (dos cajas marcadas a 12px).
+  - No se separa más la cabecera de todas las listas: las demás tarjetas con botón en la cabecera (Versiones y
+    eventos, Fuentes) tienen debajo etiquetas o una línea, no cajas.
+  - A 24px, como si la cabecera fuera una fila más, el título se alejaba demasiado de su lista.
 
 ## Glosario e interruptores
 
@@ -100,6 +107,14 @@ volver a proponer y por qué.
   actualizan en cada visita; la fecha, pocas veces.
 - **Fechas destacadas:** sin título encima de la tabla, que se veía descompensado; solo en la vista estrecha.
 - **Resumen:** sin la línea de veredicto bajo la cifra.
+- **Cuenta atrás:** «en N días» en todas partes (`fmtCountdown`), por homogeneidad. Se probó «quedan N días»: en
+  Sparxie partía la segunda línea de cada fecha destacada, y solo en el Resumen rompía la homogeneidad.
+- **Fecha del Resumen (2026-11-06):** texto gris junto al título, «11 de noviembre (en 5 días)», con el mes
+  entero. Si no cabe (móvil), parte entre la fecha y la cuenta atrás. Se probó la hoja de
+  calendario de las fechas destacadas, con el nombre de la fecha destacada y «miércoles (en 42 días)», y se
+  descartó:
+  - en la cabecera, junto al título, cargaba la esquina de arriba y la tarjeta parecía caerse;
+  - a la derecha de la cifra, el texto se montaba sobre la ilustración de Aha con la tarjeta estrecha.
 - **Estado completo:** sin exportar ni importar todo el estado (quitado a propósito).
 - **Planes antiguos con nombres en inglés:** no se mantienen (se aceptó perderlos).
 - **Temas Kafka y Grafito:** borrados (2026-10-28). Aha es la base.

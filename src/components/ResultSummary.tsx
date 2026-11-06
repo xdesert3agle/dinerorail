@@ -1,8 +1,7 @@
 import type { ComponentType } from 'react';
 import type { Result } from '../engine/calculate';
-import { formatDate } from '../engine/dates';
 import type { Skin } from '../engine/types';
-import { fmtCountdown, fmtDayMonth, fmtInt, fmtSingles } from './format';
+import { fmtCountdown, fmtDayMonthLong, fmtInt, fmtSingles } from './format';
 import { Icon } from './Icon';
 import { Masks } from './Masks';
 import { Tip } from './Tip';
@@ -13,9 +12,15 @@ const DECORATION: Record<Skin, ComponentType | null> = {
   sparxie: null,
 };
 
-/** "11 nov. (en 42 días)", "21 oct. (hoy)": la fecha corta y cuánto falta, como en las fechas destacadas. */
+/** Espacios de no separación: cada parte de la fecha va entera a su línea. */
+const unbroken = (s: string) => s.replaceAll(' ', ' ');
+
+/**
+ * "11 de noviembre (en 5 días)", "21 de octubre (hoy)": la fecha, con el mes entero, y cuánto falta. Si no
+ * cabe (móvil), solo parte entre las dos.
+ */
 function dateLabel(result: Result): string {
-  return `${fmtDayMonth(result.targetDate)} (${fmtCountdown(result.days)})`;
+  return `${unbroken(fmtDayMonthLong(result.targetDate))} ${unbroken(`(${fmtCountdown(result.days)})`)}`;
 }
 
 export function ResultSummary({ result, skin }: { result: Result; skin: Skin }) {
@@ -40,10 +45,14 @@ export function ResultSummary({ result, skin }: { result: Result; skin: Skin }) 
     <section className="card hero card-summary">
       <header className="card-header">
         <h2>Resumen</h2>
-        {/* La fecha objetivo, a la vista: de ella sale la cifra (se cambia en la tarjeta de la fecha objetivo). */}
-        <Tip className="hero-date" content={`Fecha objetivo: ${formatDate(result.targetDate)}`}>
+        {/*
+          La fecha objetivo, a la vista: de ella sale la cifra (se cambia en la tarjeta de la fecha objetivo). Sin
+          burbuja: solo repetiría la fecha; qué fecha es queda solo para lectores de pantalla.
+        */}
+        <span className="hero-date">
+          <span className="sr-only">Fecha objetivo: </span>
           {dateLabel(result)}
-        </Tip>
+        </span>
       </header>
       {Decoration && <Decoration />}
       {/* Solo la cifra, sin explicación: en el Resumen, cuantas menos burbujas, mejor. */}

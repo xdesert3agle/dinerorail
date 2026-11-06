@@ -89,8 +89,8 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
       setPlan(
         (p) => p.filter((x) => x.id !== pull.id),
         pull.name
-          ? { before: '«', name: pull.name, after: `${dupe === null ? '' : ` E${dupe}`}» quitado del plan.` }
-          : 'Fila quitada del plan.',
+          ? { before: '«', name: pull.name, after: `${dupe === null ? '' : ` E${dupe}`}» eliminado del plan.` }
+          : 'Fila eliminada del plan.',
       ),
     );
   // Miniatura de cada fila: el retrato del personaje o el icono del cono (null si no está en el catálogo).
@@ -115,8 +115,9 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
   };
 
   const sensors = useSensors(
-    // Un pequeño margen para que un clic en el asa no cuente como arrastre.
-    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    // Sin margen: la fila se coge (y flota) nada más pulsar el asa, sin esperar a moverla. El asa no tiene
+    // acción de clic, y soltar sin moverse deja el orden igual.
+    useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 

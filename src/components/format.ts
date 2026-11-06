@@ -36,7 +36,6 @@ export const fmtSettingsPath = (card: string) => `Configuración › ${card}`;
 
 /** Cuánto falta para un día: "hoy", "mañana" o "en 19 días" (va entre paréntesis tras la fecha o el día). */
 export const fmtCountdown = (days: number) => (days === 0 ? 'hoy' : days === 1 ? 'mañana' : `en ${fmtInt(days)} días`);
-
 /** Solo el mes de una fecha, como "nov." (la cabecera de una hoja de calendario). */
 export const fmtMonth = (iso: string) => MONTHS[Number(iso.split('-')[1]) - 1];
 
@@ -44,6 +43,27 @@ export const fmtMonth = (iso: string) => MONTHS[Number(iso.split('-')[1]) - 1];
 export const fmtDayMonth = (iso: string) => {
   const [, month, day] = iso.split('-').map(Number);
   return `${day} ${MONTHS[month - 1]}`;
+};
+
+const MONTH_NAMES = [
+  'enero',
+  'febrero',
+  'marzo',
+  'abril',
+  'mayo',
+  'junio',
+  'julio',
+  'agosto',
+  'septiembre',
+  'octubre',
+  'noviembre',
+  'diciembre',
+];
+
+/** Día y mes con el mes entero, como "11 de noviembre" (sin año, como fmtDayMonth): la fecha del Resumen. */
+export const fmtDayMonthLong = (iso: string) => {
+  const [, month, day] = iso.split('-').map(Number);
+  return `${day} de ${MONTH_NAMES[month - 1]}`;
 };
 
 /** Fecha y hora de un momento (ms), como "5 nov. 2026 a las 18:30". */

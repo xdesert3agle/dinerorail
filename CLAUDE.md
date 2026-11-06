@@ -205,7 +205,7 @@ React hooks and browser storage.
   - Aligned numbers use `var(--num-variant)`.
   - Card headers never wrap; the title wraps instead.
 - **Tokens:**
-  - spacing `--space-1…5` (4/8/12/16/20; 6px for repeating row pitch);
+  - spacing `--space-1…5` (4/8/12/16/20; 6px for repeating row pitch), and `--card-gap` between a card's header and its blocks (12; 4 in the Resumen). The plan's first row sits at 16 instead, an approved exception (`docs/decisiones.md`);
   - type scale 12/13/14/16/18/20/24/56px;
   - controls: `--control-h`, `--field-compact-h`, `--field-compact-pad`, `--field-radius`, `--stepper-w`, `--btn-pad-x`, `--remove-w`, `--date-field-w`, `--badge-out`, `--focus-ring`;
   - floating surfaces: `--shadow-pop`, `--border-pop`;

@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { describeSchedule, floorSingles, fmtChance, fmtCountdown, fmtEuros, fmtSingles, pendingLabel } from './format';
+import {
+  describeSchedule,
+  floorSingles,
+  fmtChance,
+  fmtCountdown,
+  fmtDayMonthLong,
+  fmtEuros,
+  fmtSingles,
+  pendingLabel,
+} from './format';
 
 // Intl y los textos con % llevan espacios de no separación: se comparan sin distinguirlos.
 const plain = (s: string | null) => s?.replace(/\u00a0|\u202f/g, ' ') ?? null;
@@ -13,8 +22,11 @@ describe('formatos', () => {
   });
 
   it('cuenta atrás y euros', () => {
-    expect([fmtCountdown(0), fmtCountdown(1), fmtCountdown(1200)]).toEqual(['hoy', 'mañana', 'en 1.200 días']);
-    expect(plain(fmtEuros(1999.9))).toBe('1.999,90 €');
+    expect([fmtCountdown(0), fmtCountdown(1), fmtCountdown(1200)]).toEqual(['hoy', 'mañana', 'en 1.200 días']);    expect(plain(fmtEuros(1999.9))).toBe('1.999,90 €');
+  });
+
+  it('día y mes entero, sin cero delante', () => {
+    expect([fmtDayMonthLong('2026-11-11'), fmtDayMonthLong('2027-01-05')]).toEqual(['11 de noviembre', '5 de enero']);
   });
 
   it('el % de cada objetivo: 100 y 0 solo si son seguros; si no, >99 y <1', () => {

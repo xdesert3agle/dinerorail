@@ -112,6 +112,8 @@
   --space-3: 12px;
   --space-4: 16px;
   --space-5: 20px;
+  /* Entre la cabecera de una tarjeta y su contenido, y entre sus bloques (.card). */
+  --card-gap: var(--space-3);
   /*
    * Capas de lo que flota sobre la página, de abajo arriba: la tarjeta con la lista del buscador abierta, esa
    * lista, el popover de la galería, las burbujas (y el salto al contenido) y el aviso de deshacer. Los -1, 1 y 2
@@ -1118,7 +1120,7 @@ p {
   padding: var(--space-4);
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-3);
+  gap: var(--card-gap);
   min-width: 0;
 }
 /*
@@ -1202,7 +1204,7 @@ p {
   position: relative;
   overflow: hidden;
   isolation: isolate;
-  gap: 4px;
+  --card-gap: var(--space-1);
   border-color: var(--accent-frame);
   /* Deja ver un poco los naipes del fondo (solo el fondo de la tarjeta es translúcido). */
   background: color-mix(in srgb, var(--surface) 50%, transparent);
@@ -1285,21 +1287,29 @@ p {
   gap: 6px;
 }
 /*
- * Fecha objetivo en la cabecera del Resumen («5 dic. (en 42 días)»): dato secundario, como un subtítulo,
- * junto al título y no a la derecha, donde caería sobre la ilustración del tema. La tarjeta va más apretada
- * que las demás (gap de 4px): el título se separa un poco más de la cifra.
+ * Fecha objetivo en la cabecera del Resumen («11 de noviembre (en 5 días)»): dato secundario, como un
+ * subtítulo, junto al título y no a la derecha, donde caería sobre la ilustración del tema. La tarjeta va más
+ * apretada que las demás (--card-gap de 4px): el título se separa un poco más de la cifra.
  */
 .hero .card-header {
   justify-content: flex-start;
   gap: var(--space-3);
   margin-bottom: 6px;
 }
-/* «5 dic. (en 42 días)»: cifras proporcionales, como en las fechas destacadas (es una frase, no una columna). */
+/*
+ * Aquí encoge la fecha y no el título: «Resumen» es una palabra y no se puede partir. La fecha sí, en dos
+ * líneas (fecha y cuenta atrás, cada una entera); con el mes entero, en móvil se montaba sobre el título.
+ */
+.hero .card-header > h2 {
+  flex: none;
+}
+/* Cifras proporcionales, como en las fechas destacadas (es una frase, no una columna). */
 .hero-date {
+  flex: 0 1 auto;
+  min-width: 0;
   font-size: 0.875rem;
   color: var(--text-secondary);
   font-variant-numeric: normal;
-  white-space: nowrap;
 }
 /* Esquirlas que no se cuentan como Jades, o paquetes que no cuentan: apagados. */
 .hero-stats dd.is-off,
@@ -2177,7 +2187,7 @@ select:focus {
 .source-group {
   display: grid;
 }
-/* Arriba ya separa el gap de la tarjeta (12px); entre grupos, 8px más, como .group-gap. */
+/* Arriba ya separa --card-gap; entre grupos, 8px más, como .group-gap. */
 .source-group + .source-group {
   margin-top: 8px;
 }
@@ -2399,8 +2409,8 @@ tfoot td {
  */
 .pull-list {
   --pull-gap: 8px;
-  /* Relleno de arriba y abajo de cada fila. */
-  --pull-row-pad: 8px;
+  /* Relleno de arriba y abajo de cada fila (12: con 8, el plan se veía apretado). */
+  --pull-row-pad: var(--space-3);
   /* Lado de la miniatura y alto del campo del nombre, que van a la par. */
   --pull-thumb: 3.375rem;
   /* Lado del ticket de los costes y del balance (size={26} en PullRow y PlanFooter; menor en móviles). */
@@ -2409,12 +2419,14 @@ tfoot td {
   grid-template-columns: auto auto minmax(0, 1fr) auto auto auto;
   column-gap: var(--pull-gap);
   /*
-   * La primera fila no muestra línea ni aire propio (bajo la cabecera ya separa el gap de la tarjeta), pero los
-   * conserva, con la línea transparente, y la lista sube lo que ocupan (relleno + 1px de línea): todas las
-   * filas miden lo mismo. Con la primera más baja, al arrastrarla hacia abajo las demás subían 9px de menos y
-   * saltaban al soltar.
+   * La primera fila no muestra línea, pero conserva su relleno y la línea (transparente), y la lista sube lo que
+   * sobra: todas las filas miden lo mismo. Con la primera más baja, al arrastrarla hacia abajo las demás subían
+   * 9px de menos y saltaban al soltar.
+   * Queda a 16 (--space-4) de la cabecera, no a --card-gap (12): a 12, los botones de añadir y el campo de la
+   * primera fila se veían pegados en oscuro (dos cajas marcadas). 16, como del pie: la lista, enmarcada igual
+   * arriba y abajo. Excepción aprobada (docs/decisiones.md).
    */
-  margin-top: calc(-1 * (var(--pull-row-pad) + 1px));
+  margin-top: calc(var(--space-4) - var(--card-gap) - var(--pull-row-pad) - 1px);
 }
 .pull-row {
   grid-column: 1 / -1;
@@ -2792,10 +2804,11 @@ tfoot td {
   gap: 12px;
   border-top: 1px solid var(--axis);
   /*
-   * Con el relleno de debajo de la última fila, su línea queda a 12 (--space-3, entre grupos): separa las filas
-   * del pie, no una fila de otra (8). En el pie y no en la última fila, que mediría distinto que las demás.
+   * Con el relleno de debajo de la última fila, su línea queda a 16 (--space-4): más que de una fila a otra
+   * (--pull-row-pad), porque separa las filas del pie. En el pie y no en la última fila, que mediría distinto
+   * que las demás.
    */
-  margin-top: calc(var(--space-3) - var(--pull-row-pad));
+  margin-top: calc(var(--space-4) - var(--pull-row-pad));
   padding-top: 8px;
   padding-right: calc(var(--remove-w) + var(--pull-gap));
 }
@@ -3250,7 +3263,7 @@ tfoot td {
   display: grid;
   gap: var(--space-3);
 }
-/* La línea solo separa una actualización de otra; bajo la cabecera ya separa el gap de la tarjeta. */
+/* La línea solo separa una actualización de otra; bajo la cabecera ya separa --card-gap. */
 .card-header + .patch-block {
   border-top: none;
   padding-top: 0;
