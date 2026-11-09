@@ -2,7 +2,7 @@
  * Índice (cada sección empieza con un comentario «== Nombre ==»):
  * Tokens · Base · Iconos · Calendario (air-datepicker) · Maquetación · Galería de dupes · Tarjetas · Resumen ·
  * Formularios · Burbujas de explicación (Tip) · Botones · Fechas destacadas · Fuentes de ingresos · Interruptores ·
- * Tablas y desglose · Plan de tiradas · Sincronizar contenido · Cuenta · Versiones y eventos · Previsión de suerte ·
+ * Tablas y desglose · Filas reordenables · Plan de tiradas · Sincronizar contenido · Cuenta · Versiones y eventos · Previsión de suerte ·
  * Paquetes de Esquirlas · Tienda · Toast · Tema Sparxie.
  * Las reglas de un tema van bajo :where(:root[data-skin='…']), para pesar lo mismo que las de base y ganar
  * solo por ir después. Las que tocan un solo componente, junto a él; la capa de Sparxie para las piezas comunes
@@ -69,7 +69,7 @@
   --stepper-w: 20px;
   /* Relleno a los lados de .btn: los botones que alinean su texto con una columna lo compensan (más su borde de 1px). */
   --btn-pad-x: 12px;
-  /* Ancho del botón de quitar (✕): el pie del plan y la columna de los eventos dejan su hueco. */
+  /* Ancho del botón de quitar (✕) y del asa de arrastre: el pie del plan y las columnas de los eventos dejan su hueco. */
   --remove-w: 24px;
   /* Ancho de un campo de fecha (dd/mm/aaaa y su icono): la fecha objetivo y el inicio de cada versión. */
   --date-field-w: 9.5rem;
@@ -1179,11 +1179,17 @@ p {
  * Total en singles de una tarjeta, en su cabecera (Recursos actuales, Paquetes, Previsión de suerte): como los
  * costes del plan (misma letra de cifras del tema y mismo tamaño, 20px: un tamaño menos en la escala).
  */
+/*
+ * Total de tiradas con su ticket: el de las cabeceras de tarjeta y, más pequeño, el de cada versión de «Versiones y
+ * eventos» (.patch-total). El tamaño va en --total-size (cifra) y --total-icon (ticket).
+ */
 .card-total {
+  --total-size: 1.25rem;
+  --total-icon: 28px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 1.25rem;
+  font-size: var(--total-size);
   font-weight: 700;
   line-height: 1;
   color: var(--text);
@@ -1195,15 +1201,16 @@ p {
  * Aha, cuyas cifras miden 17px). Sparxie, en proporción a sus cifras de Courier (12px).
  */
 .card-total .icon {
-  width: 28px;
-  height: 28px;
+  width: var(--total-icon);
+  height: var(--total-icon);
 }
 /* Courier deja sus cifras altas en la línea: el ticket sube con ellas para quedar centrado. */
+:where(:root[data-skin='sparxie']) .card-total {
+  --total-icon: 20px;
+}
 :where(:root[data-skin='sparxie']) .card-total .icon {
   position: relative;
   top: -1.5px;
-  width: 20px;
-  height: 20px;
 }
 /* Aha: coste de cada tirada, balance y total de las cabeceras en letra de naipe (juntos, para que los tickets
  * sigan en la misma columna). */
@@ -1951,16 +1958,17 @@ select:focus {
   display: block;
 }
 /*
- * En pantallas táctiles, zona de toque de al menos 44 × 44px en los controles pequeños (✕, casillas, selector
- * de tema), sin cambiar lo que se ve: una capa invisible centrada que sobresale. Donde 44px taparía el campo
- * de al lado, menos: 36px de alto en las casillas (8px de hueco con el campo de encima).
+ * En pantallas táctiles, zona de toque de al menos 44 × 44px en los controles pequeños (✕, asas, casillas,
+ * selector de tema), sin cambiar lo que se ve: una capa invisible centrada que sobresale. Donde 44px taparía el
+ * campo de al lado, menos: 36px de alto en las casillas (8px de hueco con el campo de encima) y 40px de ancho
+ * en las asas.
  * El selector claro/oscuro ya usa ::after (su línea invisible de texto), así que el suyo va en ::before.
  */
 @media (pointer: coarse) {
-  :is(.btn-remove, .check, .segment, .theme-option) {
+  :is(.btn-remove, .drag-handle, .check, .segment, .theme-option) {
     position: relative;
   }
-  :is(.btn-remove, .check, .segment)::after,
+  :is(.btn-remove, .drag-handle, .check, .segment)::after,
   .theme-option::before {
     content: '';
     position: absolute;
@@ -1972,6 +1980,10 @@ select:focus {
   }
   .check::after {
     height: max(100%, 36px);
+  }
+  /* El asa, 40px de ancho: lo que cabe hasta el campo de al lado (24 + los 8 de hueco a cada lado). */
+  .drag-handle::after {
+    width: max(100%, 40px);
   }
   /* El término con explicación de la etiqueta (Term), por encima de esa zona: si no, el toque cambiaba el interruptor. */
   .check .tip-term {
@@ -2208,7 +2220,7 @@ select:focus {
 .source:last-child > .source-row:last-child {
   padding-bottom: 0;
 }
-.source:last-child > .source-edit:last-child {
+.source:last-child > .inline-edit:last-child {
   margin-bottom: 0;
 }
 .source {
@@ -2238,15 +2250,21 @@ select:focus {
   white-space: nowrap;
   font-variant-numeric: var(--num-variant);
 }
-.source-edit {
+/*
+ * Editor en el sitio («Editar» de una fuente o de una versión): una caja con los campos y, al pie, la opción de
+ * la izquierda y «Eliminar …» a la derecha.
+ */
+.inline-edit {
   display: grid;
   gap: 10px;
   background: var(--surface-2);
   border-radius: 8px;
   padding: 12px;
+}
+.source > .inline-edit {
   margin-bottom: 10px;
 }
-.source-edit-footer {
+.inline-edit-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -2391,6 +2409,82 @@ tfoot td {
   background: var(--series-1);
   border-radius: 0 4px 4px 0;
   min-width: 2px;
+}
+/* == Filas reordenables == */
+/* Las filas del plan y de los eventos (SortableRows.tsx): se arrastran por su asa y se deshacen en polvo al quitarlas. */
+/* Asa para arrastrar y reordenar: 10px de puntos y su relleno, del ancho de la ✕ (--remove-w). */
+.drag-handle {
+  display: grid;
+  width: var(--remove-w);
+  padding: 2px 0;
+  place-items: center;
+  align-self: stretch;
+  color: var(--text-muted);
+  cursor: grab;
+  touch-action: none;
+}
+.drag-handle svg {
+  fill: currentColor;
+}
+/*
+ * Fila arrastrada: el recuadro es una capa por detrás que sobresale 10px a los lados y deja el mismo aire arriba
+ * y abajo (la fila no lleva relleno lateral; darle relleno movería su contenido, que comparte columnas con las
+ * demás). --drag-out da lo que sobresale: en el plan, la fila ya lleva su aire arriba y abajo; los eventos, sin
+ * él, lo ponen aquí. Sombra negra en oscuro: con el color del texto era un halo.
+ */
+.sortable-row.is-dragging {
+  position: relative;
+  z-index: 2;
+}
+.sortable-row.is-dragging::before {
+  content: '';
+  position: absolute;
+  inset: var(--drag-out, 0 -10px);
+  z-index: -1;
+  background: var(--surface-2);
+  border-radius: 10px;
+  box-shadow:
+    0 8px 24px light-dark(color-mix(in srgb, var(--text) 35%, transparent), rgb(0 0 0 / 0.6)),
+    0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+/*
+ * Fila quitada: se deshace en polvo (el filtro de ruido de DustFilter dispersa sus píxeles) mientras se apaga y
+ * deriva un poco hacia arriba a la derecha, como si se la llevara el aire. Dura --dust-ms (DUST_MS, lo pone useSortableRow). Ya no se puede tocar.
+ * El SVG del filtro va fuera del flujo para no ocupar una celda de la rejilla.
+ */
+.dust-filter {
+  position: absolute;
+}
+.sortable-row.is-leaving {
+  pointer-events: none;
+  animation: row-dust var(--dust-ms) ease-in forwards;
+}
+@keyframes row-dust {
+  0% {
+    opacity: 1;
+    transform: none;
+  }
+  40% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(18px, -10px);
+  }
+}
+
+/*
+ * Agarrada: sin el tinte del hover (el recuadro de la fila ya dice «agarrada»); puntos en el acento y mano
+ * cerrada. Con :hover también, para ganar al hover de los botones fantasma de cada tema.
+ * Sin transición: el recuadro aparece de golpe al agarrar, y el tinte, fundiéndose, se vería un momento dentro
+ * de él. Al soltar sí vuelve fundido (el asa sigue bajo el puntero).
+ */
+.sortable-row.is-dragging .drag-handle,
+.sortable-row.is-dragging .drag-handle:hover {
+  cursor: grabbing;
+  color: var(--accent-text);
+  background: transparent;
+  transition: none;
 }
 /* == Plan de tiradas == */
 /* Cabecera: los botones de añadir («+ icono Personaje»). */
@@ -2643,82 +2737,6 @@ tfoot td {
 .card:has(.combo.is-open) {
   position: relative;
   z-index: var(--z-raised);
-}
-/* Asa para arrastrar y reordenar. */
-.drag-handle {
-  display: grid;
-  place-items: center;
-  align-self: stretch;
-  color: var(--text-muted);
-  cursor: grab;
-  touch-action: none;
-}
-.drag-handle svg {
-  fill: currentColor;
-}
-/*
- * Fila arrastrada: el recuadro es una capa por detrás que sobresale 10px a los lados y deja el mismo aire arriba
- * y abajo (la fila no lleva relleno lateral y la primera no tiene el de arriba; darle relleno a la fila movería
- * su contenido, que comparte columnas con las demás). Sombra negra en oscuro: con el color del texto era un halo.
- */
-.pull-row.is-dragging {
-  position: relative;
-  z-index: 2;
-}
-.pull-row.is-dragging::before {
-  content: '';
-  position: absolute;
-  inset: 0 -10px;
-  z-index: -1;
-  background: var(--surface-2);
-  border-radius: 10px;
-  box-shadow:
-    0 8px 24px light-dark(color-mix(in srgb, var(--text) 35%, transparent), rgb(0 0 0 / 0.6)),
-    0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
-}
-/*
- * Fila quitada: se deshace en polvo (el filtro de ruido de FuturePulls dispersa sus píxeles) mientras se apaga y
- * deriva un poco hacia arriba a la derecha, como si se la llevara el aire. Dura --dust-ms (DUST_MS, lo pone la fila). Ya no se puede tocar.
- * El SVG del filtro va fuera del flujo para no ocupar una celda de la rejilla.
- */
-.dust-filter {
-  position: absolute;
-}
-.pull-row.is-leaving {
-  pointer-events: none;
-  animation: pull-dust var(--dust-ms) ease-in forwards;
-}
-@keyframes pull-dust {
-  0% {
-    opacity: 1;
-    transform: none;
-  }
-  40% {
-    opacity: 0.85;
-  }
-  100% {
-    opacity: 0;
-    transform: translate(18px, -10px);
-  }
-}
-
-/*
- * Agarrada: sin el tinte del hover (el recuadro de la fila ya dice «agarrada»); puntos en el acento y mano
- * cerrada. Con :hover también, para ganar al hover de los botones fantasma de cada tema.
- * Sin transición: el recuadro aparece de golpe al agarrar, y el tinte, fundiéndose, se vería un momento dentro
- * de él. Al soltar sí vuelve fundido (el asa sigue bajo el puntero).
- */
-.pull-row.is-dragging .drag-handle,
-.pull-row.is-dragging .drag-handle:hover {
-  cursor: grabbing;
-  color: var(--accent-text);
-  background: transparent;
-  transition: none;
-}
-.btn-icon {
-  padding: 2px 6px;
-  font-size: 0.75rem;
-  line-height: 1.2;
 }
 .pull-win {
   white-space: nowrap;
@@ -3281,31 +3299,89 @@ tfoot td {
   border-top: none;
   padding-top: 0;
 }
+/*
+ * Cabecera de cada versión: su título de grupo (el h3 de las fuentes, «Diarias») y «Editar». Sin el margen de
+ * abajo del h3: aquí separa la rejilla del bloque, y con él el título quedaba más alto que el botón.
+ */
 .patch-head {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
+  justify-content: space-between;
   gap: var(--space-2);
 }
-.patch-head .date-field {
+.patch-head h3 {
+  margin: 0;
+}
+/* Leyendo: evento, cobro y recompensas (la tabla del desglose); las dos últimas, sin partir. */
+.patch-table :is(th, td):not(:first-child) {
+  white-space: nowrap;
+}
+/* Evento que no cuenta: se apaga lo que no suma, como en el editor; el porqué va bajo el nombre. */
+.patch-table .is-ignored .patch-reward {
+  opacity: 0.5;
+}
+/*
+ * En el móvil, en tres columnas el nombre se partía en tres o cuatro líneas: la fecha baja bajo el nombre (como
+ * la línea de detalle de las fuentes) y las recompensas quedan a la derecha, a lo alto de los dos.
+ */
+@media (width <= 560px) {
+  /* Sin hueco entre columnas: las celdas ya llevan su relleno, y con hueco las rayas de las filas se cortaban. */
+  .patch-table tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .patch-table th:nth-child(2) {
+    display: none;
+  }
+  .patch-table td:first-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .patch-table td:nth-child(2) {
+    grid-column: 1;
+    padding-top: 2px;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+  }
+  .patch-table td:nth-child(3) {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+}
+/* Editando: el número y el inicio de la versión. */
+.patch-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.patch-fields .date-field {
   width: var(--date-field-w);
 }
-.patch-head .input-version {
+.patch-fields .input-version {
   width: 5rem;
 }
-.patch-total {
-  margin-left: auto;
+/*
+ * Las tiradas de la versión, al pie y a la derecha, bajo las recompensas. Es la suma de sus filas: 18px, como el
+ * Total de los paquetes (fila 16 < suma 18 < cabecera 20), con el ticket en la proporción de la cabecera
+ * (28/20 en Aha, 20/20 en Sparxie).
+ */
+.patch-foot {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
+  justify-content: flex-end;
 }
-/* La X, del alto de los campos de al lado: así el total queda centrado con ellos. */
-.patch-total .btn-remove {
-  height: var(--field-compact-h);
+.patch-total {
+  --total-size: 1.125rem;
+  --total-icon: 25px;
 }
-.event-list {
+:where(:root[data-skin='sparxie']) .patch-total {
+  --total-icon: 18px;
+}
+.event-list,
+.event-rows {
   display: grid;
   gap: 6px;
 }
@@ -3317,9 +3393,12 @@ tfoot td {
    * son las más anchas, y para la fecha más ancha con la fuente de cada tema; el resto es para el nombre.
    */
   --event-date-col: 8.125rem;
-  grid-template-columns: minmax(0, 1fr) var(--event-date-col) 5.375rem 5.375rem var(--remove-w);
+  /* Asa · nombre · fecha · Jades · Pases · quitar. */
+  grid-template-columns: var(--remove-w) minmax(0, 1fr) var(--event-date-col) 5.375rem 5.375rem var(--remove-w);
   gap: 8px;
   align-items: center;
+  /* Arrastrada, el recuadro deja 8px de aire arriba y abajo (la fila no tiene relleno). */
+  --drag-out: -8px -10px;
 }
 .event-row input {
   padding: var(--field-compact-pad);
@@ -3327,19 +3406,31 @@ tfoot td {
 .event-row input[type='number'] {
   text-align: right;
 }
-.event-row.is-ignored > :not(.event-status):not(.btn) {
+/*
+ * Evento que no cuenta: se apagan solo las cantidades, que son lo que no suma; el nombre y la fecha (la causa,
+ * lo que hay que corregir) quedan a contraste normal.
+ */
+.event-row.is-ignored > :is(.event-jades, .event-passes) {
   opacity: 0.5;
 }
+/* Por qué un evento no cuenta, bajo su nombre: en la tabla y en el editor. */
 .event-status {
-  grid-column: 1 / -1;
+  display: block;
   font-size: 0.75rem;
   color: var(--warning-text);
-  margin-top: -2px;
 }
-/* El texto de «+ Evento» alineado con la columna de los nombres: sin el relleno ni el borde (1px) del botón. */
-.btn-add {
-  justify-self: start;
-  margin-left: calc(-1 * (var(--btn-pad-x) + 1px));
+/*
+ * En el editor, bajo el nombre (no bajo el asa) y más cerca de su fila que de la siguiente: 4px por encima
+ * (8 de la rejilla − 4) y 10 por debajo (4 + los 6 de la lista).
+ */
+.event-row > .event-status {
+  grid-column: 2 / -1;
+  margin: -4px 0 4px;
+}
+/* «+ Evento»: un botón del ancho y el alto de una fila, en el hueco donde aparecerá la nueva. */
+.btn-add-event {
+  justify-self: stretch;
+  min-height: var(--field-compact-h);
 }
 /*
  * Fecha de cobro: borde y relleno (9px), icono con su aire (28px) y la fecha más ancha. En Figtree, 92px
@@ -3350,63 +3441,73 @@ tfoot td {
   --event-date-col: 8.3125rem;
 }
 /*
- * Hasta 720px, dos líneas por evento: arriba el nombre (entero) y quitar; debajo fecha, Jades y Pases.
- * Los Pases llegan hasta el borde (también bajo la columna de quitar) para que quepan sus cifras y flechas.
+ * Hasta 720px, dos líneas por evento, como las del plan: el asa a lo alto de las dos; arriba el nombre (entero)
+ * y quitar; debajo fecha, Jades y Pases. Los Pases llegan hasta el borde (también bajo la columna de quitar)
+ * para que quepan sus cifras y flechas.
  */
 @media (width <= 720px) {
   .event-header {
     display: none;
   }
   .event-row {
-    grid-template-columns: var(--event-date-col) 5.375rem minmax(0, 1fr) var(--remove-w);
+    grid-template-columns: var(--remove-w) var(--event-date-col) 5.375rem minmax(0, 1fr) var(--remove-w);
     padding-bottom: 8px;
     border-bottom: 1px dashed var(--grid);
+    /* El relleno de abajo ya es su aire; arriba, el que falta. */
+    --drag-out: -8px -10px 0;
+  }
+  .event-row > .drag-handle {
+    grid-column: 1;
+    grid-row: 1 / span 2;
   }
   .event-row > input {
-    grid-column: 1 / 4;
+    grid-column: 2 / 5;
   }
-  .event-row > .btn {
-    grid-column: 4;
+  .event-row > .btn-remove {
+    grid-column: 5;
     grid-row: 1;
   }
   .event-row > .date-field {
-    grid-column: 1;
-    grid-row: 2;
-  }
-  .event-row > .event-jades {
     grid-column: 2;
     grid-row: 2;
   }
+  .event-row > .event-jades {
+    grid-column: 3;
+    grid-row: 2;
+  }
   .event-row > .event-passes {
-    grid-column: 3 / 5;
+    grid-column: 4 / 6;
     grid-row: 2;
   }
 }
 /*
- * En los móviles más estrechos (por debajo de ~380px) los Pases ya no caben al lado de la fecha y los Jades:
- * nombre, fecha y Jades · Pases, en tres líneas.
+ * En los móviles estrechos (430px o menos, con la columna del asa) los Pases ya no caben al lado de la fecha y
+ * los Jades: nombre, fecha y Jades · Pases, en tres líneas.
  */
-@media (width <= 380px) {
+@media (width <= 430px) {
   .event-row {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) var(--remove-w);
+    grid-template-columns: var(--remove-w) minmax(0, 1fr) minmax(0, 1fr) var(--remove-w);
+  }
+  .event-row > .drag-handle {
+    grid-row: 1 / span 3;
   }
   .event-row > input {
-    grid-column: 1 / 3;
+    grid-column: 2 / 4;
   }
   .event-row > .date-field {
-    grid-column: 1 / 3;
+    grid-column: 2 / 4;
     grid-row: 2;
   }
-  .event-row > .btn {
-    grid-column: 3;
+  .event-row > .btn-remove {
+    grid-column: 4;
     grid-row: 1;
   }
   .event-row > .event-jades {
-    grid-column: 1;
+    grid-column: 2;
     grid-row: 3;
   }
   .event-row > .event-passes {
-    grid-column: 2;
+    grid-column: 3;
     grid-row: 3;
   }
 }
@@ -4016,8 +4117,8 @@ tfoot td {
   --adp-cell-border-radius: 2px;
 }
 /* Desplegables, editor de fuentes, fila arrastrada y miniatura de cono: esquinas casi rectas. */
-:where(:root[data-skin='sparxie']) :is(.combo-list, .source-edit, .pull-portrait-lightCone),
-:where(:root[data-skin='sparxie']) .pull-row.is-dragging::before {
+:where(:root[data-skin='sparxie']) :is(.combo-list, .inline-edit, .pull-portrait-lightCone),
+:where(:root[data-skin='sparxie']) .sortable-row.is-dragging::before {
   border-radius: 3px;
 }
 :where(:root[data-skin='sparxie']) :is(.combo-option, .dupe-badge, .eidolon-badge) {

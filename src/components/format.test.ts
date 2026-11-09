@@ -16,6 +16,8 @@ const plain = (s: string | null) => s?.replace(/\u00a0|\u202f/g, ' ') ?? null;
 describe('formatos', () => {
   it('tiradas: con punto de miles siempre y dos decimales; las enteras, sin redondear hacia arriba', () => {
     expect(fmtSingles(1234.5)).toBe('1.234,50');
+    expect(fmtSingles(0)).toBe('0');
+    expect(fmtSingles(0, 1)).toBe('0');
     expect(floorSingles(81.999)).toBe(81);
     // 0,1 + 0,2 no da 0,3 exacto: el margen evita perder una tirada entera por la coma flotante.
     expect(floorSingles((0.1 + 0.2) * 10)).toBe(3);

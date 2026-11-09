@@ -30,6 +30,8 @@ interface Props {
   min?: ISODate;
   id?: string;
   'aria-label'?: string;
+  /** Id de un texto que describe el campo (p. ej. por qué no cuenta su evento); se lee antes de la pista de teclado. */
+  'aria-describedby'?: string;
   /** Días señalados: el calendario los marca con un punto y su nombre al pasar por encima. */
   marks?: { date: ISODate; label: string }[];
 }
@@ -38,7 +40,15 @@ interface Props {
  * Campo de fecha con el calendario de air-datepicker en lugar del nativo del navegador.
  * El campo es de solo lectura (se elige en el calendario, también con el teclado) y muestra dd/mm/aaaa.
  */
-export function DateField({ value, onChange, min, id, 'aria-label': ariaLabel, marks }: Props) {
+export function DateField({
+  value,
+  onChange,
+  min,
+  id,
+  'aria-label': ariaLabel,
+  'aria-describedby': describedBy,
+  marks,
+}: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const pickerRef = useRef<AirDatepicker | null>(null);
   // Refs para que el calendario, creado una sola vez, use siempre el valor y el callback actuales.
@@ -112,7 +122,7 @@ export function DateField({ value, onChange, min, id, 'aria-label': ariaLabel, m
         aria-label={ariaLabel}
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-describedby={hintId}
+        aria-describedby={describedBy ? `${describedBy} ${hintId}` : hintId}
       />
       {/* Instrucción de teclado solo para lectores: en imperativo, como las pistas del propio lector (norma de voz). */}
       <span id={hintId} className="sr-only">

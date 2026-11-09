@@ -2,7 +2,7 @@ import { fromDayNum, toDayNum } from './dates';
 import { packsTotal } from './packs';
 import { JADES_PER_PULL, STARLIGHT_PER_PASS, wholeSinglesOf } from './rules';
 import { canBePending, occurrences } from './sources';
-import type { AppState, ISODate, IncomeEvent, Reward } from './types';
+import type { AppState, ISODate, IncomeEvent, PatchEvent, Reward } from './types';
 
 export const PATCH_EVENTS_ID = 'patch-events';
 export const SHARD_PACKS_ID = 'shard-packs';
@@ -75,6 +75,18 @@ export function eventTiming(date: ISODate, today: ISODate, target: ISODate): Eve
   return date > target ? 'late' : 'counts';
 }
 
+/** Los eventos de una versión que entran en el cálculo: los que eventTiming da por buenos. */
+export const countedEvents = (events: PatchEvent[], today: ISODate, target: ISODate) =>
+  events.filter((ev) => eventTiming(ev.date, today, target) === 'counts');
+
+/** Tiradas que dan unos eventos, cuenten o no: el total de cada versión en la tarjeta («lo que da la versión»). */
+export const eventsSingles = (events: PatchEvent[]) =>
+  events.reduce((sum, ev) => sum + toSingles({ jades: ev.jades, specialPasses: ev.specialPasses }), 0);
+
+/** Tiradas de los eventos que cuentan, igual que lo que suma el cálculo: el total de la cabecera de la tarjeta. */
+export const countedEventSingles = (events: PatchEvent[], today: ISODate, target: ISODate) =>
+  eventsSingles(countedEvents(events, today, target));
+
 /** Genera todos los cobros con fecha entre hoy y la fecha objetivo. */
 export function buildEvents(state: AppState, today: ISODate): IncomeEvent[] {
   const todayNum = toDayNum(today);
@@ -97,8 +109,8 @@ export function buildEvents(state: AppState, today: ISODate): IncomeEvent[] {
 
   // Eventos de cada parche, cada uno en su fecha de cobro.
   for (const patch of patches) {
-    for (const ev of patch.events) {
-      if (eventTiming(ev.date, today, state.targetDate) === 'counts' && (ev.jades || ev.specialPasses)) {
+    for (const ev of countedEvents(patch.events, today, state.targetDate)) {
+      if (ev.jades || ev.specialPasses) {
         events.push({ date: ev.date, sourceId: PATCH_EVENTS_ID, reward: { jades: ev.jades, specialPasses: ev.specialPasses } });
       }
     }

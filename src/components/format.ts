@@ -23,7 +23,8 @@ export const fmtRate = (p: number, digits: 1 | 2 = 1) => (digits === 1 ? pct1 : 
 export const YEN_RATE = `${new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2 }).format(JPY_PER_EUR)} ¥/€`;
 /** Precios de Japón: se eligen en Configuración (Tienda); en la tarjeta de paquetes solo se avisa. */
 export const YEN_PRICES_TIP = `Precios de Japón convertidos a euros a ${YEN_RATE}`;
-export const fmtSingles = (n: number, digits: 1 | 2 = 2) => (digits === 1 ? dec1 : dec2).format(n);
+/** Tiradas con sus decimales («12,88»); un cero real sale «0», no «0,00» (regla de los ceros). */
+export const fmtSingles = (n: number, digits: 1 | 2 = 2) => (n === 0 ? '0' : (digits === 1 ? dec1 : dec2).format(n));
 /** Singles enteras, las que se pueden tirar: 81,5 son 81 (el margen salva los errores de coma flotante). */
 export const floorSingles = (n: number) => Math.floor(n + 1e-9);
 

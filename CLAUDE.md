@@ -63,7 +63,7 @@ Pure, framework-free logic. Business logic belongs here, not in components. Test
   - `JADES_PER_PULL`, `DEFAULT_HARD_PITY`, `FOUR_STAR_PITY`, `PATCH_LENGTH_DAYS`, the Starlight constants and the banner model (`BANNERS`).
   - `wholeSinglesOf` and `PATHS`, the 9 Paths in game order. Memory is «Reminiscencia».
   - Put new game constants here and build help texts from them.
-- **`calculate.ts`:** `calculate(state, today)` returns the `Result`. Also `eventTiming`: whether a dated event counts.
+- **`calculate.ts`:** `calculate(state, today)` returns the `Result`. Also `eventTiming`, whether a dated event counts, `countedEvents`/`countedEventSingles`, the events that count and their pulls (the calculation and the card's header total share them), and `eventsSingles`, what a version's events give whether they count or not (each version's total).
 - **`sources.ts`:** schedule occurrences and `canBePending`.
 - **`packs.ts`:** shard packs.
 - **`pulls.ts`:** `planPulls` (cost per row), `planBalance` and `effectivePity` (the only place that limits the pity).
@@ -96,13 +96,14 @@ React hooks and browser storage.
 - **Shared controls:**
   - `NumberField`, `DateField` (air-datepicker) and `NameCombobox`;
   - `Toggle` and `SwitchInput` (the bare switch), `Tip`/`TipTitle`, `Term`/`TermProvider`, `TipSumRow` and `TipEquation` (every «=» with icons in a bubble);
-  - `RemoveGlyph`, `Icon`, `Rarity` and `Toast`.
+  - `RemoveGlyph`, `Icon`, `Rarity`, `Toast` and `RewardInline` (a reward with its icons, in sources and events);
+  - `SortableRows`: rows reordered by a handle and turned to dust on removal (`SortableList`, `useSortableRow`, `DragHandle`, `DustFilter`, `useDustRemoval`), shared by the plan and the events.
 - **Helpers:**
   - `glossary.tsx`: shared definitions;
   - `format.ts`: every es-ES formatter, such as `fmtSingles`, `fmtChance` and `fmtEuros`;
-  - `kinds.ts`, `motion.ts`, `inputs.ts` and `usePlanOdds.ts`.
+  - `kinds.ts`, `motion.ts`, `inputs.ts`, `usePlanOdds.ts` and `useFocusNew.ts` (a newly added row focuses its name once).
 
-`App.tsx` owns the state. It runs `calculate`, `usePlanOdds` and `planCopies` once each, passes the results down, and keeps the undo toast. Planner rows are reordered with `@dnd-kit`.
+`App.tsx` owns the state. It runs `calculate`, `usePlanOdds` and `planCopies` once each, passes the results down, and keeps the undo toast. Planner and event rows are reordered with `@dnd-kit`, through `SortableRows`.
 
 ## Domain rules
 
@@ -215,7 +216,7 @@ React hooks and browser storage.
   - Field padding follows `--input-nudge`: 0 in Aha, and −1px in Sparxie, whose Courier sits high, so it gets 1px more on top.
 - **Breakpoints:**
   - 2000 and 1480 (dupe gallery), 1180 (two columns), 1040 (Configuración aside);
-  - ≤720 (rows split into two lines; >720 the reverse), ≤560 (phones), ≤520 (sources), ≤430, ≤380 and ≤350;
+  - ≤720 (rows split into two lines; >720 the reverse), ≤560 (phones), ≤520 (sources), ≤430 (events in three lines) and ≤350;
   - container queries: `plan` 29rem, key dates 36rem, account 30 and 44rem.
 - **Calculadora order:** below 1180px the cards order by class: Resumen, Recursos actuales, Plan, Previsión, Fecha objetivo, Versiones y eventos, Paquetes, Desglose.
 - **Explanations:**
@@ -227,12 +228,16 @@ React hooks and browser storage.
     - It draws its own ±1 arrows inside the field (`.stepper`; the native ones are hidden everywhere), only under `pointer: fine`. Amounts in the thousands, typed rather than counted (Jades, Esquirlas), pass `noStepper`; the rest keep them (packs, Pases, Cosmiluz, pity, days).
   - **The segmented control** (`.segmented` with `.segment` buttons) serves the theme and mode selectors, the store and the Path filter.
   - **`Toggle`** is for on/off settings. Per-row choices stay checkboxes (the 50/50, the ×2). The sources' bare `role="switch"` has no visible label, so it is not a `Toggle`.
+  - **Add buttons** go in the container they add to. What is added to the card goes in its header (`.btn`: «+ Versión», «+ Personaje», «+ Fuente personalizada»). What is added to a sub-list repeated inside the card goes at the end of that sub-list, as a `.btn` the width and height of a row, in the slot where the new row appears (`.btn-add-event`, «+ Evento»).
   - **Remove buttons** are `btn btn-ghost btn-remove` with `<RemoveGlyph />`, never ✕.
+  - **Read first, edit in place:** Fuentes de ingresos and Versiones y eventos show read-only rows, and a ghost «Editar»/«Cerrar» (`aria-expanded`) opens one editor at a time in place: the `.inline-edit` box, with «Eliminar …» (`btn btn-danger`) at its foot (`.inline-edit-footer`).
   - **Every `.btn` and `.chip` fades its hover** with `--fade-in`/`--fade-out`.
 - **Undo instead of confirmations:** deleting or replacing data passes a `Notice` to `onChange`, and the toast offers «Deshacer».
   - Any other change closes that toast, also one arriving from another tab, because its snapshot predates the change.
-  - Planner rows turn to dust before leaving, except with reduced motion.
+  - Planner and event rows turn to dust before leaving, except with reduced motion.
 - **Touch:** under `pointer: coarse`, small controls get a 44px hit area (36px tall on `.check`). Glossary terms sit above it.
-- **Zeros and dashes:** a real zero shows as «0». «—» only means "not applicable".
+- **Pull totals** show the pass ticket and the figure (`.card-total`), never a sentence: whole pulls in a card header (Recursos actuales, Paquetes, Versiones y eventos), and with decimals at the foot of each version (`.patch-total` sets `--total-size`/`--total-icon`).
+  - **Size scale of totals:** a row's figure 16px < a sum of rows 18px (Paquetes' «Total», each version's total) < a card header 20px. The ticket keeps the header's proportion (28/20 in Aha, 20/20 in Sparxie).
+- **Zeros and dashes:** a real zero shows as «0» (`fmtSingles` does it). «—» only means "not applicable".
 - **No decorative gradients:** only functional ones.
 - **`NameCombobox`:** while unfocused, the name is painted by `.combo-value` at `50% + 6px − var(--input-nudge)`, because Chrome shifts input text that falls back to another font (the ★). Keep that formula if the padding changes.

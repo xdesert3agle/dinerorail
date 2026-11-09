@@ -1,19 +1,6 @@
-import {
-  closestCenter,
-  DndContext,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type Announcements,
-  type DragEndEvent,
-  type DragOverEvent,
-  type Modifier,
-  type UniqueIdentifier,
-} from '@dnd-kit/core';
+import type { Modifier } from '@dnd-kit/core';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { useMemo, useRef, type RefObject } from 'react';
 import type { Result } from '../engine/calculate';
 import { entryOf, type Catalog, type CatalogEntry } from '../engine/catalog';
 import { dupeOf, type RowCopy } from '../engine/dupes';
@@ -24,7 +11,9 @@ import { newId } from '../engine/util';
 import type { ChangeState, Notice } from '../state/store';
 import { KIND_GLYPH, KIND_LABEL } from './kinds';
 import { PlanFooter } from './PlanFooter';
-import { PullRow, useDustRemoval } from './PullRow';
+import { PullRow } from './PullRow';
+import { moveById, SortableList, useDustRemoval } from './SortableRows';
+import { useFocusNew } from './useFocusNew';
 
 interface Props {
   state: AppState;
@@ -102,62 +91,17 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
       ? [characterPortraitUrl(entry.id)]
       : [lightConeIconUrl(entry.id), lightConeImageUrl(entry.id)];
   };
-  // La fila recién añadida enfoca su nombre para poder escribir directamente. Una sola vez: en cuanto aparece se
-  // olvida, así que si vuelve a montarse (al deshacer su borrado) no se lleva el foco.
-  const [focusId, setFocusId] = useState<string | null>(null);
-  useEffect(() => {
-    if (focusId && plan.some((p) => p.id === focusId)) setFocusId(null);
-  }, [focusId, plan]);
+  // La fila recién añadida enfoca su nombre para poder escribir directamente (una sola vez, ver useFocusNew).
+  const [focusId, setFocusId] = useFocusNew(plan.map((p) => p.id));
   const add = (kind: PullKind) => {
     const id = newId('pull');
     setFocusId(id);
     setPlan((p) => [...p, { id, name: '', kind, winsFiftyFifty: false }]);
   };
 
-  const sensors = useSensors(
-    // Sin margen: la fila se coge (y flota) nada más pulsar el asa, sin esperar a moverla. El asa no tiene
-    // acción de clic, y soltar sin moverse deja el orden igual.
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
-
-  // Al cruzar a otro puesto, un toque corto en el móvil (Android; iOS no deja vibrar desde la web): el «clic»
-  // de cambiar de hueco, como los selectores del sistema.
-  const lastOver = useRef<UniqueIdentifier | null>(null);
-
   // En vertical y sin salir de las filas (ver restrictToRows).
   const footRef = useRef<HTMLDivElement>(null);
   const modifiers = useMemo(() => [restrictToVerticalAxis, restrictToRows(footRef)], []);
-  const onDragOver = ({ over }: DragOverEvent) => {
-    if (!over || over.id === lastOver.current) return;
-    lastOver.current = over.id;
-    navigator.vibrate?.(8);
-  };
-
-  const onDragEnd = ({ active, over }: DragEndEvent) => {
-    lastOver.current = null;
-    if (!over || active.id === over.id) return;
-    setPlan((p) => {
-      const from = p.findIndex((x) => x.id === active.id);
-      const to = p.findIndex((x) => x.id === over.id);
-      return from < 0 || to < 0 ? p : arrayMove(p, from, to);
-    });
-  };
-
-  // Avisos para lectores de pantalla, en español.
-  const nameOf = (id: string | number) => {
-    const pull = plan.find((x) => x.id === id);
-    return pull ? pull.name || KIND_LABEL[pull.kind] : 'la tirada';
-  };
-  const position = (id: string | number) => plan.findIndex((x) => x.id === id) + 1;
-  const announcements: Announcements = {
-    onDragStart: ({ active }) => `Se ha cogido ${nameOf(active.id)}, en la posición ${position(active.id)}.`,
-    onDragOver: ({ active, over }) =>
-      over ? `${nameOf(active.id)} se movería a la posición ${position(over.id)}.` : `${nameOf(active.id)} está fuera de la lista.`,
-    onDragEnd: ({ active, over }) =>
-      over ? `${nameOf(active.id)} se ha movido a la posición ${position(over.id)}.` : `${nameOf(active.id)} se ha soltado.`,
-    onDragCancel: ({ active }) => `Movimiento cancelado. ${nameOf(active.id)} vuelve a su sitio.`,
-  };
 
   return (
     <section className="card card-plan">
@@ -187,42 +131,27 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
         <p className="muted">Aún no hay nada planificado. Los personajes y conos de luz se añaden en el orden en que se quieren conseguir.</p>
       ) : (
         <div className="pull-list">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
+          <SortableList
+            items={plan.map((p) => ({ id: p.id, name: p.name || KIND_LABEL[p.kind] }))}
             modifiers={modifiers}
-            onDragStart={({ active }) => (lastOver.current = active.id)}
-            onDragOver={onDragOver}
-            onDragEnd={onDragEnd}
-            onDragCancel={() => (lastOver.current = null)}
-            accessibility={{
-              announcements,
-              // Instrucción de teclado solo para lectores: en imperativo y con las teclas en minúscula, como las
-              // pistas del propio lector (norma de voz); los avisos de estado, de arriba, van en impersonal.
-              screenReaderInstructions: {
-                draggable:
-                  'Para mover una tirada, pulsa espacio o intro para cogerla, muévela con las flechas arriba y abajo y vuelve a pulsar espacio o intro para soltarla. Pulsa escape para cancelar.',
-              },
-            }}
+            onMove={(activeId, overId) => setPlan((p) => moveById(p, activeId, overId))}
           >
-            <SortableContext items={plan.map((p) => p.id)} strategy={verticalListSortingStrategy}>
-              {plan.map((pull, i) => (
-                <PullRow
-                  key={pull.id}
-                  pull={pull}
-                  row={rows[i]}
-                  suggestions={catalog?.[pull.kind] ?? NO_SUGGESTIONS}
-                  dupe={dupeOf(copies[i] ?? null)}
-                  chance={chances[i] ?? ''}
-                  portrait={portraitOf(pull)}
-                  onUpdate={(patch) => updatePull(pull.id, patch)}
-                  autoFocus={pull.id === focusId}
-                  leaving={leaving.includes(pull.id)}
-                  onRemove={() => remove(pull, dupeOf(copies[i] ?? null))}
-                />
-              ))}
-            </SortableContext>
-          </DndContext>
+            {plan.map((pull, i) => (
+              <PullRow
+                key={pull.id}
+                pull={pull}
+                row={rows[i]}
+                suggestions={catalog?.[pull.kind] ?? NO_SUGGESTIONS}
+                dupe={dupeOf(copies[i] ?? null)}
+                chance={chances[i] ?? ''}
+                portrait={portraitOf(pull)}
+                onUpdate={(patch) => updatePull(pull.id, patch)}
+                autoFocus={pull.id === focusId}
+                leaving={leaving.includes(pull.id)}
+                onRemove={() => remove(pull, dupeOf(copies[i] ?? null))}
+              />
+            ))}
+          </SortableList>
 
           <PlanFooter
             result={result}

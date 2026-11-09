@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { calculate, eventTiming, PATCH_EVENTS_ID } from './calculate';
+import { calculate, countedEventSingles, eventsSingles, eventTiming, PATCH_EVENTS_ID } from './calculate';
 import { addDays } from './dates';
 import { defaultState } from './defaults';
 import type { AppState, Source } from './types';
@@ -131,6 +131,24 @@ describe('calculate', () => {
     const ev = (id: string, date: string) => ({ id, name: id, date, jades: 100, specialPasses: 0 });
     s.patches = [{ id: 'p', version: '4.7', start: today, events: [ev('hoy', today), ev('mañana', addDays(today, 1))] }];
     expect(calculate(s, today).bySource.find((t) => t.sourceId === PATCH_EVENTS_ID)?.count).toBe(1);
+  });
+
+  it('eventos: lo que dan todos y lo que cuenta, como el cálculo', () => {
+    const ev = (id: string, date: string, jades: number, specialPasses = 0) => ({ id, name: id, date, jades, specialPasses });
+    const events = [
+      ev('pasado', '2026-10-05', 1600),
+      ev('hoy', today, 1600),
+      ev('dentro', addDays(today, 1), 320, 1),
+      ev('tarde', '2027-01-01', 1600),
+    ];
+    // Lo que da la versión: 4.800 + 320 Jades (32 tiradas) y 1 Pase, cuenten o no.
+    expect(eventsSingles(events)).toBe(33);
+    // Lo que cuenta: solo «dentro», 320 Jades (2 tiradas) y 1 Pase.
+    expect(countedEventSingles(events, today, '2026-12-31')).toBe(3);
+
+    const s = stateWith([], '2026-12-31', today);
+    s.patches = [{ id: 'p', version: '4.7', start: today, events }];
+    expect(calculate(s, today).incomeSingles).toBe(countedEventSingles(events, today, '2026-12-31'));
   });
 
   it('las fuentes por parche solo cuentan los parches de la tabla', () => {

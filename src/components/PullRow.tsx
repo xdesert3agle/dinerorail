@@ -1,6 +1,3 @@
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { useEffect, useRef, useState } from 'react';
 import type { CatalogEntry } from '../engine/catalog';
 import type { PlannedPullResult } from '../engine/pulls';
 import { fiftyFiftyName } from '../engine/rules';
@@ -8,37 +5,11 @@ import type { PlannedPull } from '../engine/types';
 import { fmtInt } from './format';
 import { Icon } from './Icon';
 import { KIND_GLYPH, KIND_LABEL } from './kinds';
-import { reducedMotion } from './motion';
 import { NameCombobox } from './NameCombobox';
 import { RemoveGlyph } from './RemoveGlyph';
+import { DragHandle, DustFilter, useSortableRow } from './SortableRows';
 import { Tip } from './Tip';
 import { TipSumRow } from './TipSumRow';
-
-/** Cuánto dura el polvo de una fila quitada y hasta dónde se dispersan sus píxeles (px del desplazamiento). */
-const DUST_MS = 600;
-const DUST_SCALE = 70;
-
-/** Cómo encaja una fila desplazada en su nuevo hueco al reordenar: rápida y con un rebote leve al llegar. */
-const SNAP_TRANSITION = { duration: 180, easing: 'cubic-bezier(0.3, 1.35, 0.5, 1)' };
-
-/**
- * Quitar filas con el polvo: cada una se marca como «saliendo» durante DUST_MS y luego se llama a su `commit`;
- * sin animación si se pide menos movimiento. Una que ya se está yendo no se quita dos veces (un segundo Intro
- * sobre su ✕, que sigue con el foco).
- */
-export function useDustRemoval() {
-  const [leaving, setLeaving] = useState<string[]>([]);
-  const removeLater = (id: string, commit: () => void) => {
-    if (reducedMotion()) return commit();
-    if (leaving.includes(id)) return;
-    setLeaving((l) => [...l, id]);
-    window.setTimeout(() => {
-      commit();
-      setLeaving((l) => l.filter((x) => x !== id));
-    }, DUST_MS);
-  };
-  return { leaving, removeLater };
-}
 
 interface Props {
   pull: PlannedPull;
@@ -69,69 +40,19 @@ export function PullRow({
   leaving,
   onRemove,
 }: Props) {
-  // El polvo: un filtro de ruido que desplaza los píxeles de la fila cada vez más (de 0 a DUST_SCALE) mientras se
-  // desvanece. El filtro es de cada fila, así dos que se quitan a la vez no se pisan.
-  const dustId = `dust-${pull.id}`;
-  const dustRef = useRef<SVGAnimateElement>(null);
-  useEffect(() => {
-    if (leaving) dustRef.current?.beginElement();
-  }, [leaving]);
-  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({
-    id: pull.id,
-    // Encaje seco al cambiar de puesto (180ms con un leve rebote, en vez de 250ms suaves); sin movimiento si se pide.
-    transition: reducedMotion() ? null : SNAP_TRANSITION,
-  });
+  const sortable = useSortableRow(pull.id, leaving);
   const label = pull.name || KIND_LABEL[pull.kind];
   // «50/50» o «75/25», el de su banner; mismo ancho, así la columna no cambia entre filas.
   const bet = fiftyFiftyName(pull.kind);
 
   return (
     <div
-      ref={setNodeRef}
-      className={`pull-row ${row.affordable ? '' : 'is-short'} ${isDragging ? 'is-dragging' : ''} ${leaving ? 'is-leaving' : ''}`}
-      style={{
-        transform: CSS.Translate.toString(transform),
-        transition,
-        filter: leaving ? `url(#${dustId})` : undefined,
-        '--dust-ms': `${DUST_MS}ms`,
-      }}
+      ref={sortable.setNodeRef}
+      className={`pull-row ${sortable.className}${row.affordable ? '' : ' is-short'}`}
+      style={sortable.style}
     >
-      {leaving && (
-        <svg className="dust-filter" width="0" height="0" aria-hidden="true">
-          <filter id={dustId} x="-20%" y="-50%" width="140%" height="200%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" result="noise" />
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="0" xChannelSelector="R" yChannelSelector="G">
-              <animate
-                ref={dustRef}
-                attributeName="scale"
-                from="0"
-                to={DUST_SCALE}
-                dur={`${DUST_MS}ms`}
-                begin="indefinite"
-                fill="freeze"
-              />
-            </feDisplacementMap>
-          </filter>
-        </svg>
-      )}
-      <button
-        type="button"
-        ref={setActivatorNodeRef}
-        className="btn btn-ghost btn-icon drag-handle"
-        title="Arrastrar para cambiar el orden"
-        {...attributes}
-        {...listeners}
-        aria-label={`Mover ${label}`}
-      >
-        <svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true">
-          {[3, 8, 13].map((y) => (
-            <g key={y}>
-              <circle cx="2.5" cy={y} r="1.4" />
-              <circle cx="7.5" cy={y} r="1.4" />
-            </g>
-          ))}
-        </svg>
-      </button>
+      <DustFilter id={pull.id} leaving={leaving} />
+      <DragHandle handle={sortable.handle} label={label} />
 
       {/*
         Miniatura: el retrato (o el icono del cono) tapa el icono del tipo, que queda debajo para las filas

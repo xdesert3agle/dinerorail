@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { SourceTotal } from '../engine/calculate';
 import { formatDate, fromDayNum, toDayNum, WEEKDAYS } from '../engine/dates';
 import { DEFAULT_CYCLE_DAYS } from '../engine/rules';
@@ -7,11 +7,12 @@ import type { AppState, Reward, Schedule, Source, SourceCategory } from '../engi
 import { newId } from '../engine/util';
 import { namedNotice, type ChangeState } from '../state/store';
 import { DateField } from './DateField';
-import { describeSchedule, fmtInt, fmtSingles, pendingLabel } from './format';
-import { Icon } from './Icon';
+import { describeSchedule, fmtSingles, pendingLabel } from './format';
 import { PLAIN_TEXT_INPUT } from './inputs';
 import { NumberField } from './NumberField';
+import { RewardInline } from './RewardInline';
 import { SwitchInput, Toggle } from './Toggle';
+import { useFocusNew } from './useFocusNew';
 
 interface Props {
   state: AppState;
@@ -52,32 +53,10 @@ function defaultSchedule(type: Schedule['type'], today: string): Schedule {
   }
 }
 
-function RewardInline({ reward }: { reward: Reward }) {
-  if (!reward.jades && !reward.specialPasses) return <>Sin recompensa</>;
-  return (
-    <span className="reward">
-      {reward.jades > 0 && (
-        <span className="with-icon">
-          <Icon kind="jade" size={16} />+{fmtInt(reward.jades)}
-        </span>
-      )}
-      {reward.specialPasses > 0 && (
-        <span className="with-icon">
-          <Icon kind="pass" size={16} />+{fmtInt(reward.specialPasses)}
-        </span>
-      )}
-    </span>
-  );
-}
-
 export function SourcesPanel({ state, today, totals, onChange }: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
-  // La fuente recién creada enfoca su nombre para poder escribirlo directamente. Una sola vez: en cuanto aparece
-  // se olvida, así que al volver a abrir su editor no se lleva el foco.
-  const [addedId, setAddedId] = useState<string | null>(null);
-  useEffect(() => {
-    if (addedId && state.sources.some((s) => s.id === addedId)) setAddedId(null);
-  }, [addedId, state.sources]);
+  // La fuente recién creada enfoca su nombre para poder escribirlo directamente (una sola vez, ver useFocusNew).
+  const [addedId, setAddedId] = useFocusNew(state.sources.map((s) => s.id));
 
   // Próximo cobro de cada fuente (en el próximo año), para mostrarlo en la lista.
   const nextDates = useMemo(() => {
@@ -158,7 +137,7 @@ export function SourcesPanel({ state, today, totals, onChange }: Props) {
                       {/* Activa sin cobros en el periodo: un cero real, «0»; «—» solo si está desactivada (no aplica). */}
                       {src.enabled ? (
                         <>
-                          <strong>{total?.singles ? fmtSingles(total.singles) : '0'}</strong> tiradas
+                          <strong>{fmtSingles(total?.singles ?? 0)}</strong> tiradas
                         </>
                       ) : (
                         <span className="muted">—</span>
@@ -214,7 +193,7 @@ function SourceEditor({ source, today, focusName, onUpdate, onDelete }: EditorPr
   const pending = pendingLabel(schedule);
 
   return (
-    <div className="source-edit">
+    <div className="inline-edit">
       {source.description && <p className="muted">{source.description}</p>}
 
       {source.custom && (
@@ -316,7 +295,7 @@ function SourceEditor({ source, today, focusName, onUpdate, onDelete }: EditorPr
         </div>
       )}
 
-      <div className="source-edit-footer">
+      <div className="inline-edit-footer">
         {pending ? (
           <Toggle checked={source.pendingNow} onChange={(pendingNow) => onUpdate({ pendingNow })}>
             {/* En las diarias, el paréntesis repetiría el «hoy» de la etiqueta. */}

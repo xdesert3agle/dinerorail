@@ -38,6 +38,41 @@ volver a proponer y por qué.
     eventos, Fuentes) tienen debajo etiquetas o una línea, no cajas.
   - A 24px, como si la cabecera fuera una fila más, el título se alejaba demasiado de su lista.
 
+## Versiones y eventos
+
+- **Leer primero y editar en el sitio (2026-11-09):** como las fuentes de ingresos. Cada versión es un título de
+  grupo (el h3 de «Diarias») con su inicio y «Editar», y debajo una tabla de lectura (evento, cobro y
+  recompensas, con las de las fuentes, `RewardInline`). «Editar» abre los campos y las filas editables en la caja
+  del editor de las fuentes (`.inline-edit`), con «Eliminar versión» al pie, como «Eliminar fuente». Sale de un
+  boceto del usuario. Del boceto no se tomaron:
+  - «Añadir versión» al pie de la tarjeta: contradice la regla de los botones de añadir (lo de la tarjeta, en su
+    cabecera);
+  - el subtítulo «Recompensas totales» bajo el título: ninguna tarjeta tiene subtítulo, y el total de cabecera
+    lleva su etiqueta solo para lectores de pantalla;
+  - el total de la versión sin ticket (el mismo fallo de la frase de antes);
+  - un diamante genérico en lugar del icono del Jade;
+  - el título de la versión grande y en negrita: se usa el h3 de grupo de la app.
+  En el móvil (≤560px), la fecha baja bajo el nombre y las recompensas quedan a la derecha.
+- **«+ Evento» (2026-11-09):** un botón del ancho y el alto de una fila, al pie de cada versión, en el hueco donde
+  aparece la nueva: dice qué hace antes de pulsarlo (idea del usuario). Es el `.btn` de siempre, sin borde
+  discontinuo: en el plan, el discontinuo es «fila que no llega», y en gris se seguiría leyendo así. Se
+  descartaron:
+  - el botón pequeño al pie, alineado con las asas: no se veía de qué versión era;
+  - en la cabecera de cada versión, tras «Inicio» (lo recomendó la crítica de impeccable, por repetir el
+    «añadir en la cabecera» de «+ Versión»);
+  - un único «+ Evento» en la cabecera de la tarjeta: obligaría a elegir la versión.
+- **Quitar una versión:** «Eliminar versión» al pie de su editor. Se probaron una ✕ junto al total, en la columna de
+  las ✕ de los eventos (parecía una fila más), y otra junto a los campos de la versión.
+- **Totales (2026-11-09):** el de la tarjeta en su cabecera, con el ticket y las tiradas enteras, como Recursos
+  actuales y Paquetes; y el de cada versión al pie de su tabla, bajo las recompensas, con el mismo formato más
+  pequeño y con decimales (también con el editor abierto). Se descartó la frase «N tiradas en eventos» (la única
+  cifra de tiradas sin ticket) y dejar solo el de la cabecera. Cada total responde a una pregunta:
+  - la cabecera, cuánto llega a tiempo: solo los eventos que cuentan (`countedEventSingles`), como el cálculo;
+  - cada versión, cuánto da: todos sus eventos (`eventsSingles`), también los que aún no llegan a la fecha
+    objetivo. Se probó que sumara solo los que cuentan, y una versión futura salía a 0.
+- **Evento que no cuenta:** se apaga solo lo que no suma (las recompensas en la tabla; Jades y Pases en el editor);
+  el nombre y la fecha (la causa) quedan a contraste normal, y el aviso va bajo el nombre.
+
 ## Glosario e interruptores
 
 - **Subrayados del glosario** (2026-10-28): se planteó marcar «Cosmiluz» en todas las etiquetas y casillas; se
