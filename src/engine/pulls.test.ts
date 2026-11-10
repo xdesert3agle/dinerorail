@@ -85,6 +85,16 @@ describe('planPulls', () => {
     expect(short.affordable).toBe(false);
   });
 
+  it('la Cosmiluz de cada fila, en piezas: 4★ esperados, 5★ del 50/50 perdido y 5★ buscado', () => {
+    // Personaje nuevo que pierde (160 tiradas): 364,4 de 4★ + 40 del perdido + 0 suyo.
+    // Cono repetido que gana (70 tiradas, 14,8 % de 4★): 10,36 4★ × 9,06 = 93,8 + 0 + 40 suyo.
+    const rows = planPulls([pull('a', 'character'), pull('b', 'lightCone', true)], { character: 0, lightCone: 0 }, 1000);
+    expect(rows.map((r) => Math.round(r.fourStarStarlight))).toEqual([364, 94]);
+    expect(rows.map((r) => r.lostStarlight)).toEqual([40, 0]);
+    expect(rows.map((r) => r.targetStarlight)).toEqual([0, 40]);
+    for (const r of rows) expect(r.starlight).toBeCloseTo(r.fourStarStarlight + r.lostStarlight + r.targetStarlight);
+  });
+
   it('sin contar la Cosmiluz, el coste neto es el de las tiradas', () => {
     const rows = planPulls([pull('a', 'character'), pull('b', 'lightCone')], { character: 0, lightCone: 0 }, 200, {
       countStarlight: false,

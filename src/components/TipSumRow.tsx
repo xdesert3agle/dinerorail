@@ -1,11 +1,24 @@
 import { fmtInt } from './format';
-import { Icon } from './Icon';
+import { Icon, type IconKind } from './Icon';
 
 /**
- * Una línea de una cuenta escrita (.tip-table-3): concepto · signo · cifra con su icono. Sin cifra (null), «—»
- * (no aplica), sin signo y con el hueco del icono reservado para que quede en la columna de las cifras.
+ * Una línea de una cuenta escrita (.tip-table-3): concepto · signo · cifra con su icono (el ticket, o el de lo que
+ * se cuenta). Sin cifra (null), «—» (no aplica), sin signo y con el hueco del icono reservado para que quede en
+ * la columna de las cifras.
  */
-export function TipSumRow({ label, sign, value, total }: { label: string; sign?: string; value: number | null; total?: boolean }) {
+export function TipSumRow({
+  label,
+  sign,
+  value,
+  total,
+  icon = 'pass',
+}: {
+  label: string;
+  sign?: string;
+  value: number | null;
+  total?: boolean;
+  icon?: IconKind;
+}) {
   return (
     <span className={total ? 'tip-table-row tip-table-total' : 'tip-table-row'}>
       <span>{label}</span>
@@ -13,7 +26,7 @@ export function TipSumRow({ label, sign, value, total }: { label: string; sign?:
       <span className="with-icon with-icon-tight tip-table-value">
         {value === null ? '—' : fmtInt(value)}
         <span className={value === null ? 'with-icon invisible' : 'with-icon'}>
-          <Icon kind="pass" size={16} decorative />
+          <Icon kind={icon} size={16} decorative />
         </span>
       </span>
     </span>

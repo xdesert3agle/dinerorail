@@ -48,9 +48,9 @@ export function PlanFooter({ result, countStarlight, balance, onChange, footRef 
             de las tiradas
           </span>
           {/* Apagada, el hueco se reserva (nada se mueve al encenderla); en palabras para los lectores. */}
-          <span className={`pull-refund with-icon with-icon-tight${countStarlight ? '' : ' invisible'}`}>
+          <span className={`data-pill with-icon with-icon-tight${countStarlight ? '' : ' invisible'}`}>
             <Icon kind="pass" size={16} decorative />
-            <span className="pull-refund-num" aria-hidden="true">
+            <span className="data-pill-num" aria-hidden="true">
               +{fmtInt(refunded)}
             </span>
             {countStarlight && <span className="sr-only">(devuelve {fmtInt(refunded)} tiradas)</span>}

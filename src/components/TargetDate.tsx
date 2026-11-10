@@ -17,8 +17,8 @@ const QUICK_TARGETS = [
   { label: '+3 semanas', days: 21 },
 ];
 
-/** Versiones a la vista antes de «Ver más». */
-const SHOWN_VERSIONS = 3;
+/** Versiones a la vista antes de «Ver más»: solo la próxima; las demás, al desplegar. */
+const SHOWN_VERSIONS = 1;
 
 /** "1 versión más" o "7 versiones más". */
 const moreText = (n: number) => `${n} ${n === 1 ? 'versión' : 'versiones'} más`;

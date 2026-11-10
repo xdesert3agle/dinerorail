@@ -21,8 +21,8 @@ Dinero Rail projects Stellar Jades and pulls ("singles") up to a target date, pl
 Three answers in one flow, from the player's real inventory and income sources:
 
 - **Projected income:** current resources plus every enabled income source and the dated events in the user's own patch table, up to the target date. Future patches are never extrapolated.
-- **Deterministic worst case:** hard pity on every target and every 50/50 lost, with Starlight refunds carried between rows. This is the «Peor caso» number.
-- **Real odds:** a Monte Carlo simulation with the official consolidated rates (soft pity, 50/50 and 75/25), turned into a probability for each target given the budget.
+- **Deterministic worst case:** hard pity on every target and every 50/50 lost, with Starlight refunds carried between rows. It prices each row of the plan.
+- **Real odds:** a Monte Carlo simulation with the official consolidated rates (soft pity, 50/50 and 75/25), turned into a probability for each target given the budget. It only says 100 % when the budget covers the worst possible luck at the game's own limits.
 
 The account import and the dupe tracking (which Eidolon or superimposition each planned target becomes) support the plan, but they are not the core claim.
 

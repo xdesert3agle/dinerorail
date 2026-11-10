@@ -21,6 +21,8 @@ interface Props {
   chance: string;
   /** URLs de la miniatura, por orden de preferencia, o null si la fila no tiene nombre del catálogo. */
   portrait: string[] | null;
+  /** Se reinvierte la Cosmiluz: la fila enseña la que se espera obtener. */
+  countStarlight: boolean;
   autoFocus: boolean;
   /** Se está quitando: se deshace en polvo antes de salir del plan. */
   leaving: boolean;
@@ -35,6 +37,7 @@ export function PullRow({
   dupe,
   chance,
   portrait,
+  countStarlight,
   onUpdate,
   autoFocus,
   leaving,
@@ -44,6 +47,11 @@ export function PullRow({
   const label = pull.name || KIND_LABEL[pull.kind];
   // «50/50» o «75/25», el de su banner; mismo ancho, así la columna no cambia entre filas.
   const bet = fiftyFiftyName(pull.kind);
+  // Cómo acaba la apuesta en el peor caso; lo dicen la cuenta del coste y la de la Cosmiluz.
+  const betLabel = row.guaranteed ? 'Garantizado' : `${bet} ${row.losesFiftyFifty ? 'perdido' : 'ganado'}`;
+  // La Cosmiluz esperada, en enteros: solo la de los 4★ lleva decimales, así que la suma redondeada cuadra.
+  const fourStarStarlight = Math.round(row.fourStarStarlight);
+  const starlight = fourStarStarlight + row.lostStarlight + row.targetStarlight;
 
   return (
     <div
@@ -141,6 +149,40 @@ export function PullRow({
         </span>
       </label>
 
+      {/*
+        La Cosmiluz que se espera obtener en la fila, en la misma pastilla que lo que devuelve en el pie. Sin
+        reinvertirla, el hueco se reserva (nada se mueve al encender el interruptor).
+      */}
+      <Tip
+        className={`pull-starlight data-pill with-icon with-icon-tight${countStarlight ? '' : ' invisible'}`}
+        content={
+          <>
+            {/*
+              La cuenta de la Cosmiluz, como la del coste: la de los 4★ esperados en sus tiradas, la del 5★ que
+              sale al perder el 50/50 (o el 75/25) y la del 5★ buscado, según su copia.
+            */}
+            <span className="tip-table tip-table-3" aria-hidden="true">
+              <TipSumRow icon="starlight" label="4★ esperados" value={fourStarStarlight} />
+              <TipSumRow icon="starlight" label={betLabel} sign="+" value={row.lostStarlight} />
+              <TipSumRow icon="starlight" label="5★ buscado" sign="+" value={row.targetStarlight} />
+              <span className="tip-table-sum" />
+              <TipSumRow icon="starlight" label="Cosmiluz esperada" value={starlight} total />
+            </span>
+            <span className="sr-only">
+              {`${fmtInt(fourStarStarlight)} de los 4★ esperados`}
+              {row.losesFiftyFifty && `, más ${fmtInt(row.lostStarlight)} del 5★ del ${bet} perdido`}
+              {`, más ${fmtInt(row.targetStarlight)} del 5★ buscado: ${fmtInt(starlight)} de Cosmiluz.`}
+            </span>
+          </>
+        }
+      >
+        <Icon kind="starlight" size={16} decorative />
+        <span className="data-pill-num" aria-hidden="true">
+          +{fmtInt(starlight)}
+        </span>
+        <span className="sr-only">{`${fmtInt(starlight)} de Cosmiluz esperada`}</span>
+      </Tip>
+
       <Tip
         as="div"
         className="pull-cost"
@@ -154,11 +196,7 @@ export function PullRow({
             <span className="tip-table tip-table-3" aria-hidden="true">
               <TipSumRow label="Límite de pity" value={row.hardPity} />
               <TipSumRow label="Pity actual" sign="−" value={row.usesPity ? row.pityDiscount : null} />
-              <TipSumRow
-                label={row.guaranteed ? 'Garantizado' : `${bet} ${row.losesFiftyFifty ? 'perdido' : 'ganado'}`}
-                sign="+"
-                value={row.losesFiftyFifty ? row.hardPity : 0}
-              />
+              <TipSumRow label={betLabel} sign="+" value={row.losesFiftyFifty ? row.hardPity : 0} />
               <span className="tip-table-sum" />
               <TipSumRow label="Coste" value={row.cost} total />
             </span>

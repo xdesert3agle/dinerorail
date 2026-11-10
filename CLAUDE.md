@@ -67,7 +67,7 @@ Pure, framework-free logic. Business logic belongs here, not in components. Test
 - **`sources.ts`:** schedule occurrences and `canBePending`.
 - **`packs.ts`:** shard packs.
 - **`pulls.ts`:** `planPulls` (cost per row), `planBalance` and `effectivePity` (the only place that limits the pity).
-- **`odds.ts`:** `simulatePlan`/`planOdds` (Monte Carlo), `guaranteedNeeded` (worst case) and `shownChances`.
+- **`odds.ts`:** `simulatePlan`/`planOdds` (Monte Carlo), `guaranteedNeeded` (the worst possible luck, which only gates 100 %) and `shownChances`.
 - **`dupes.ts`:** `planCopies`/`planDupes` and `superimpositions`.
 - **`urls.ts`:** every external address (nanoka.cc, yatta.moe, StarRailRes), including the image URLs.
 - **`account.ts`:** `parseProfile`, the roster and its Path groups.
@@ -131,11 +131,11 @@ React hooks and browser storage.
 - **Pull planning (deterministic worst case):**
   - Each target costs the maximum, and losing the 50/50 doubles that.
   - The first row of a kind subtracts the current pity, or wins outright if `guaranteed[kind]` is set.
-  - Rows return their pieces (`hardPity`, `pityDiscount`, `losesFiftyFifty`) for the cost tip.
+  - Rows return their pieces (`hardPity`, `pityDiscount`, `losesFiftyFifty`) for the cost tip, and those of their Starlight (`fourStarStarlight`, `lostStarlight`, `targetStarlight`) for the row's «Cosmiluz esperada» pill, shown while it is reinvested.
   - **Starlight refund (`countStarlight`):** what each 5★ gives plus the expected 4★ refund (13 % per pull on the character banner, 14.8 % on the light cone one).
     - The target's 5★ gives `targetStarlight` by its copy (from `planCopies`): a light cone 40; a character 0 if new, 40 from E1 to E6, 100 past E6. A row without a known copy (no catalog, or a name outside it) counts as new, the safe side.
     - The 5★ lost to the 50/50 (a standard one) is assumed repeated: 40.
-    - The plan, the simulation and the «Peor caso» all take `copies`, so they agree.
+    - The plan, the simulation and `guaranteedNeeded` all take `copies`, so they agree.
     - It carries over between rows.
     - A target's own refund never pays for its own row.
 - **Odds (Monte Carlo):** official consolidated rates (tests check them).
@@ -143,12 +143,12 @@ React hooks and browser storage.
   - Light cones: 0.8 % base, soft pity from 66, hard at 80, 75/25.
   - Losing the 50/50 or 75/25 can still give the featured 5★ (1 in 8, `FIFTY_FIFTY_POOL`), so the featured one comes 56.25 % / 78.125 % of the time, which gives the official 1.113 % / 1.534 %.
   - `simulatePlan` runs 10,000 seeded runs from a precomputed CDF. It must stay cheap enough for every keystroke.
-  - `guaranteedNeeded` is the «Peor caso». Its guaranteed 4★ count per banner, as in the game.
+  - `guaranteedNeeded` is the worst possible luck at the game's limits: a target shows 100 % only if the budget covers it. It is not shown as a figure. Its guaranteed 4★ count per banner, as in the game.
 - **Plan rows and dupes:** a row stores the catalog name and, once known, its `entryId`. With a catalog, `App` keeps every row's id and name current (`withCatalogIds`): a beta name in English becomes the Spanish one when yatta publishes it. The dupe is never stored: `planCopies` derives each row's copy from the plan order, after the owned copies (Eidolon + 1).
 - **Key dates:** `KEY_DATES` is hand-maintained.
   - Unpublished dates are estimated at `PATCH_LENGTH_DAYS` per version.
   - Clicking a leaf sets the target date.
-  - Only the next 3 versions show.
+  - Only the next version shows; «Ver N versiones más» opens the rest (all of them when the target date falls in a hidden one).
 
 ## State and external data
 
@@ -217,7 +217,7 @@ React hooks and browser storage.
 - **Breakpoints:**
   - 2000 and 1480 (dupe gallery), 1180 (two columns), 1040 (Configuración aside);
   - ≤720 (rows split into two lines; >720 the reverse), ≤560 (phones), ≤520 (sources), ≤430 (events in three lines) and ≤350;
-  - container queries: `plan` 29rem, key dates 36rem, account 30 and 44rem.
+  - container queries: `plan` 29rem (the add buttons lose their text and each row's Starlight drops under the cost), key dates 36rem, account 30 and 44rem.
 - **Calculadora order:** below 1180px the cards order by class: Resumen, Recursos actuales, Plan, Previsión, Fecha objetivo, Versiones y eventos, Paquetes, Desglose.
 - **Explanations:**
   - **`Tip`** explains a value on hover, focus or tap, linked with `aria-describedby`. `control` wraps a button.

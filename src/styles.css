@@ -2511,7 +2511,7 @@ tfoot td {
   }
 }
 /*
- * Una línea por tirada: orden · miniatura · nombre · 50/50 · coste · quitar.
+ * Una línea por tirada: orden · miniatura · nombre · 50/50 · Cosmiluz esperada · coste · quitar.
  * Las filas comparten columnas (subgrid) para que todo quede alineado.
  */
 .pull-list {
@@ -2523,7 +2523,7 @@ tfoot td {
   /* Lado del ticket de los costes y del balance (size={26} en PullRow y PlanFooter; menor en móviles). */
   --pull-ticket: 26px;
   display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr) auto auto auto;
+  grid-template-columns: auto auto minmax(0, 1fr) auto auto auto auto;
   column-gap: var(--pull-gap);
   /*
    * La primera fila no muestra línea, pero conserva su relleno y la línea (transparente), y la lista sube lo que
@@ -2776,10 +2776,11 @@ tfoot td {
   line-height: var(--pull-ticket);
 }
 /*
- * Lo que devuelve la Cosmiluz, pegado al texto de su interruptor: una pastilla gris «🎫 +35» (suelta, el «+»
- * se leía como «las tiradas + 35»). Un dato, no un aviso. Sin partirse: el ticket no se separa de su cifra.
+ * Pastilla de dato: un icono y su cifra en gris, «🎫 +35» (suelta, el «+» se leía como «las tiradas + 35»).
+ * Un dato, no un aviso. Sin partirse: el icono no se separa de su cifra. La usan lo que devuelve la Cosmiluz,
+ * pegado al texto de su interruptor, y la Cosmiluz esperada de cada fila.
  */
-.pull-refund {
+.data-pill {
   padding: 1px 8px 1px 5px;
   font-size: 0.8125rem;
   color: var(--text-secondary);
@@ -2811,12 +2812,20 @@ tfoot td {
  * La cifra, 1px más abajo (medido sobre la tinta, en Aha y Sparxie): centrada en la pastilla quedaba 1,2px alta
  * y con la línea base 1px por encima de la de la etiqueta. Así comparten línea base y queda a 0,2px del centro.
  */
-.pull-refund-num {
+.data-pill-num {
   position: relative;
   top: 1px;
 }
+/*
+ * La Cosmiluz esperada de cada fila, a la izquierda del coste. Hueco fijo para «+» y 3 cifras (como el coste):
+ * todas las pastillas miden lo mismo y sus iconos quedan en columna.
+ */
+.pull-starlight .data-pill-num {
+  min-width: 4ch;
+  text-align: right;
+}
 /* En Sparxie, la cifra en máquina de escribir (en la letra de píxeles de las etiquetas, el 5 parece una S). */
-:where(:root[data-skin='sparxie']) .pull-refund {
+:where(:root[data-skin='sparxie']) .data-pill {
   font-family: var(--font-type);
   border-radius: 2px;
 }
@@ -2845,7 +2854,7 @@ tfoot td {
 }
 /*
  * En pantallas estrechas, dos líneas por tirada: en una el nombre se quedaba en dos letras.
- * Arriba, asa · miniatura · nombre entero; debajo del nombre, 50/50 · coste · quitar.
+ * Arriba, asa · miniatura · nombre entero; debajo del nombre, 50/50 · Cosmiluz esperada · coste · quitar.
  * Corta en 720px, como las demás filas que se parten (eventos, paquetes). En el pie, el interruptor arriba y
  * el balance debajo, en la columna de los costes.
  */
@@ -2858,7 +2867,7 @@ tfoot td {
     margin-left: auto;
   }
   .pull-list {
-    grid-template-columns: auto auto minmax(0, 1fr) auto auto;
+    grid-template-columns: auto auto minmax(0, 1fr) auto auto auto;
   }
   .pull-row {
     row-gap: 6px;
@@ -2896,6 +2905,24 @@ tfoot td {
   .pull-row .pull-win {
     grid-column: 2 / 4;
     margin-left: 0;
+  }
+}
+/*
+ * En una tarjeta estrecha (≤29rem, la de los móviles), la Cosmiluz esperada no cabe junto al 50/50 y el coste
+ * («Garantizado» se le montaba encima): baja a una tercera línea, bajo el coste y alineada con él. Su columna
+ * desaparece y el asa se centra en las tres líneas.
+ */
+@container plan (width <= 29rem) {
+  .pull-list {
+    grid-template-columns: auto auto minmax(0, 1fr) auto auto;
+  }
+  .pull-row .drag-handle {
+    grid-row: span 3;
+  }
+  .pull-row .pull-starlight {
+    grid-row: 3;
+    grid-column: 4;
+    justify-self: end;
   }
 }
 
@@ -3513,20 +3540,14 @@ tfoot td {
 }
 /* == Previsión de suerte == */
 /*
- * Cinco cifras resumen (el % de cada objetivo va en su fila del plan), en dos filas: probabilidad y objetivos
- * (mitad y mitad, .odds-stat-wide) y debajo las tres cifras de tiradas.
+ * Cuatro cifras resumen (el % de cada objetivo va en su fila del plan), dos a dos: probabilidad y objetivos, y
+ * debajo las dos cifras de tiradas.
  */
 .odds-stats {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   margin: 0;
-}
-.odds-stats > div {
-  grid-column: span 2;
-}
-.odds-stats > .odds-stat-wide {
-  grid-column: span 3;
 }
 /* Cifra siempre abajo, para que quede alineada aunque alguna etiqueta ocupe dos líneas. */
 .odds-stats div {

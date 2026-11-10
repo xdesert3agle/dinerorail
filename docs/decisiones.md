@@ -21,6 +21,10 @@ volver a proponer y por qué.
 - **Cosmiluz del 5★ buscado (2026-10-29):** se propuso un selector por fila «nuevo / repetido / E6». Se descartó:
   la copia ya sale del orden del plan y de la cuenta (`planCopies`, lo mismo que los dupes), así que se deduce
   sola. Antes se contaban 40 siempre, también por un personaje nuevo, que en el juego da 0.
+- **Cosmiluz esperada de cada fila (2026-11-10):** una pastilla gris «🌟 +404», como la del pie, entre el 50/50 y
+  el coste, con su cuenta en la burbuja. En una tarjeta de móvil (≤29rem) no cabe junto a «Garantizado» y baja a
+  una tercera línea, bajo el coste. Se descartaron meterla en la línea de arriba del nombre, junto al % (dos cifras
+  seguidas en letra pequeña), y quitarla en el móvil dejándola solo en la burbuja del coste.
 - **Fila que no llega (2026-10-29):** el borde del nombre, discontinuo y en rojo pleno (en gris se sigue
   distinguiendo). Se descartaron:
   - «No llega ·» delante del %: chocaba con la probabilidad («No llega · 95 %») y pisaba el tipo;
@@ -146,6 +150,10 @@ volver a proponer y por qué.
 
 ## Otros
 
+- **«Peor caso» en la previsión (quitado el 2026-11-10):** la cifra de tiradas con la peor suerte posible (cada 5★
+  en el límite del juego, todas las apuestas perdidas y solo los 4★ garantizados) no era realista. La previsión se
+  queda con «Suerte media» y «90 % seguro». El cálculo sigue, sin mostrarse, para decidir cuándo una fila dice
+  100 %.
 - **Orden de las tarjetas:** «Recursos actuales» antes que la fecha objetivo (2026-10-28). Los recursos se
   actualizan en cada visita; la fecha, pocas veces.
 - **Fechas destacadas:** sin título encima de la tabla, que se veía descompensado; solo en la vista estrecha.

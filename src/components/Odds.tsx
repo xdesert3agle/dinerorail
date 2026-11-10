@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 import { RUNS } from '../engine/odds';
-import { BANNERS, fiftyFiftyName, STARLIGHT_PER_4_STAR } from '../engine/rules';
+import { BANNERS, fiftyFiftyName } from '../engine/rules';
 import type { AppState, PullKind } from '../engine/types';
-import { fmtInt, fmtRate, fmtSettingsPath, fmtSingles } from './format';
+import { fmtInt, fmtRate, fmtSingles } from './format';
 import { Icon } from './Icon';
 import { KIND_LABEL } from './kinds';
 import { Rarity } from './Rarity';
@@ -80,10 +80,7 @@ const MODEL_ROWS: BannerRow[] = [
   { label: 'Destacado', text: 'Destacado', value: (kind) => fmtRate(BANNERS[kind].featuredChance, 2) },
 ];
 
-/**
- * Cómo se simula: la tabla de los dos banners y debajo las notas, una por viñeta. El peor caso no va aquí: tiene
- * su propia explicación, en su cifra (un término, una definición).
- */
+/** Cómo se simula: la tabla de los dos banners y debajo las notas, una por viñeta. */
 function ModelHelp() {
   return (
     <>
@@ -95,7 +92,7 @@ function ModelHelp() {
       <span className="tip-list">
         <span>Parte del pity y el garantizado actuales.</span>
         <span>{`No usa las casillas ${WIN_CHECKS} del plan.`}</span>
-        <span>Solo se considera 100&nbsp;% si se consigue todo incluso en el peor caso.</span>
+        <span>Solo se considera 100&nbsp;% si se consigue todo con la peor suerte posible.</span>
         <span>La probabilidad de cada objetivo, junto con la de todos los anteriores, se muestra en su fila del plan.</span>
       </span>
     </>
@@ -122,53 +119,9 @@ function StatTerm({ term, help }: { term: string; help: ReactNode }) {
   );
 }
 
-/**
- * Cosmiluz con su icono en lugar de la palabra, como una unidad («8🌟»), igual que en la tabla de la Cosmiluz
- * (glossary.tsx); la palabra queda para los lectores. Cifra e icono, sin corte entre ellos. `named`: la palabra ya
- * va a la vista justo detrás («8🌟 y 20🌟 de Cosmiluz»), y los lectores no la oyen dos veces.
- */
-function StarlightAmount({ amount, named = false }: { amount: number; named?: boolean }) {
-  return (
-    <span className="with-icon with-icon-tight">
-      {amount}
-      <Icon kind="starlight" size={16} decorative />
-      {!named && <span className="sr-only"> de Cosmiluz</span>}
-    </span>
-  );
-}
-
-/**
- * El peor caso: la frase que lo define y, en viñetas, lo que supone (sin tabla: son dos cifras por banner, se leen
- * bien en una frase) y en qué se distingue del plan, que cuenta con los ajustes.
- */
-function WorstCaseHelp({ hardPity }: { hardPity: Record<PullKind, number> }) {
-  return (
-    <>
-      Tiradas que garantizan conseguirlo todo con la peor suerte posible.
-      <span className="tip-list tip-lines-last">
-        <span>
-          Cada <Rarity stars={5} /> llega en el límite del juego ({BANNERS.character.hardPity} en personaje y{' '}
-          {BANNERS.lightCone.hardPity} en cono de luz).
-        </span>
-        <span>{`Se pierden todos los ${fiftyFiftyName('character')} y ${fiftyFiftyName('lightCone')}.`}</span>
-        <span>
-          Solo sale el <Rarity stars={4} /> garantizado. En el banner de personajes alterna cono de luz y personaje (
-          {/* La primera vez, con su nombre: en esta burbuja no se presenta en otro sitio. Luego basta el icono. */}
-          <StarlightAmount amount={STARLIGHT_PER_4_STAR.lightCone} named /> y{' '}
-          <StarlightAmount amount={STARLIGHT_PER_4_STAR.character} named /> de Cosmiluz); en el de conos, siempre es un cono de luz (
-          <StarlightAmount amount={STARLIGHT_PER_4_STAR.lightCone} />).
-        </span>
-        <span>
-          {`El plan, en cambio, usa los límites de ${fmtSettingsPath('Pity')} (${hardPity.character} y ${hardPity.lightCone}) y las casillas ${WIN_CHECKS}.`}
-        </span>
-      </span>
-    </>
-  );
-}
-
 export function Odds({ state, view }: Props) {
   if (!view) return null;
-  const { odds, sure, pct } = view;
+  const { odds, pct } = view;
   const plan = state.plannedPulls;
 
   return (
@@ -181,11 +134,11 @@ export function Odds({ state, view }: Props) {
       </header>
 
       {/*
-        Lo que significa cada cifra se abre desde su etiqueta (punteada), no desde toda la casilla: con cinco
+        Lo que significa cada cifra se abre desde su etiqueta (punteada), no desde toda la casilla: con cuatro
         casillas grandes, al mover el ratón por la tarjeta iban saltando burbujas.
       */}
       <dl className="odds-stats">
-        <div className="odds-stat-wide">
+        <div>
           <dt>
             <StatTerm
               term="Conseguirlo todo"
@@ -194,7 +147,7 @@ export function Odds({ state, view }: Props) {
           </dt>
           <dd>{pct.at(-1)}</dd>
         </div>
-        <div className="odds-stat-wide">
+        <div>
           <dt>
             <StatTerm term="Objetivos esperados" help="Número medio de objetivos del plan que se consiguen, en orden." />
           </dt>
@@ -218,15 +171,6 @@ export function Odds({ state, view }: Props) {
           <dd className="with-icon">
             <Icon kind="pass" size={28} decorative />
             {fmtInt(odds.p90Needed)}
-          </dd>
-        </div>
-        <div>
-          <dt>
-            <StatTerm term="Peor caso" help={<WorstCaseHelp hardPity={state.settings.hardPity} />} />
-          </dt>
-          <dd className="with-icon">
-            <Icon kind="pass" size={28} decorative />
-            {fmtInt(sure.at(-1) ?? 0)}
           </dd>
         </div>
       </dl>

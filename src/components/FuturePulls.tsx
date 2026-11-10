@@ -145,6 +145,7 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
                 dupe={dupeOf(copies[i] ?? null)}
                 chance={chances[i] ?? ''}
                 portrait={portraitOf(pull)}
+                countStarlight={countStarlight}
                 onUpdate={(patch) => updatePull(pull.id, patch)}
                 autoFocus={pull.id === focusId}
                 leaving={leaving.includes(pull.id)}

@@ -8,8 +8,6 @@ import { fmtChance } from './format';
 
 export interface PlanOddsView {
   odds: PlanOdds;
-  /** Singles que garantizan los i primeros objetivos pase lo que pase (el peor caso absoluto). */
-  sure: number[];
   /** Probabilidad de cada objetivo (junto con los anteriores), ya escrita. */
   pct: string[];
 }
@@ -33,7 +31,8 @@ export function usePlanOdds(state: AppState, result: Result, copies: readonly (R
 
   if (plan.length === 0) return null;
   const odds = planOdds(sim, budget);
+  // Solo se dice 100 % si llega con la peor suerte posible (guaranteedNeeded).
   const sure = guaranteedNeeded(plan, pity, { countStarlight, guaranteed, initialStarlight, copies });
   const pct = shownChances(odds.chances, sure, budget).map(fmtChance);
-  return { odds, sure, pct };
+  return { odds, pct };
 }

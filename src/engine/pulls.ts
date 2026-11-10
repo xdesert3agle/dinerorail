@@ -19,8 +19,12 @@ export interface PlannedPullResult {
   pityDiscount: number;
   /** Se cuenta el 50/50 perdido: el 5★ cuesta el doble. */
   losesFiftyFifty: boolean;
-  /** Cosmiluz Inextinguible que se obtiene en esta fila (media esperada, con decimales). */
+  /** Cosmiluz Inextinguible que se obtiene en esta fila (media esperada, con decimales): la suma de las tres de abajo. */
   starlight: number;
+  /** Las piezas de la Cosmiluz: la de los 4★ esperados (con decimales), la del 5★ del 50/50 perdido y la del buscado. */
+  fourStarStarlight: number;
+  lostStarlight: number;
+  targetStarlight: number;
   /** Singles que cuesta de verdad la fila, descontando lo que devuelve la Cosmiluz. */
   netCost: number;
   /** Singles netas acumuladas hasta esta fila (incluida). */
@@ -124,8 +128,11 @@ export function planPulls(
 
     // 4★ esperados en la fila (media, con decimales); la Cosmiluz se redondea solo al cambiarla por singles.
     const fourStars = cost * FOUR_STAR_RATE[pull.kind];
-    const duringRow = fourStars * STARLIGHT_PER_AVERAGE_4_STAR[pull.kind] + (wins ? 0 : STARLIGHT_PER_5_STAR);
-    const rowStarlight = duringRow + targetStarlight(pull.kind, copies[i]?.eidolon ?? null);
+    const fourStarStarlight = fourStars * STARLIGHT_PER_AVERAGE_4_STAR[pull.kind];
+    const lostStarlight = wins ? 0 : STARLIGHT_PER_5_STAR;
+    const ownStarlight = targetStarlight(pull.kind, copies[i]?.eidolon ?? null);
+    const duringRow = fourStarStarlight + lostStarlight;
+    const rowStarlight = duringRow + ownStarlight;
     pulls += cost;
 
     // Singles que devuelve una cantidad de Cosmiluz (0 si no se cuenta).
@@ -145,6 +152,9 @@ export function planPulls(
       pityDiscount: progress,
       losesFiftyFifty: !wins,
       starlight: rowStarlight,
+      fourStarStarlight,
+      lostStarlight,
+      targetStarlight: ownStarlight,
       netCost,
       cumulative,
       needed,
