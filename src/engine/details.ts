@@ -1,6 +1,6 @@
 import { cleanName } from './catalog';
 import type { PullKind } from './types';
-import { nanokaUrl, YATTA } from './urls';
+import { nanokaUrl, yattaUrl } from './urls';
 import { isObj } from './util';
 
 /*
@@ -18,10 +18,11 @@ export type Lang = 'es' | 'en';
 export const SOURCE_LANG: Record<DetailsSource, Lang> = { yatta: 'es', nanoka: 'en' };
 
 /*
- * Versión de lo guardado: subirla si cambia lo que se guarda o de dónde sale (YATTA), y lo guardado deja de
+ * Versión de lo guardado: subirla si cambia lo que se guarda o de dónde sale (yattaUrl), y lo guardado deja de
  * valer. Solo se guarda lo de yatta (lo de nanoka va en memoria), así que no depende de la versión de nanoka.
+ * En la 2 (2026-11-11), yatta con vh: los «yatta no lo tiene» apuntados antes podían ser 404 viejos de la caché.
  */
-export const DETAILS_VERSION = 'yatta-v2-es-1';
+export const DETAILS_VERSION = 'yatta-v2-es-2';
 
 /** Un efecto tal como viene del juego: el texto lleva huecos ("#1[i]%") que se llenan con params. */
 export interface Effect {
@@ -49,9 +50,9 @@ export interface LightConeDetails extends Common {
 
 export type Details = CharacterDetails | LightConeDetails;
 
-/** URL de los detalles en una fuente; nanoka, en la versión del catálogo (`version`). */
-export function detailsUrl(source: DetailsSource, kind: PullKind, id: string, version: string) {
-  if (source === 'yatta') return `${YATTA}/${kind === 'character' ? 'avatar' : 'equipment'}/${id}`;
+/** URL de los detalles en una fuente; nanoka, en la versión del catálogo (`version`), y yatta, con `now` (yattaUrl). */
+export function detailsUrl(source: DetailsSource, kind: PullKind, id: string, version: string, now: number) {
+  if (source === 'yatta') return yattaUrl(`${kind === 'character' ? 'avatar' : 'equipment'}/${id}`, now);
   return `${nanokaUrl(version)}/en/${kind === 'character' ? 'character' : 'lightcone'}/${id}.json`;
 }
 

@@ -69,7 +69,7 @@ Pure, framework-free logic. Business logic belongs here, not in components. Test
 - **`pulls.ts`:** `planPulls` (cost per row), `planBalance` and `effectivePity` (the only place that limits the pity).
 - **`odds.ts`:** `simulatePlan`/`planOdds` (Monte Carlo), `guaranteedNeeded` (the worst possible luck, which only gates 100 %) and `shownChances`.
 - **`dupes.ts`:** `planCopies`/`planDupes` and `superimpositions`.
-- **`urls.ts`:** every external address (nanoka.cc, yatta.moe, StarRailRes), including the image URLs.
+- **`urls.ts`:** every external address (nanoka.cc, yatta.moe, StarRailRes), including the image URLs. Every yatta request goes through `yattaUrl`, which adds `?vh=` with the current minute: without it, Cloudflare serves copies (and 404s) up to 16 days old.
 - **`account.ts`:** `parseProfile`, the roster and its Path groups.
 - **`catalog.ts`:**
   - parsing and weekly-sync rules (`WEEKLY_SYNC`, `syncDue`);

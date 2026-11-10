@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDesc, normalizeDetails, parseDetails } from './details';
+import { detailsUrl, formatDesc, normalizeDetails, parseDetails } from './details';
 
 const rank = (n: number, desc = 'Texto', param_list: number[] = []) => ({ id: n, name: `E${n}`, desc, param_list });
 
@@ -78,5 +78,25 @@ describe('detalles de Eidolones y conos', () => {
     const details = parseDetails('nanoka', 'lightCone', raw);
     expect('effect' in details && details.effect.name).toBe('Meteor Swarm');
     expect('levels' in details && details.levels[4]).toEqual([0.5]);
+  });
+});
+
+describe('direcciones de los detalles', () => {
+  it('yatta lleva el minuto en vh (sin él, Cloudflare devuelve copias de hasta 16 días); nanoka, la versión', () => {
+    const at = Date.UTC(2026, 10, 11, 9, 30, 15);
+    const minute = Math.floor(at / 60_000);
+    expect(detailsUrl('yatta', 'character', '1511', '4.7.53', at)).toBe(
+      `https://sr.yatta.moe/api/v2/es/avatar/1511?vh=${minute}`,
+    );
+    // En el mismo minuto, la misma dirección; al siguiente, otra.
+    expect(detailsUrl('yatta', 'lightCone', '23052', '4.7.53', at + 40_000)).toBe(
+      `https://sr.yatta.moe/api/v2/es/equipment/23052?vh=${minute}`,
+    );
+    expect(detailsUrl('yatta', 'character', '1511', '4.7.53', at + 60_000)).toBe(
+      `https://sr.yatta.moe/api/v2/es/avatar/1511?vh=${minute + 1}`,
+    );
+    expect(detailsUrl('nanoka', 'character', '1511', '4.7.53', at)).toBe(
+      'https://static.nanoka.cc/hsr/4.7.53/en/character/1511.json',
+    );
   });
 });

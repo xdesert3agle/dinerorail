@@ -10,7 +10,7 @@ import {
   type Catalog,
 } from '../engine/catalog';
 import type { PullKind } from '../engine/types';
-import { catalogUrl, MANIFEST_URL, YATTA_NAMES_URLS } from '../engine/urls';
+import { catalogUrl, MANIFEST_URL, yattaNamesUrl } from '../engine/urls';
 
 // Va aparte del estado de la app: es una caché de datos del juego.
 const CATALOG_KEY = 'hsr-jades:catalog:v1';
@@ -50,11 +50,12 @@ async function fetchJson(url: string): Promise<unknown> {
  * guardado, que dejaría el plan sin copias (toda la Cosmiluz de personaje nuevo) y la cuenta vacía.
  */
 export async function fetchCatalog(previous: Catalog | null = null): Promise<Catalog> {
+  const now = Date.now();
   const version = await fetchJson(MANIFEST_URL)
     .then(parseManifestVersion)
     .catch(() => FALLBACK_VERSION);
   const spanish = (kind: PullKind) =>
-    fetchJson(YATTA_NAMES_URLS[kind])
+    fetchJson(yattaNamesUrl(kind, now))
       .then(parseYattaNames)
       .catch(() => new Map((previous?.[kind] ?? []).map((e) => [e.id, e.name])));
   const entries = async (kind: PullKind) => {
@@ -62,7 +63,7 @@ export async function fetchCatalog(previous: Catalog | null = null): Promise<Cat
     return parseCatalogEntries(raw, names, { withPaths: kind === 'character' });
   };
   const [character, lightCone] = await Promise.all([entries('character'), entries('lightCone')]);
-  return { syncedAt: Date.now(), version, character, lightCone };
+  return { syncedAt: now, version, character, lightCone };
 }
 
 export interface CatalogSync {

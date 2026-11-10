@@ -30,6 +30,10 @@ describe('descarga del catálogo', () => {
     expect(catalog.version).toBe('4.7.10');
     expect(catalog.character.map((e) => e.name)).toEqual(['Lobo Plateado']);
     expect(fetch.mock.calls.some(([url]) => url.includes('/4.7.10/'))).toBe(true);
+    // Los nombres de yatta, con vh: sin él, Cloudflare devolvía una lista de días antes (yattaUrl).
+    const yatta = fetch.mock.calls.map(([url]) => url).filter((url) => url.includes('yatta'));
+    expect(yatta).toHaveLength(2);
+    for (const url of yatta) expect(url).toMatch(/\/(avatar|equipment)\?vh=\d+$/);
   });
 
   it('sin manifest, la última versión conocida; sin yatta, los nombres en inglés', async () => {

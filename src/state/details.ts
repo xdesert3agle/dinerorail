@@ -88,7 +88,7 @@ export function cachedDetails(ref: Pick<DetailsRef, 'kind' | 'id'>): Details | n
 }
 
 async function fetchFrom(source: DetailsSource, ref: DetailsRef): Promise<Details> {
-  const res = await fetch(detailsUrl(source, ref.kind, ref.id, ref.version));
+  const res = await fetch(detailsUrl(source, ref.kind, ref.id, ref.version, Date.now()));
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return parseDetails(source, ref.kind, await res.json());
 }
