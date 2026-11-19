@@ -223,9 +223,9 @@ volver a proponer y por qué.
 - **Orden de las tarjetas:** «Recursos actuales» antes que la fecha objetivo (2026-10-28). Los recursos se
   actualizan en cada visita; la fecha, pocas veces.
 - **Fechas destacadas:** sin título encima de la tabla, que se veía descompensado; solo en la vista estrecha.
-  - Al desplegar y plegar (2026-11-19), la lista cambia de alto y lo de debajo la acompaña, con la curva quíntica
-    (`cubic-bezier(0.83, 0, 0.17, 1)`, elegida por el usuario). Se probaron una máscara con el resto saltando de
-    golpe, `ease-out`, `ease-in-out` y la cúbica.
+  - Al desplegar y plegar (2026-11-19), la lista cambia de alto y lo de debajo la acompaña, con la curva cúbica
+    (`cubic-bezier(0.65, 0, 0.35, 1)`, elegida por el usuario). Se probaron una máscara con el resto saltando de
+    golpe, `ease-out`, `ease-in-out` y la quíntica (`cubic-bezier(0.83, 0, 0.17, 1)`).
   - Plegada, llega hasta la versión de la fecha objetivo si es posterior a la próxima; antes, en ese caso, se veían
     todas. No se pliega sola al elegir una fecha: movería lo de debajo justo tras el clic y obligaría a desplegar
     otra vez para probar otra. Por lo mismo, plegada crece sola hasta la fecha objetivo pero no encoge sola (al

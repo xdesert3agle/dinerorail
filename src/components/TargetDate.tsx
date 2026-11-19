@@ -23,12 +23,13 @@ const SHOWN_VERSIONS = 1;
 
 /**
  * Lo que tarda la lista en crecer al desplegar y en encogerse al plegar (un 20 % menos: lo que se deja ya no
- * interesa), y su curva: de entrada y salida, porque es un movimiento (lo de debajo se desplaza). La quíntica:
- * arranca y frena muy suave y el tramo central va rápido (se probaron ease-in-out y la cúbica, más blandas).
+ * interesa), y su curva: de entrada y salida, porque es un movimiento (lo de debajo se desplaza). La cúbica:
+ * arranque y frenada suaves, más marcados que ease-in-out, sin lo brusco del centro de la quíntica (se probaron
+ * las dos).
  */
 const REVEAL_MS = 240;
 const HIDE_MS = 190;
-const MOVE_EASING = 'cubic-bezier(0.83, 0, 0.17, 1)';
+const MOVE_EASING = 'cubic-bezier(0.65, 0, 0.35, 1)';
 
 /**
  * Hasta dónde llega, desde arriba de la tabla, la fila `count` de versiones (la última que queda a la vista): el
