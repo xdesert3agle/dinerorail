@@ -93,7 +93,7 @@ export function buildEvents(state: AppState, today: ISODate): IncomeEvent[] {
   const from = todayNum + 1;
   const to = toDayNum(state.targetDate);
   // Solo cuentan los parches de la tabla: no se extrapolan parches futuros.
-  const patches = [...state.patches].sort((a, b) => a.start.localeCompare(b.start));
+  const patches = state.patches.toSorted((a, b) => a.start.localeCompare(b.start));
   const patchStarts = patches.map((p) => toDayNum(p.start));
   const events: IncomeEvent[] = [];
 

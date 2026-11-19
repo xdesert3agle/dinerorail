@@ -1,4 +1,4 @@
-import { useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { findByName, searchCatalog, type CatalogEntry } from '../engine/catalog';
 import { PLAIN_TEXT_INPUT } from './inputs';
 
@@ -57,6 +57,20 @@ export function NameCombobox({
   // Con una sola sugerencia, ya va marcada: Intro la elige sin tener que bajar con la flecha.
   const highlighted = active >= 0 ? active : suggestions.length === 1 ? 0 : -1;
 
+  // Cuántas sugerencias hay, para el lector de pantalla (la lista en sí no se anuncia al cambiar). Con medio
+  // segundo de espera: anunciado en cada tecla, cortaría lo que el lector está leyendo a cada pulsación.
+  const count = shown
+    ? suggestions.length === 0
+      ? 'Sin coincidencias'
+      : `${suggestions.length} ${suggestions.length === 1 ? 'sugerencia' : 'sugerencias'}`
+    : '';
+  const [announced, setAnnounced] = useState('');
+  useEffect(() => {
+    if (!count) return setAnnounced('');
+    const timer = window.setTimeout(() => setAnnounced(count), 500);
+    return () => window.clearTimeout(timer);
+  }, [count]);
+
   const reset = () => {
     setQuery(null);
     setActive(-1);
@@ -87,6 +101,9 @@ export function NameCombobox({
       setActive((i) => (i <= 0 ? n - 1 : i - 1));
     } else if (e.key === 'Enter' && searching) {
       e.preventDefault();
+      // Intro que confirma un carácter compuesto (japonés, chino…) no elige. keyCode 229: Safari ya ha puesto
+      // isComposing a false cuando llega ese Intro.
+      if (e.nativeEvent.isComposing || e.keyCode === 229) return;
       if (highlighted >= 0) {
         pick(suggestions[highlighted]);
         // Elegido con Intro, el campo se suelta: el nombre ya está puesto.
@@ -158,9 +175,8 @@ export function NameCombobox({
           )}
         </ul>
       )}
-      {/* Cuántas sugerencias hay, para el lector de pantalla (la lista en sí no se anuncia al cambiar). */}
       <span className="sr-only" role="status">
-        {shown && (suggestions.length === 0 ? 'Sin coincidencias' : `${suggestions.length} ${suggestions.length === 1 ? 'sugerencia' : 'sugerencias'}`)}
+        {announced}
       </span>
     </div>
   );

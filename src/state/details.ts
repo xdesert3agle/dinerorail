@@ -8,6 +8,7 @@ import {
   type DetailsSource,
 } from '../engine/details';
 import type { PullKind } from '../engine/types';
+import { FETCH_TIMEOUT_MS } from '../engine/urls';
 import { isObj } from '../engine/util';
 
 /*
@@ -87,8 +88,11 @@ export function cachedDetails(ref: Pick<DetailsRef, 'kind' | 'id'>): Details | n
   return hit;
 }
 
-async function fetchFrom(source: DetailsSource, ref: DetailsRef): Promise<Details> {
-  const res = await fetch(detailsUrl(source, ref.kind, ref.id, ref.version, Date.now()));
+async function fetchFrom(source: DetailsSource, ref: DetailsRef, priority: RequestPriority): Promise<Details> {
+  const res = await fetch(detailsUrl(source, ref.kind, ref.id, ref.version, Date.now()), {
+    priority,
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return parseDetails(source, ref.kind, await res.json());
 }
@@ -97,31 +101,34 @@ async function fetchFrom(source: DetailsSource, ref: DetailsRef): Promise<Detail
  * Primero yatta.moe (en español) y, si no lo tiene, nanoka.cc (en inglés). Se salta yatta.moe si hace menos de
  * YATTA_RETRY_MS que no lo tenía.
  */
-async function fetchFirst(ref: DetailsRef): Promise<{ source: DetailsSource; details: Details }> {
+async function fetchFirst(ref: DetailsRef, priority: RequestPriority): Promise<{ source: DetailsSource; details: Details }> {
   const missedAt = readMisses()[keyOf(ref)];
   const tryYatta = missedAt === undefined || Date.now() - missedAt >= YATTA_RETRY_MS;
   if (tryYatta) {
     try {
-      return { source: 'yatta', details: await fetchFrom('yatta', ref) };
+      return { source: 'yatta', details: await fetchFrom('yatta', ref, priority) };
     } catch {
       // Se prueba con nanoka.cc.
     }
   }
-  const details = await fetchFrom('nanoka', ref);
+  const details = await fetchFrom('nanoka', ref, priority);
   // Solo cuenta como que yatta.moe no lo tiene si nanoka.cc sí responde: si fallan las dos, será la red.
   if (tryYatta) setMiss(keyOf(ref), Date.now());
   return { source: 'nanoka', details };
 }
 
-/** Los detalles de un personaje o cono, descargándolos si hace falta (una sola descarga a la vez por cada uno). */
-export function loadDetails(ref: DetailsRef): Promise<Details> {
+/**
+ * Los detalles de un personaje o cono, descargándolos si hace falta (una sola descarga a la vez por cada uno).
+ * `priority`: 'low' para lo que se descarga por si acaso (prefetchDetails), que no compite con las imágenes.
+ */
+export function loadDetails(ref: DetailsRef, priority: RequestPriority = 'auto'): Promise<Details> {
   const hit = cachedDetails(ref);
   if (hit) return Promise.resolve(hit);
   const key = keyOf(ref);
   let p = pending.get(key);
   if (!p) {
     p = (async () => {
-      const { source, details } = await fetchFirst(ref);
+      const { source, details } = await fetchFirst(ref, priority);
       memory.set(key, details);
       if (source !== 'yatta') return details;
       if (readMisses()[key] !== undefined) setMiss(key, null);
@@ -141,7 +148,7 @@ export function loadDetails(ref: DetailsRef): Promise<Details> {
 
 /** Descarga de fondo lo que falte; si algo falla, se reintenta al pasar el ratón. */
 export function prefetchDetails(refs: DetailsRef[]) {
-  for (const ref of refs) loadDetails(ref).catch(() => {});
+  for (const ref of refs) loadDetails(ref, 'low').catch(() => {});
 }
 
 /** Detalles para mostrar: null mientras se descargan; failed si la descarga ha fallado. */

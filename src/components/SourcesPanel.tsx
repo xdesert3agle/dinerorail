@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import type { SourceTotal } from '../engine/calculate';
 import { formatDate, fromDayNum, toDayNum, WEEKDAYS } from '../engine/dates';
 import { DEFAULT_CYCLE_DAYS } from '../engine/rules';
@@ -7,6 +7,7 @@ import type { AppState, Reward, Schedule, Source, SourceCategory } from '../engi
 import { newId } from '../engine/util';
 import { namedNotice, type ChangeState } from '../state/store';
 import { DateField } from './DateField';
+import { EditDialog, useEditDialog } from './EditDialog';
 import { describeSchedule, fmtSingles, pendingLabel } from './format';
 import { PLAIN_TEXT_INPUT } from './inputs';
 import { NumberField } from './NumberField';
@@ -54,7 +55,7 @@ function defaultSchedule(type: Schedule['type'], today: string): Schedule {
 }
 
 export function SourcesPanel({ state, today, totals, onChange }: Props) {
-  const [openId, setOpenId] = useState<string | null>(null);
+  const edit = useEditDialog();
   // La fuente recién creada enfoca su nombre para poder escribirlo directamente (una sola vez, ver useFocusNew).
   const [addedId, setAddedId] = useFocusNew(state.sources.map((s) => s.id));
 
@@ -92,7 +93,7 @@ export function SourcesPanel({ state, today, totals, onChange }: Props) {
         },
       ],
     }));
-    setOpenId(id);
+    edit.open(id);
     setAddedId(id);
   };
 
@@ -100,7 +101,7 @@ export function SourcesPanel({ state, today, totals, onChange }: Props) {
     <section className="card">
       <header className="card-header">
         <h2>Fuentes de ingresos</h2>
-        <button type="button" className="btn" onClick={addCustom}>
+        <button ref={edit.addButton} type="button" className="btn" onClick={addCustom}>
           + Fuente personalizada
         </button>
       </header>
@@ -113,20 +114,23 @@ export function SourcesPanel({ state, today, totals, onChange }: Props) {
             <h3>{title}</h3>
             {sources.map((src) => {
               const total = totals.get(src.id);
-              const open = openId === src.id;
+              const open = edit.openId === src.id;
               const next = nextDates.get(src.id);
               return (
                 <div key={src.id} className={`source ${src.enabled ? '' : 'is-off'}`}>
                   <div className="source-row">
                     <label className="switch" title={src.enabled ? 'Desactivar' : 'Activar'}>
+                      {/* Su nombre es el de la fuente, el que se ve (el estado lo dice el propio interruptor). */}
                       <SwitchInput
                         checked={src.enabled}
                         onChange={(enabled) => updateSource(src.id, { enabled })}
-                        aria-label={`Activar ${src.name}`}
+                        aria-labelledby={`source-name-${src.id}`}
                       />
                     </label>
                     <div className="source-main">
-                      <div className="source-name">{src.name}</div>
+                      <div id={`source-name-${src.id}`} className="source-name">
+                        {src.name}
+                      </div>
                       <div className="source-meta">
                         <RewardInline reward={src.reward} /> · {describeSchedule(src.schedule)}
                         {next && <> · próximo {formatDate(next)}</>}
@@ -143,27 +147,22 @@ export function SourcesPanel({ state, today, totals, onChange }: Props) {
                         <span className="muted">—</span>
                       )}
                     </div>
-                    <button
-                      type="button"
-                      className="btn btn-ghost"
-                      aria-expanded={open}
-                      aria-label={`${open ? 'Cerrar' : 'Editar'} ${src.name}`}
-                      onClick={() => setOpenId(open ? null : src.id)}
-                    >
-                      {open ? 'Cerrar' : 'Editar'}
-                    </button>
+                    <button {...edit.editButton(src.id, `Editar ${src.name}`)}>Editar</button>
                   </div>
 
                   {open && (
                     <SourceEditor
                       source={src}
                       today={today}
-                      focusName={src.id === addedId}
+                      isNew={src.id === addedId}
                       onUpdate={(p) => updateSource(src.id, p)}
+                      onDone={edit.done}
                       onDelete={() =>
-                        onChange(
-                          (s) => ({ ...s, sources: s.sources.filter((x) => x.id !== src.id) }),
-                          namedNotice('Fuente ', src.name, ' eliminada.'),
+                        edit.removed(() =>
+                          onChange(
+                            (s) => ({ ...s, sources: s.sources.filter((x) => x.id !== src.id) }),
+                            namedNotice('Fuente ', src.name, ' eliminada.'),
+                          ),
                         )
                       }
                     />
@@ -181,19 +180,26 @@ export function SourcesPanel({ state, today, totals, onChange }: Props) {
 interface EditorProps {
   source: Source;
   today: string;
-  /** Enfoca el nombre al abrir (fuente recién creada). */
-  focusName: boolean;
+  /** Recién creada: el foco empieza en su nombre. */
+  isNew: boolean;
   onUpdate: (patch: Partial<Source>) => void;
+  onDone: () => void;
   onDelete: () => void;
 }
 
-function SourceEditor({ source, today, focusName, onUpdate, onDelete }: EditorProps) {
+function SourceEditor({ source, today, isNew, onUpdate, onDone, onDelete }: EditorProps) {
   const { schedule, reward } = source;
   const setReward = (patch: Partial<Reward>) => onUpdate({ reward: { ...reward, ...patch } });
   const pending = pendingLabel(schedule);
 
   return (
-    <div className="inline-edit">
+    <EditDialog
+      title={source.name}
+      focusFirstField={isNew}
+      // Solo las personalizadas se eliminan; las del juego se desactivan con su interruptor.
+      remove={source.custom ? { label: 'Eliminar fuente', onClick: onDelete } : undefined}
+      onDone={onDone}
+    >
       {source.description && <p className="muted">{source.description}</p>}
 
       {source.custom && (
@@ -204,7 +210,6 @@ function SourceEditor({ source, today, focusName, onUpdate, onDelete }: EditorPr
               type="text"
               {...PLAIN_TEXT_INPUT}
               value={source.name}
-              autoFocus={focusName}
               onChange={(e) => onUpdate({ name: e.target.value })}
             />
           </label>
@@ -295,22 +300,14 @@ function SourceEditor({ source, today, focusName, onUpdate, onDelete }: EditorPr
         </div>
       )}
 
-      <div className="inline-edit-footer">
-        {pending ? (
-          <Toggle checked={source.pendingNow} onChange={(pendingNow) => onUpdate({ pendingNow })}>
-            {/* En las diarias, el paréntesis repetiría el «hoy» de la etiqueta. */}
-            {pending}
-            {source.schedule.type !== 'daily' && ' (se suma hoy)'}
-          </Toggle>
-        ) : (
-          <span />
-        )}
-        {source.custom && (
-          <button type="button" className="btn btn-danger" onClick={onDelete}>
-            Eliminar fuente
-          </button>
-        )}
-      </div>
-    </div>
+      {/* Con los campos, no en el pie: es un dato de la fuente, y el pie queda para las acciones. */}
+      {pending && (
+        <Toggle checked={source.pendingNow} onChange={(pendingNow) => onUpdate({ pendingNow })}>
+          {/* En las diarias, el paréntesis repetiría el «hoy» de la etiqueta. */}
+          {pending}
+          {source.schedule.type !== 'daily' && ' (se suma hoy)'}
+        </Toggle>
+      )}
+    </EditDialog>
   );
 }

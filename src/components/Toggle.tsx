@@ -16,13 +16,13 @@ interface Props {
 interface SwitchInputProps {
   checked: boolean;
   onChange: (checked: boolean) => void;
-  'aria-label'?: string;
+  'aria-labelledby'?: string;
   'aria-describedby'?: string;
 }
 
 /**
  * La pieza del interruptor: el input (role="switch") y la pista que se pinta detrás. Va dentro de un `.switch`;
- * Toggle lo pone con su texto y las fuentes de ingresos, solo (con su nombre en aria-label).
+ * Toggle lo pone con su texto y las fuentes de ingresos, solo (nombrado por el nombre visible de la fuente).
  */
 export function SwitchInput({ checked, onChange, ...aria }: SwitchInputProps) {
   return (

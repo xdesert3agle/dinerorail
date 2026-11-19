@@ -44,11 +44,12 @@ volver a proponer y por qué.
 
 ## Versiones y eventos
 
-- **Leer primero y editar en el sitio (2026-11-09):** como las fuentes de ingresos. Cada versión es un título de
+- **Leer primero y editar en el sitio (2026-11-09; la edición pasó a un diálogo el 2026-11-18, ver «Editar en
+  un diálogo»):** como las fuentes de ingresos. Cada versión es un título de
   grupo (el h3 de «Diarias») con su inicio y «Editar», y debajo una tabla de lectura (evento, cobro y
   recompensas, con las de las fuentes, `RewardInline`). «Editar» abre los campos y las filas editables en la caja
-  del editor de las fuentes (`.inline-edit`), con «Eliminar versión» al pie, como «Eliminar fuente». Sale de un
-  boceto del usuario. Del boceto no se tomaron:
+  del editor de las fuentes (`.inline-edit`), con «Eliminar versión» al pie, como «Eliminar fuente» (ver «Pie del
+  editor»). Sale de un boceto del usuario. Del boceto no se tomaron:
   - «Añadir versión» al pie de la tarjeta: contradice la regla de los botones de añadir (lo de la tarjeta, en su
     cabecera);
   - el subtítulo «Recompensas totales» bajo el título: ninguna tarjeta tiene subtítulo, y el total de cabecera
@@ -57,7 +58,8 @@ volver a proponer y por qué.
   - un diamante genérico en lugar del icono del Jade;
   - el título de la versión grande y en negrita: se usa el h3 de grupo de la app.
   En el móvil (≤560px), la fecha baja bajo el nombre y las recompensas quedan a la derecha.
-- **«+ Evento» (2026-11-09):** un botón del ancho y el alto de una fila, al pie de cada versión, en el hueco donde
+- **«+ Evento» (2026-11-09; en el diálogo pasó a un botón normal el 2026-11-18, ver «Editar en un diálogo»):** un
+  botón del ancho y el alto de una fila, al pie de cada versión, en el hueco donde
   aparece la nueva: dice qué hace antes de pulsarlo (idea del usuario). Es el `.btn` de siempre, sin borde
   discontinuo: en el plan, el discontinuo es «fila que no llega», y en gris se seguiría leyendo así. Se
   descartaron:
@@ -67,6 +69,58 @@ volver a proponer y por qué.
   - un único «+ Evento» en la cabecera de la tarjeta: obligaría a elegir la versión.
 - **Quitar una versión:** «Eliminar versión» al pie de su editor. Se probaron una ✕ junto al total, en la columna de
   las ✕ de los eventos (parecía una fila más), y otra junto a los campos de la versión.
+- **Pie del editor (2026-11-13), también en las fuentes de ingresos:** el pie es la barra de acciones, tras una
+  raya: «Eliminar …» a la izquierda, fantasma en rojo, y «Terminar edición» a la derecha, con borde (solo
+  «Terminar» no decía qué se terminaba). «Editar» se oculta con el editor abierto (deja su hueco), y el interruptor
+  «pendiente hoy» de las fuentes sube con los campos. Antes, «Cerrar» era un fantasma fuera de la caja, en la línea
+  del título, y «Eliminar versión», con borde, ocupaba la esquina de abajo a la derecha, bajo «+ Evento»: de un
+  vistazo no se veía qué hacía cada botón ni cómo salir. Se propusieron y no se eligieron:
+  - los mismos sitios con otra jerarquía («Terminar edición» con borde en la línea del título y «Eliminar versión»
+    fantasma al pie): la salida seguía fuera de la caja;
+  - la caja envolviendo también la cabecera, con los campos en lugar del título y el total dentro: el título
+    saltaba al abrir, y las fuentes del juego no tienen nombre editable;
+  - «Eliminar versión» en la cabecera, junto a «Terminar edición»: se parece a la ✕ junto a los campos, ya
+    descartada, y en las fuentes no cabe en la fila.
+- **Editar en un diálogo (2026-11-18), también en las fuentes de ingresos:** «Editar» abre un diálogo modal en
+  lugar de la caja en el sitio. Con varias versiones con eventos, editar la del centro dejaba los campos y las filas
+  que se arrastran entre dos tablas de lectura que se les parecen, y la tarjeta quedaba cargada. Ahora la tarjeta
+  siempre se lee y el diálogo siempre se edita. El diálogo es una tarjeta (`.card`, una ventana en Sparxie) con lo
+  editado de título, los campos (y el total de la versión) y el mismo pie. Los cambios se siguen guardando al
+  escribir, así que Esc y un clic en el velo también cierran sin perder nada. Las fuentes pasan también, aunque su
+  editor es pequeño, para que haya una sola forma de editar.
+  - Se quitan la caja del editor (`.inline-edit`) y el tono que solo existía para sus botones (`--surface-3`). Sin
+    campos sobre `--surface-2` (salvo la fila que se arrastra), el borde de los campos en Aha oscuro baja a su
+    mínimo sobre la tarjeta, #766261 (3,03:1); sobre la caja pedía #836d6c.
+  - Lo que se pierde: mientras se edita no se ven el Resumen ni el total de la cabecera de la tarjeta, solo el de
+    la versión, dentro del diálogo.
+  - Se dejó como alternativa sin probar marcar la caja en el sitio con un borde en vez de un relleno (los campos
+    quedaban sobre la tarjeta igual), pero no resolvía lo cargado de la tarjeta.
+  - X de cerrar en la cabecera y «Terminar edición» al pie, las dos (elegido por el usuario). La X sola dejaba el
+    pie solo con «Eliminar …», pero sin «Guardar» podía leerse como «cancelar». Tampoco se llama «Guardar»: lo
+    escrito ya está guardado, y el botón prometería que la X lo descarta. En Sparxie la X es la caja de cierre de
+    la ventana, a la izquierda; la de adorno no sale.
+  - «+ Evento» deja de ser del ancho de una fila (en el diálogo se veía pegote, una franja que pesaba más que las
+    filas): es un `.btn` normal al final de la lista, empezando donde los nombres, y comparte línea con el total
+    de la versión, como el pie de una tabla. El botón pequeño se había descartado porque no se veía de qué versión
+    era; en el diálogo solo hay una. De paso, el total ya no queda justo encima de «Terminar edición».
+  - «Eliminar …» alineado por su caja, como «Editar» y «Deshacer», no por su texto. Se probó sacar el texto con
+    un margen negativo (el relleno y el borde de .btn) para alinearlo con los campos: el tinte del hover quedaba a
+    3px del borde del diálogo. Solo alinea su texto lo que se lee como enlace bajo una columna («Ver N versiones
+    más»).
+  - Canal de las asas (elegido por el usuario, 2026-11-19): «Versión», «Inicio», los nombres de los eventos y
+    «+ Evento» empiezan en la misma línea, tras el hueco del asa, siempre (sin eventos también: si no, «+ Evento»
+    saltaba al añadir el primero). El título y «Eliminar versión» quedan en el borde, como encabezado y pie. Se
+    descartaron todo en la columna interior (también título y pie: parecía más margen a la izquierda que a la
+    derecha), las asas colgando en el margen del diálogo (pedía ensanchar solo el izquierdo, de 16 a ~44px) y
+    dejarlo como estaba con un subtítulo «Eventos».
+  - Pie sin raya (elegido por el usuario): lo separa el aire de entre bloques de una tarjeta (20px). En el diálogo
+    los botones ya se leen como pie, y la raya del editor en el sitio venía de separarlos de lo de alrededor.
+  - Dos anchos: estrecho para una fuente (30rem; con uno solo, el de una fuente quedaba medio vacío) y ancho para
+    una versión (48rem; a 40rem se cortaban los nombres de los eventos).
+  - El borde de los campos baja hasta 3,3:1 en Aha claro (#8f7c79) y oscuro (#7d6867) y en Sparxie oscuro
+    (#756d7b). Se probó el mínimo de WCAG, 3:1 justo (#958380, #766261 y #6e6674), y se descartó por no dejar
+    margen: una raya de 1px se ve más débil que su color, y al 125 % de escalado se suaviza y pierde más. Sparxie
+    claro conserva la tinta: es el estilo del tema.
 - **Totales (2026-11-09):** el de la tarjeta en su cabecera, con el ticket y las tiradas enteras, como Recursos
   actuales y Paquetes; y el de cada versión al pie de su tabla, bajo las recompensas, con el mismo formato más
   pequeño y con decimales (también con el editor abierto). Se descartó la frase «N tiradas en eventos» (la única
@@ -130,6 +184,18 @@ volver a proponer y por qué.
 - **Borde de las burbujas:** el acento al 90 %, de 2px (2026-10-27).
   - Se descartó un gris (tinta al 50 %, al 35 % y pura) y el acento del 100 al 40 %.
   - Con el toast y «Deshacer», el acento fuera de problemas, selección y foco; ver la regla en CLAUDE.md.
+- **Capa sobre la tarjeta en Aha oscuro (2026-11-13):** `--surface-2` pasa de #311b1e a #3c2226. Estaba a 1,07:1
+  de la tarjeta y la caja del editor apenas se separaba; ahora da el mismo paso que en claro (1,19:1). Es el
+  token, no solo la caja: suben igual los botones, los recuadros de cifras, la fila arrastrada y el selector. Con
+  él sube el texto apagado (`--text-muted`, de #9c8481 a #a48c89), para seguir a 4,5:1 sobre esa capa. Sparxie
+  oscuro ya estaba a 1,18:1 y no se toca.
+- **Botones y raya dentro de la caja del editor (2026-11-13; la caja y `--surface-3` se quitaron el 2026-11-18,
+  con el diálogo):** «+ Evento» y «Terminar edición» llevan un relleno
+  un escalón por encima de la caja (`--surface-3`, por `--btn-bg`), como los botones de la tarjeta sobre ella. Con
+  el relleno de siempre (`--surface-2`, el de la propia caja) solo los separaba el borde, a 1,25:1, y se veían
+  poco. Se probó también dejarlos sin relleno con el borde de la raya (`--axis`): se veían, pero eran distintos
+  de los botones de la tarjeta. La raya del pie y el resto de rayas fuertes suben en Aha oscuro (`--axis`, de
+  #4a2a2d a #5c363a), a la misma distancia de la tarjeta y de la caja que en claro (≈1,7:1 y ≈1,4:1).
 - **Tablas en las burbujas (2026-10-30):** no parten filas; la burbuja crece lo justo para ellas, sin pasar del
   ancho de la pantalla, y el texto corrido sigue cortado a 20rem. Se descartó ensanchar solo la burbuja de la
   Cosmiluz.
@@ -157,6 +223,13 @@ volver a proponer y por qué.
 - **Orden de las tarjetas:** «Recursos actuales» antes que la fecha objetivo (2026-10-28). Los recursos se
   actualizan en cada visita; la fecha, pocas veces.
 - **Fechas destacadas:** sin título encima de la tabla, que se veía descompensado; solo en la vista estrecha.
+  - Al desplegar y plegar (2026-11-19), la lista cambia de alto y lo de debajo la acompaña, con la curva quíntica
+    (`cubic-bezier(0.83, 0, 0.17, 1)`, elegida por el usuario). Se probaron una máscara con el resto saltando de
+    golpe, `ease-out`, `ease-in-out` y la cúbica.
+  - Plegada, llega hasta la versión de la fecha objetivo si es posterior a la próxima; antes, en ese caso, se veían
+    todas. No se pliega sola al elegir una fecha: movería lo de debajo justo tras el clic y obligaría a desplegar
+    otra vez para probar otra. Por lo mismo, plegada crece sola hasta la fecha objetivo pero no encoge sola (al
+    principio encogía al elegir una fecha de más arriba); encoge con «Ver menos», hasta la versión de la fecha.
 - **Resumen:** sin la línea de veredicto bajo la cifra.
 - **Cuenta atrás:** «en N días» en todas partes (`fmtCountdown`), por homogeneidad. Se probó «quedan N días»: en
   Sparxie partía la segunda línea de cada fecha destacada, y solo en el Resumen rompía la homogeneidad.
@@ -190,3 +263,23 @@ volver a proponer y por qué.
   usuario usa en los paquetes.
 - **Fechas por defecto (versión 4.6 y sus eventos):** las mantiene el usuario a mano por ahora; no se derivan de
   `KEY_DATES`.
+
+## Auditoría con modern-web-guidance (2026-11-18)
+
+- **Aviso de deshacer:** se queda con temporizador, alargado de 5 a 10 s (`TOAST_MS`), y se para con el ratón o el
+  foco encima. Se descartó que no se fuera solo hasta cerrarlo, aunque lo recomiendan la guía y Material 3: el
+  usuario prefirió el comportamiento de Gmail.
+- **Galería de dupes:** flota una sola vez (sube y baja en 4,8 s) y se queda quieta, en vez de un bucle
+  infinito. Así no necesita un botón para pararla (WCAG 2.2.2 lo pide para lo que se mueve solo más de 5 s), que
+  sí era la otra opción de la guía; se eligió para no añadir controles a una decoración.
+- **Reordenar sin arrastrar:** un toque en el asa (sin moverla) abre un menú «Subir / Bajar» bajo la fila. Se
+  prefirió a dos botones ▲▼ en cada fila, que cargaban las filas del plan y de los eventos.
+- **Sin `font-size-adjust`:** la guía lo pide para que la letra no salte al cargar Figtree. Con `from-font` no
+  sirve (mientras carga mide la de reserva), y con el valor de Figtree (0,500) se heredaría a los títulos en la
+  letra de naipe y los encogería, salvo anulándolo en cada uno de sus nueve sitios. Las fuentes ya van con la app,
+  así que el salto es corto.
+- **Sin `popover` para burbujas, aviso y menús:** el atributo aún no es Baseline amplio y pediría cargar un
+  polyfill; hoy nada tapa esas capas (`--z-*`).
+- **Cortes de pantalla en `px`:** la guía prefiere `em` (y `<meta name="text-scale">`) para seguir el tamaño de
+  letra del sistema; cambiarlos es rehacer todos los breakpoints, y se dejó.
+

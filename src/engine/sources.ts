@@ -31,7 +31,7 @@ export function occurrences(schedule: Schedule, from: number, to: number, patchS
     }
     case 'perPatch':
       // En orden aunque las versiones no lo estén (su inicio se puede editar): el primero es el próximo cobro.
-      for (const start of [...patchStarts].sort((a, b) => a - b)) {
+      for (const start of patchStarts.toSorted((a, b) => a - b)) {
         const d = start + schedule.offsetDays;
         if (d >= from && d <= to) days.push(d);
       }

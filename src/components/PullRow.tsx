@@ -80,7 +80,7 @@ export function PullRow({
               // El tamaño lo pone el CSS (el hueco de la miniatura); estos evitan saltos al cargar.
               width={54}
               height={54}
-              loading="lazy"
+              // Sin loading="lazy": el plan suele estar a la vista al cargar, y diferirla la retrasaría.
               decoding="async"
               draggable={false}
               // Cargada: el cono quita entonces su fondo (ver .pull-portrait-lightCone en styles.css).

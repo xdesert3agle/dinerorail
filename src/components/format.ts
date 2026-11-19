@@ -1,4 +1,4 @@
-import { WEEKDAYS } from '../engine/dates';
+import { toDayNum, WEEKDAYS, weekdayOf } from '../engine/dates';
 import type { ShownChance } from '../engine/odds';
 import { JPY_PER_EUR } from '../engine/packs';
 import { canBePending } from '../engine/sources';
@@ -66,6 +66,10 @@ export const fmtDayMonthLong = (iso: string) => {
   const [, month, day] = iso.split('-').map(Number);
   return `${day} de ${MONTH_NAMES[month - 1]}`;
 };
+
+/** Fecha completa con el día de la semana, como "martes, 18 de noviembre de 2026": la que se anuncia en el calendario. */
+export const fmtFullDate = (iso: string) =>
+  `${WEEKDAYS[weekdayOf(toDayNum(iso))]}, ${fmtDayMonthLong(iso)} de ${iso.slice(0, 4)}`;
 
 /** Fecha y hora de un momento (ms), como "5 nov. 2026 a las 18:30". */
 export const fmtMoment = (ms: number) => {

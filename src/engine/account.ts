@@ -62,7 +62,7 @@ export interface RosterEntry {
  * Sin catálogo no se sabe cuáles hay: solo los que ya están en la cuenta.
  */
 export function roster(characters: OwnedCharacter[], entries: CatalogEntry[] | null): RosterEntry[] {
-  if (!entries) return [...characters].sort(byName);
+  if (!entries) return characters.toSorted(byName);
   const owned = new Map(characters.map((c) => [c.id, c.eidolon]));
   return entries
     .map((e) => ({ id: e.id, name: e.name, eidolon: owned.get(e.id) ?? null, ...(e.path && { path: e.path }) }))

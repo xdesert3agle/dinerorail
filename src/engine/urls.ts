@@ -1,4 +1,5 @@
-import type { PullKind } from './types';
+// Con extensión: vite.config.ts carga este archivo, y su cargador no resuelve imports sin ella.
+import type { PullKind } from './types.ts';
 
 /*
  * Todas las direcciones externas de la app, en un sitio:
@@ -10,6 +11,18 @@ const NANOKA = 'https://static.nanoka.cc';
 const NANOKA_ASSETS = `${NANOKA}/assets/hsr`;
 const YATTA = 'https://sr.yatta.moe/api/v2/es';
 const STAR_RAIL_RES = 'https://raw.githubusercontent.com/Mar-7th/StarRailRes/master/icon';
+
+/** Los orígenes a los que la app pide datos e imágenes: la política de seguridad de la build solo deja esos (vite.config.ts). */
+export const EXTERNAL_ORIGINS = {
+  data: [NANOKA, new URL(YATTA).origin],
+  images: [NANOKA, new URL(STAR_RAIL_RES).origin],
+};
+
+/**
+ * Lo más que se espera a una respuesta de nanoka o yatta. Sin límite, una conexión colgada dejaba la
+ * sincronización en curso hasta que el navegador la cortaba (minutos); así falla y se puede reintentar.
+ */
+export const FETCH_TIMEOUT_MS = 15_000;
 
 /** La versión actual de los datos de nanoka (hsr.latest). */
 export const MANIFEST_URL = `${NANOKA}/manifest.json`;

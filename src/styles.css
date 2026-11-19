@@ -1,9 +1,10 @@
 /*
  * Índice (cada sección empieza con un comentario «== Nombre ==»):
  * Tokens · Base · Iconos · Calendario (air-datepicker) · Maquetación · Galería de dupes · Tarjetas · Resumen ·
- * Formularios · Burbujas de explicación (Tip) · Botones · Fechas destacadas · Fuentes de ingresos · Interruptores ·
+ * Formularios · Burbujas de explicación (Tip) · Botones · Diálogo de edición · Fechas destacadas · Fuentes de ingresos ·
+ * Interruptores ·
  * Tablas y desglose · Filas reordenables · Plan de tiradas · Sincronizar contenido · Cuenta · Versiones y eventos · Previsión de suerte ·
- * Paquetes de Esquirlas · Tienda · Toast · Tema Sparxie.
+ * Paquetes de Esquirlas · Tienda · Toast · Tema Sparxie · Colores forzados.
  * Las reglas de un tema van bajo :where(:root[data-skin='…']), para pesar lo mismo que las de base y ganar
  * solo por ir después. Las que tocan un solo componente, junto a él; la capa de Sparxie para las piezas comunes
  * (página, pestañas, tarjetas, campos, botones, interruptores, tablas, aviso), en su sección, al final.
@@ -16,7 +17,8 @@
  * Sparxie, más abajo, redefine encima su paleta.
  */
 :root {
-  color-scheme: light;
+  /* Sigue al sistema; el claro elegido a mano (data-theme) lo fija debajo y el oscuro, en su bloque. */
+  color-scheme: light dark;
   /* Figtree: mayúsculas ya centradas, así que los campos no necesitan el ajuste de 1px (--input-nudge). */
   font-family: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
   line-height: 1.45;
@@ -25,15 +27,32 @@
   --input-nudge: 0px;
   --page: light-dark(#f0eae9, #0f0708);
   --surface: light-dark(#ffffff, #29151a);
-  --surface-2: light-dark(#f6e8e5, #311b1e);
+  /*
+   * La capa sobre la tarjeta (botones, recuadros de cifras, fila arrastrada): a 1,19:1 de --surface en claro y en
+   * oscuro. En oscuro era #311b1e, a 1,07:1, y no se separaba.
+   */
+  --surface-2: light-dark(#f6e8e5, #3c2226);
+  /* Relleno de .btn: un escalón sobre su fondo, la tarjeta. */
+  --btn-bg: var(--surface-2);
   --text: light-dark(#1e0c0d, #ffffff);
   --text-secondary: light-dark(#5f4442, #d2b9b6);
   /* ≥4,5:1 sobre --surface, --page y --surface-2. */
-  --text-muted: light-dark(#7a6360, #9c8481);
+  --text-muted: light-dark(#7a6360, #a48c89);
   --grid: light-dark(#eedcd8, #2f1a1c);
-  --axis: light-dark(#d9c0bb, #4a2a2d);
+  /* Rayas fuertes (pies, cabeceras de tabla): a ~1,7:1 de la tarjeta y ~1,4:1 de --surface-2, en claro y en oscuro. */
+  --axis: light-dark(#d9c0bb, #5c363a);
   --border: light-dark(rgba(70, 10, 10, 0.1), rgba(255, 200, 190, 0.09));
-  --series-1: light-dark(#7a6360, #9c8481); /* Barras de datos en el gris del texto apagado: el rojo queda para los problemas. */
+  /*
+   * Borde de los campos: a 3,3:1 de la tarjeta y de su propio fondo (--page), lo justo para que destaque poco. WCAG
+   * 1.4.11 pide 3:1 para el contorno de un control, pero una raya de 1px se ve más débil que su color, y más con
+   * el escalado de pantalla (al 125 % se suaviza): el margen la sostiene. En claro, 3,31:1 con su fondo, el más
+   * oscuro de los dos; en oscuro, 3,33:1 con la tarjeta, el más claro (los diálogos de edición también son
+   * tarjetas). Con --border, que separa tarjetas y no controles, quedaban a 1,45:1 en claro y a 1:1 en oscuro. Solo
+   * la fila que se arrastra lleva sus campos sobre --surface-2, a 3,3:1 en claro y 2,79:1 en oscuro, mientras dura
+   * el arrastre.
+   */
+  --field-border: light-dark(#8f7c79, #7d6867);
+  --series-1: light-dark(#7a6360, #a48c89); /* Barras de datos en el gris del texto apagado: el rojo queda para los problemas. */
   /* Interruptor encendido: verde musgo apagado (dice «encendido» sin competir con el rojo de los avisos). */
   --switch-on: light-dark(#4f8a5f, #56966a);
   /* Botón del interruptor: apagado, del gris del contorno de la pista; encendido, blanco. */
@@ -67,10 +86,18 @@
   --field-radius: 8px;
   /* Ancho de las flechas de ±1 de NumberField, dentro del borde del campo. */
   --stepper-w: 20px;
-  /* Relleno a los lados de .btn: los botones que alinean su texto con una columna lo compensan (más su borde de 1px). */
+  /*
+   * Relleno a los lados de .btn. Los botones se alinean por su caja, también los fantasma de acción («Editar»,
+   * «Eliminar …»); solo lo que se lee como enlace bajo una columna alinea su texto (.key-dates-more).
+   */
   --btn-pad-x: 12px;
-  /* Ancho del botón de quitar (✕) y del asa de arrastre: el pie del plan y las columnas de los eventos dejan su hueco. */
-  --remove-w: 24px;
+  /*
+   * Ancho del botón de quitar (✕, un círculo) y del asa de arrastre: el pie del plan y las columnas de los eventos
+   * dejan su hueco. 28px: con 24, el círculo de la ✕ se quedaba justo para el ratón.
+   */
+  --remove-w: 28px;
+  /* El canal de las asas: lo que ocupan el asa y el hueco de .event-row antes del primer campo de un evento. */
+  --row-gutter: calc(var(--remove-w) + 8px);
   /* Ancho de un campo de fecha (dd/mm/aaaa y su icono): la fecha objetivo y el inicio de cada versión. */
   --date-field-w: 9.5rem;
   /* Lo que la pastilla del Eidolón (.eidolon-badge) sale del retrato, en Cuenta y en el plan. */
@@ -93,15 +120,28 @@
    */
   --border-pop: color-mix(in srgb, var(--accent) 90%, var(--surface));
   --border-pop-w: 2px;
+  /* Velo de detrás de un diálogo modal: aparta la página sin borrarla. */
+  --backdrop: light-dark(rgb(30 12 13 / 0.45), rgb(0 0 0 / 0.6));
   /* Bordes teñidos de acento: el marco del Resumen y de sus recuadros de cifras, y el hover de los atajos y las fechas destacadas. */
   --accent-frame: color-mix(in srgb, var(--accent) 28%, var(--border));
   --accent-hover: color-mix(in srgb, var(--accent) 55%, var(--border));
   /*
    * Lo que tarda en aparecer y en irse lo que reacciona al ratón: las burbujas (.tip y el popover de la galería)
-   * y el tinte de los botones fantasma. Al irse, algo más rápido: lo que se deja ya no interesa.
+   * y el tinte de los botones fantasma. Al irse, un 20 % más rápido: lo que se deja ya no interesa.
    */
   --fade-in: 180ms;
-  --fade-out: 150ms;
+  --fade-out: 145ms;
+  /*
+   * Al pulsar un botón, se encoge un 3 % (0,97) en --press-ms: confirma el toque sin moverlo de su sitio. Más
+   * (0,9) se ve como un salto, sobre todo en los botones anchos. Sparxie no encoge: su pulsación es el bisel.
+   */
+  --press-scale: 0.97;
+  --press-ms: 100ms;
+  /*
+   * Lo que flota sobre un control (burbujas, popover de la galería, desplegables, calendario) nace al 95 % desde
+   * el lado de su control y crece hasta su tamaño mientras aparece; al irse, vuelve hacia él.
+   */
+  --pop-scale: 0.95;
   /*
    * Escala de espaciado: 4 dentro de un grupo pequeño (etiqueta y campo), 8 entre piezas de un grupo, 12 entre
    * grupos dentro de una tarjeta (y entre campos de una rejilla), 16 entre tarjetas y de relleno, 20 entre
@@ -140,6 +180,10 @@
   --rarity-5: light-dark(#9a6a1f, #e8b45a);
 }
 
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
 /*
  * Modo oscuro: lo pone el sistema (sin data-theme) o el usuario (data-theme='dark'), así que va dos veces. Los
  * colores ya llevan sus dos valores en light-dark(claro, oscuro), que sigue a color-scheme; aquí solo va eso y
@@ -169,6 +213,8 @@
  * El diseño solo trae el esquema claro; el oscuro ("Night Swim") es una piscina de noche con las mismas reglas.
  */
 :root[data-skin='sparxie'] {
+  /* Al pulsar, el bisel se invierte, como en un sistema de 1 bit; el botón no encoge. */
+  --press-scale: 1;
   --page: light-dark(#f6d5d5, #1c2742);
   --surface: light-dark(#ffffff, #211d28);
   --surface-2: light-dark(#f9f0e9, #2e2a36);
@@ -178,6 +224,11 @@
   --grid: light-dark(color-mix(in srgb, var(--text) 18%, transparent), color-mix(in srgb, var(--text) 16%, transparent));
   --axis: light-dark(#9b9b9b, #6d6478);
   --border: light-dark(#000000, #5a5266);
+  /*
+   * En claro, la tinta de los marcos: es el estilo del tema. En oscuro, el marco de las ventanas (#5a5266) se
+   * queda en 2,2:1 y los campos lo aclaran hasta 3,33:1 con su fondo y la ventana (--surface), como en Aha.
+   */
+  --field-border: light-dark(#000000, #756d7b);
   --series-1: #afe5dd;
   --accent: #afe5dd;
   --accent-text: light-dark(#24675f, #afe5dd);
@@ -235,7 +286,7 @@
 /* Fuente de índice de naipe para los títulos de tarjeta de Aha (va con el proyecto, no depende del sistema). */
 @font-face {
   font-family: 'Card Characters';
-  src: url('./assets/fonts/card-characters.ttf') format('truetype');
+  src: url('./assets/fonts/card-characters.woff2') format('woff2');
   font-display: swap;
 }
 /*
@@ -244,7 +295,7 @@
  */
 @font-face {
   font-family: 'ChicagoFLF';
-  src: url('./assets/fonts/chicago-flf.woff') format('woff');
+  src: url('./assets/fonts/chicago-flf.woff2') format('woff2');
   font-display: swap;
 }
 
@@ -271,7 +322,8 @@ label {
 
 body {
   margin: 0;
-  min-height: 100vh;
+  /* dvh: en el móvil, el alto con la barra del navegador a la vista (100vh lo mide sin ella). */
+  min-height: 100dvh;
   /* Fondo plano (antes, un resplandor con degradado arriba a la derecha; fuera, como el del Resumen). */
   background: var(--page);
   color: var(--text);
@@ -328,7 +380,7 @@ p {
   width: 1px;
   height: 1px;
   overflow: hidden;
-  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
   white-space: nowrap;
 }
 /* Oculto pero ocupando su sitio, para que el resto no se mueva al aparecer. */
@@ -384,13 +436,16 @@ p {
   z-index: var(--z-tip);
   top: 8px;
   left: 8px;
-  transform: translateY(-200%);
+  translate: 0 -200%;
 }
 .skip-link:focus-visible {
-  transform: none;
+  translate: none;
 }
-/* Destino del salto: no es un control, así que no lleva anillo de foco. */
-.main:focus {
+/*
+ * Destino del salto, y el diálogo de edición al abrirse (recibe el foco si no empieza en un campo): no son
+ * controles, así que no llevan anillo de foco.
+ */
+:is(.main, .edit-dialog):focus {
   outline: none;
 }
 
@@ -425,7 +480,7 @@ p {
   vertical-align: middle;
 }
 /*
- * Iconos de interfaz monocromos (personaje, cono de luz): el PNG blanco se usa como máscara sobre el color
+ * Iconos de interfaz monocromos (personaje, cono de luz): la imagen blanca se usa como máscara sobre el color
  * del texto, así siguen al tema y al modo claro u oscuro.
  */
 /*
@@ -442,16 +497,24 @@ p {
 }
 /* El personaje es una silueta rellena: se dibuja algo más pequeño (1,25em) para no pesar más que el cono. */
 .glyph-character {
-  mask: url('./assets/icons/character.png') center / 83.333% no-repeat;
+  mask: url('./assets/icons/character.webp') center / 83.333% no-repeat;
 }
 /* El cono es de trazo fino: ocupa toda la caja. */
 .glyph-light-cone {
-  mask: url('./assets/icons/light-cone.png') center / contain no-repeat;
+  mask: url('./assets/icons/light-cone.webp') center / contain no-repeat;
 }
 
 /* == Calendario (air-datepicker) == */
-/* Calendario de air-datepicker, con los colores del tema. Se monta en <body>, fuera de las tarjetas. */
+/*
+ * Calendario de air-datepicker, con los colores del tema. Se monta en <body>, fuera de las tarjetas (en un diálogo,
+ * junto a su campo).
+ */
 .air-datepicker {
+  /*
+   * Aparece como los demás desplegables (--fade-in), no en los 300 ms de la librería; al irse, en --fade-out (la
+   * librería usa la misma duración para los dos, y la transición toma la del estado al que va).
+   */
+  --adp-transition-duration: var(--fade-in);
   /* La letra de la página (la librería trae la suya). */
   font-family: inherit;
   --adp-font-size: 0.875rem;
@@ -492,6 +555,19 @@ p {
 .-selected-.air-datepicker-cell.-day-.-other-month- {
   color: var(--on-accent);
 }
+/*
+ * Nace al 95 % desde su campo (arriba, a la altura de su flecha), como los demás desplegables, en vez de bajar
+ * deslizándose. Al abrirse, la librería le quita el transform (.-active-).
+ */
+.air-datepicker.-from-bottom- {
+  transform: scale(var(--pop-scale));
+  transform-origin: var(--adp-pointer-offset) top;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .air-datepicker:not(.-active-) {
+    --adp-transition-duration: var(--fade-out);
+  }
+}
 /* Sin movimiento: el calendario aparece sin deslizarse. */
 @media (prefers-reduced-motion: reduce) {
   .air-datepicker {
@@ -499,13 +575,18 @@ p {
     --adp-transition-offset: 0px;
   }
 }
-/* Día seleccionado: círculo del alto de la celda, centrado (la celda es más ancha que alta). */
-.air-datepicker-cell.-day-.-selected- {
+/*
+ * Día elegido y día señalado (con el ratón o las flechas): el mismo círculo, del alto de la celda y centrado (la
+ * celda es más ancha que alta). El señalado, en el gris del hover, anticipa la forma que tendrá al elegirlo; el
+ * elegido, en el acento. Un día que no se puede elegir no se señala. En meses y años, las celdas de la librería.
+ */
+.air-datepicker-cell.-day-:is(.-selected-, .-focus-) {
   position: relative;
   isolation: isolate;
   background: none;
 }
-.air-datepicker-cell.-day-.-selected-::before {
+/* Con :where(), para que el color del elegido (abajo) gane al del señalado. */
+.air-datepicker-cell.-day-:where(.-selected-, .-focus-:not(.-disabled-))::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -514,6 +595,9 @@ p {
   height: var(--adp-day-cell-height);
   margin: auto;
   border-radius: 50%;
+  background: var(--adp-cell-background-color-hover);
+}
+.air-datepicker-cell.-day-.-selected-::before {
   background: var(--adp-cell-background-color-selected);
 }
 /* La flechita que apunta al campo trae el fondo blanco fijo. */
@@ -624,7 +708,8 @@ p {
   box-shadow: inset 0 0 0 1px #000;
 }
 /*
- * Pestañas bajo la cabecera: la seleccionada se subraya con el acento del tema. El desplazamiento lateral
+ * Pestañas bajo la cabecera: enlaces de navegación (App.tsx); la de la sección actual (aria-current) se subraya
+ * con el acento del tema. El desplazamiento lateral
  * (móvil) recorta también por arriba y por abajo: el relleno de 4px deja sitio al anillo de foco y el margen
  * negativo lo compensa.
  */
@@ -642,6 +727,7 @@ p {
   font: inherit;
   font-size: 0.875rem;
   color: var(--text-secondary);
+  text-decoration: none;
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
@@ -653,7 +739,7 @@ p {
   color: var(--text);
 }
 /* Sin negrita al seleccionar: cambiaría el ancho y movería la pestaña de al lado. */
-.tab[aria-selected='true'] {
+.tab[aria-current='page'] {
   color: var(--text);
   border-bottom-color: var(--accent);
 }
@@ -967,19 +1053,22 @@ p {
   .dupe-card {
     animation: dupe-in 0.4s ease-out;
     transform: perspective(600px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
-    transition: transform 0.6s ease-out;
+    transition:
+      transform 0.6s ease-out,
+      scale 0.6s ease-out;
   }
   .dupe-card:hover {
-    transform: perspective(600px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) scale(1.1);
+    scale: 1.1;
     transition-duration: 0.12s;
   }
   /*
-   * Flotar sobre la página, sin desplazarse: 3 s subiendo hacia la pantalla y 3 s bajando. Cada hueco va
-   * desfasado para que no suban todos a la vez.
+   * Flotar sobre la página, sin desplazarse: 2,4 s subiendo hacia la pantalla y 2,4 s bajando, una sola vez, y
+   * luego quieta. Menos de 5 s: lo que se mueve solo más tiempo necesitaría un botón para pararlo (WCAG 2.2.2).
+   * Cada hueco va desfasado para que no suban todos a la vez.
    */
   .dupe-slot {
-    animation: dupe-float 3s ease-in-out infinite alternate;
-    animation-delay: calc(var(--dupe-index, 0) * -1s);
+    animation: dupe-float 2.4s ease-in-out 2 alternate;
+    animation-delay: calc(var(--dupe-index, 0) * -0.4s);
     transition: --hover-lift 0.6s ease-out;
   }
   /* Por encima de los vecinos: a esa escala invade unos píxeles el hueco entre columnas. */
@@ -1005,7 +1094,8 @@ p {
 }
 /*
  * Popover de una imagen de la galería: qué hace ese Eidolón o el cono. Sale al lado de la imagen,
- * subiendo un poco; la posición la pone DupeGallery.tsx. No captura el ratón: se quita al salir de la imagen.
+ * subiendo un poco; la posición la pone DupeGallery.tsx. Se puede recorrer con el puntero (espera un momento
+ * al salir de la imagen); el que se está yendo ya no lo captura.
  */
 .dupe-pop {
   position: fixed;
@@ -1018,8 +1108,10 @@ p {
   padding: 12px 14px;
   font-size: 0.875rem;
   line-height: 1.45;
-  pointer-events: none;
   user-select: none;
+}
+.dupe-pop.is-leaving {
+  pointer-events: none;
 }
 /*
  * Flecha de bocadillo hacia la imagen, como la de .tip: dos triángulos sin girar, uno del borde desde el
@@ -1101,25 +1193,47 @@ p {
 .dupe-pop-status {
   color: var(--text-muted);
 }
+/* Crece desde la imagen a la que apunta: el lado de su flecha, a su altura. */
+.dupe-pop-left {
+  transform-origin: left var(--arrow-y, 50%);
+}
+.dupe-pop-right {
+  transform-origin: right var(--arrow-y, 50%);
+}
 @media (prefers-reduced-motion: no-preference) {
   .dupe-pop {
-    animation: dupe-pop-in var(--fade-in) ease-out;
+    animation: pop-in var(--fade-in) ease-out;
+    transition:
+      opacity var(--fade-out) ease-out,
+      scale var(--fade-out) ease-out;
+  }
+  /*
+   * Recién salido de la imagen: se va fundiendo ya, sin esperar quieto; si el puntero llega a él, la transición
+   * se deshace y vuelve. Sin animaciones, sigue a la vista hasta que se quita (DupeGallery).
+   */
+  .dupe-pop.is-closing {
+    opacity: 0;
+    scale: var(--pop-scale);
   }
   .dupe-pop.is-leaving {
-    animation: dupe-pop-out var(--fade-out) ease-in forwards;
+    animation: pop-out var(--fade-out) ease-out forwards;
   }
 }
-@keyframes dupe-pop-in {
+/*
+ * Entrada y salida de lo que flota sobre un control (.dupe-pop, .tip, los desplegables): desde --pop-scale y
+ * transparente, hacia su control (cada uno pone su transform-origin). Sin transform: con él, las piezas fijas de
+ * dentro se colocarían respecto a la burbuja.
+ */
+@keyframes pop-in {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    scale: var(--pop-scale);
   }
 }
-/* Al revés que la entrada: baja un poco mientras se funde. */
-@keyframes dupe-pop-out {
+@keyframes pop-out {
   to {
     opacity: 0;
-    transform: translateY(8px);
+    scale: var(--pop-scale);
   }
 }
 
@@ -1223,7 +1337,7 @@ p {
 /* Hero (Resumen): la única tarjeta con decoración de fondo y borde teñido del acento. */
 .hero {
   position: relative;
-  overflow: hidden;
+  overflow: clip;
   isolation: isolate;
   --card-gap: var(--space-1);
   border-color: var(--accent-frame);
@@ -1437,7 +1551,7 @@ p {
   font-variant-numeric: var(--num-variant);
   color: var(--text);
   background: var(--page);
-  border: 1px solid var(--border);
+  border: 1px solid var(--field-border);
   border-radius: var(--field-radius);
   /*
    * --input-nudge: cuánto sube el texto de los campos (menos relleno arriba que abajo), según la letra de cada
@@ -1538,7 +1652,7 @@ select {
     width: var(--stepper-w);
     border-left: 1px solid var(--border);
     border-radius: 0 calc(var(--field-radius) - 1px) calc(var(--field-radius) - 1px) 0;
-    overflow: hidden;
+    overflow: clip;
   }
 }
 .stepper-btn {
@@ -1595,7 +1709,7 @@ button:focus-visible {
 }
 input:focus,
 select:focus {
-  border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--field-border));
 }
 .check {
   display: flex;
@@ -1677,6 +1791,13 @@ select:focus {
  */
 .tip.is-leaving {
   pointer-events: none;
+}
+/* Crece desde su flecha: bajo el dato, desde arriba; encima, desde abajo. */
+.tip {
+  transform-origin: var(--arrow-x, 50%) top;
+}
+.tip.tip-above {
+  transform-origin: var(--arrow-x, 50%) bottom;
 }
 /* Una lista de equivalencias dentro de la burbuja (con iconos): una por línea, con aire arriba y abajo. */
 .tip-lines {
@@ -1866,10 +1987,18 @@ select:focus {
 /* Entra y sale como el popover de la galería; al salir, Tip.tsx la deja a la vista hasta que acaba. */
 @media (prefers-reduced-motion: no-preference) {
   .tip {
-    animation: dupe-pop-in var(--fade-in) ease-out;
+    animation: pop-in var(--fade-in) ease-out;
+    transition:
+      opacity var(--fade-out) ease-out,
+      scale var(--fade-out) ease-out;
+  }
+  /* Recién salido el ratón: se va fundiendo ya, y vuelve si llega a ella o al dato (como .dupe-pop). */
+  .tip.is-closing {
+    opacity: 0;
+    scale: var(--pop-scale);
   }
   .tip.is-leaving {
-    animation: dupe-pop-out var(--fade-out) ease-in forwards;
+    animation: pop-out var(--fade-out) ease-out forwards;
   }
 }
 
@@ -1879,7 +2008,7 @@ select:focus {
   font: inherit;
   font-size: 0.875rem;
   color: var(--text);
-  background: var(--surface-2);
+  background: var(--btn-bg);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 6px var(--btn-pad-x);
@@ -1900,23 +2029,38 @@ select:focus {
  * propia que deshaga esta.
  */
 .btn {
-  --btn-hover-bg: color-mix(in srgb, var(--text) 10%, var(--surface-2));
+  --btn-hover-bg: color-mix(in srgb, var(--text) 10%, var(--btn-bg));
   --btn-hover-border: var(--axis);
 }
 .btn:hover:not(:disabled) {
   border-color: var(--btn-hover-border);
   background: var(--btn-hover-bg);
 }
-/* El cambio entra y sale como las burbujas (--fade-in al entrar, --fade-out al salir), también en los atajos. */
+/*
+ * Pulsado: se encoge (--press-scale). El asa no, que al pulsarla coge la fila; tampoco lo desactivado. Con
+ * movimiento reducido, de golpe (la transición va abajo).
+ * will-change lo deja como una imagen mientras dura la pulsación: sin él, Chrome volvía a dibujar el texto al
+ * acabar de encoger, y cada letra se ajustaba a los píxeles por su cuenta (se veía encoger desordenado, más con
+ * escalado de pantalla). Solo pulsado, para no crear una capa por cada botón de la página.
+ */
+:is(.btn, .chip):active:not(:disabled, .drag-handle) {
+  scale: var(--press-scale);
+  will-change: scale;
+}
+/*
+ * El cambio entra y sale como las burbujas (--fade-in al entrar, --fade-out al salir), también en los atajos. El
+ * encogido, en su tiempo corto (--press-ms) en los dos sentidos: la duración del hover, en cuarto lugar, no lo toca.
+ */
 @media (prefers-reduced-motion: no-preference) {
   :is(.btn, .chip, .stepper-btn) {
     transition:
       background-color var(--fade-out) ease-in,
       border-color var(--fade-out) ease-in,
-      color var(--fade-out) ease-in;
+      color var(--fade-out) ease-in,
+      scale var(--press-ms) ease-out;
   }
   :is(.btn:hover:not(:disabled), .chip:hover, .stepper-btn:hover:not(:disabled)) {
-    transition-duration: var(--fade-in);
+    transition-duration: var(--fade-in), var(--fade-in), var(--fade-in), var(--press-ms);
     transition-timing-function: ease-out;
   }
 }
@@ -1927,30 +2071,39 @@ select:focus {
 }
 /*
  * Fantasma: sin borde, también al pasar el ratón; solo se tiñe, con un paso de tono que se vea (con --surface-2
- * era 1,15:1 y casi no se notaba), y el texto pasa a tinta.
+ * era 1,15:1 y casi no se notaba), y el texto pasa a tinta (--btn-ghost-hover-text). El tinte es tinta al 10 %,
+ * translúcida: da el mismo paso sobre la tarjeta y sobre la caja del editor (mezclado con --surface, dentro de
+ * la caja quedaba a 1,03:1 en claro).
  */
 .btn-ghost {
-  --btn-hover-bg: color-mix(in srgb, var(--text) 10%, var(--surface));
+  --btn-hover-bg: color-mix(in srgb, var(--text) 10%, transparent);
   --btn-hover-border: transparent;
+  --btn-ghost-hover-text: var(--text);
   background: transparent;
   border-color: transparent;
   color: var(--text-secondary);
 }
 .btn-ghost:hover:not(:disabled) {
-  color: var(--text);
+  color: var(--btn-ghost-hover-text);
 }
+/* «Eliminar …» al pie de un editor: fantasma en rojo, que sigue rojo al pasar el ratón. */
 .btn-danger {
+  --btn-ghost-hover-text: var(--danger);
   color: var(--danger);
 }
 /*
- * Botón de quitar (la X de RemoveGlyph) en todo el sitio: como el asa del planificador (--remove-w de ancho, todo
- * el alto de su fila, gris que pasa a tinta al pasar el ratón, como todo .btn-ghost), con la X centrada.
+ * Quitar y cerrar (la X de RemoveGlyph) en todo el sitio: un círculo del ancho de su columna (--remove-w, como el
+ * asa), centrado en su fila, gris que pasa a tinta al pasar el ratón (como todo .btn-ghost); el tinte del hover y
+ * el anillo de foco, redondos. Sparxie le pone las esquinas casi rectas de sus botones. En pantallas táctiles, la
+ * zona de toque crece aparte (abajo).
  */
 .btn-remove {
   display: grid;
   place-items: center;
-  align-self: stretch;
+  align-self: center;
   width: var(--remove-w);
+  height: var(--remove-w);
+  border-radius: 50%;
   padding: 0;
   color: var(--text-muted);
 }
@@ -1991,6 +2144,104 @@ select:focus {
     z-index: 1;
   }
 }
+/* == Diálogo de edición == */
+/*
+ * Diálogo de edición (EditDialog): una tarjeta (.card, con su cabecera; en Sparxie, una ventana) sobre la página,
+ * que queda tras un velo. Ancho para las filas de eventos; como mucho del alto de la ventana, y entonces se
+ * desplazan los campos, con la cabecera y el pie a la vista.
+ */
+.edit-dialog {
+  /* Para unos pocos campos (una fuente); .edit-dialog-wide, para filas de varias columnas (los eventos). */
+  width: min(30rem, 100% - 2 * var(--space-4));
+  max-width: none;
+  max-height: calc(100dvh - 2 * var(--space-4));
+  margin: auto;
+  color: var(--text);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  /* Visible: el calendario de un campo puede salir de la caja. Lo que se desplaza es el cuerpo. */
+  overflow: visible;
+  box-shadow: var(--shadow-pop);
+}
+.edit-dialog-wide {
+  width: min(48rem, 100% - 2 * var(--space-4));
+}
+/* .card lo haría visible aun cerrado. */
+.edit-dialog:not([open]) {
+  display: none;
+}
+/* Con valor de reserva: los navegadores anteriores a 2024 no pasan las variables a ::backdrop. */
+.edit-dialog::backdrop {
+  background: var(--backdrop, rgb(0 0 0 / 0.5));
+}
+/* La página de detrás no se desplaza (scrollbar-gutter ya reserva el hueco de la barra). */
+:root:has(.edit-dialog[open]) {
+  overflow: hidden;
+}
+.edit-dialog-body {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  min-height: 0;
+  /*
+   * Solo en vertical: en horizontal no hay nada que desplazar, y la fila que se quita, al irse en polvo hacia la
+   * derecha (row-dust), sacaba una barra durante la animación.
+   */
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Aire para los anillos de foco de los campos de los bordes, que el desplazamiento recortaría. */
+  margin: -4px;
+  padding: 4px;
+}
+/*
+ * Al pie, las acciones: «Eliminar …» a la izquierda y «Terminar edición» a la derecha (también sola). Sin raya: las
+ * separa el aire, el de entre bloques de una tarjeta (--space-5: el --card-gap de la rejilla más este relleno).
+ */
+.edit-dialog-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  /* En un móvil estrecho no caben los dos: «Terminar edición» baja a su línea, a la derecha. */
+  flex-wrap: wrap;
+  padding-top: calc(var(--space-5) - var(--card-gap));
+}
+.edit-dialog-footer > :last-child {
+  margin-left: auto;
+}
+@media (width <= 560px) {
+  .edit-dialog {
+    width: calc(100% - 2 * var(--space-2));
+    max-height: calc(100dvh - 2 * var(--space-2));
+  }
+}
+/*
+ * Solo se funde, al abrirse y al cerrarse (EditDialog espera al final para cerrarlo): con transform, las burbujas
+ * fijas de dentro se colocarían respecto al diálogo. Mientras se va, no reacciona a más clics.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .edit-dialog[open],
+  .edit-dialog[open]::backdrop {
+    animation: dialog-in var(--fade-in) ease-out;
+  }
+  .edit-dialog.is-leaving,
+  .edit-dialog.is-leaving::backdrop {
+    animation: dialog-out var(--fade-out) ease-out forwards;
+  }
+}
+.edit-dialog.is-leaving {
+  pointer-events: none;
+}
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes dialog-out {
+  to {
+    opacity: 0;
+  }
+}
+
 /* == Fechas destacadas == */
 /*
  * Bajo la fecha y sus atajos, con el aire entre grupos. Cada fecha es una hoja de calendario (el mes en una
@@ -2111,7 +2362,7 @@ select:focus {
   flex: none;
   display: grid;
   width: 44px;
-  overflow: hidden;
+  overflow: clip;
   text-align: center;
   color: light-dark(var(--text), var(--surface));
   background: light-dark(var(--surface), var(--text));
@@ -2167,11 +2418,11 @@ select:focus {
  * vez no hace nada (antes el hover le quitaba el borde rojo). Sparxie mantiene su hover de botón.
  */
 :where(:root[data-skin='aha']) .btn.key-date {
-  --btn-hover-bg: var(--surface-2);
+  --btn-hover-bg: var(--btn-bg);
   --btn-hover-border: var(--accent-hover);
 }
 .btn.key-date[aria-pressed='true'] {
-  --btn-hover-bg: var(--surface-2);
+  --btn-hover-bg: var(--btn-bg);
   --btn-hover-border: var(--accent);
   cursor: default;
 }
@@ -2220,9 +2471,6 @@ select:focus {
 .source:last-child > .source-row:last-child {
   padding-bottom: 0;
 }
-.source:last-child > .inline-edit:last-child {
-  margin-bottom: 0;
-}
 .source {
   border-top: 1px solid var(--grid);
 }
@@ -2233,8 +2481,27 @@ select:focus {
   align-items: center;
   padding: 8px 0;
 }
-.source.is-off .source-main,
-.source.is-off .source-contrib {
+/*
+ * Lo que no cuenta: una fuente desactivada, y de un evento que no llega a la fecha objetivo, sus recompensas en
+ * la tabla y sus Jades y Pases en el editor. El texto pasa entero al gris del texto apagado (los tokens de
+ * texto se redefinen dentro, así que también los campos y lo secundario), que sigue a ≥4,5:1; con opacity 0,5
+ * bajaba a 2,5–3,5:1. Los iconos, que no son texto, se apagan a la mitad.
+ */
+:is(
+  .source.is-off :is(.source-main, .source-contrib),
+  .patch-table .is-ignored .patch-reward,
+  .event-row.is-ignored > :is(.event-jades, .event-passes)
+) {
+  --text: var(--text-muted);
+  --text-secondary: var(--text-muted);
+  color: var(--text-muted);
+}
+:is(
+    .source.is-off :is(.source-main, .source-contrib),
+    .patch-table .is-ignored .patch-reward,
+    .event-row.is-ignored > :is(.event-jades, .event-passes)
+  )
+  img {
   opacity: 0.5;
 }
 .source-name {
@@ -2249,27 +2516,6 @@ select:focus {
   font-size: 0.875rem;
   white-space: nowrap;
   font-variant-numeric: var(--num-variant);
-}
-/*
- * Editor en el sitio («Editar» de una fuente o de una versión): una caja con los campos y, al pie, la opción de
- * la izquierda y «Eliminar …» a la derecha.
- */
-.inline-edit {
-  display: grid;
-  gap: 10px;
-  background: var(--surface-2);
-  border-radius: 8px;
-  padding: 12px;
-}
-.source > .inline-edit {
-  margin-bottom: 10px;
-}
-.inline-edit-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
 }
 @media (width <= 520px) {
   .source-row {
@@ -2312,12 +2558,15 @@ select:focus {
  */
 .switch span {
   --knob: var(--switch-knob-off);
+  /* El hueco del botón: 20px, o un 12 % más mientras se pulsa (abajo). */
+  --knob-w: 20px;
   position: absolute;
   inset: 0;
   background-color: transparent;
   box-shadow: inset 0 0 0 1.5px var(--text-muted);
-  background-image: radial-gradient(circle closest-side, var(--knob) calc(100% - 2.5px), transparent calc(100% - 2px));
-  background-size: 20px 100%;
+  /* Elipse: en su hueco de 20 × 20 es un círculo, y se estira con él. */
+  background-image: radial-gradient(ellipse closest-side, var(--knob) calc(100% - 2.5px), transparent calc(100% - 2px));
+  background-size: var(--knob-w) 100%;
   background-position: 0 50%;
   background-repeat: no-repeat;
   border-radius: 999px;
@@ -2328,8 +2577,16 @@ select:focus {
     transition:
       background-color 0.15s,
       box-shadow 0.15s,
-      background-position 0.15s;
+      background-position 0.15s,
+      background-size 0.15s;
   }
+}
+/*
+ * Pulsado, el botón se estira un 12 % hacia el otro lado, como si tomara impulso para cruzar; al soltar, cruza y
+ * recupera su forma. Sparxie, con su botón cuadrado de tamaño fijo, no se estira.
+ */
+.switch input:active + span {
+  --knob-w: 22.4px;
 }
 /*
  * Encendido: pista rellena en --switch-on (el verde musgo de Aha) y botón en --switch-knob-on, no en el acento:
@@ -2412,13 +2669,18 @@ tfoot td {
 }
 /* == Filas reordenables == */
 /* Las filas del plan y de los eventos (SortableRows.tsx): se arrastran por su asa y se deshacen en polvo al quitarlas. */
-/* Asa para arrastrar y reordenar: 10px de puntos y su relleno, del ancho de la ✕ (--remove-w). */
+/*
+ * Asa para arrastrar y reordenar: 10px de puntos y su relleno, del ancho de la ✕ (--remove-w) y del alto de su
+ * fila, que es la zona por la que se agarra. Con los extremos redondos, como la ✕ de la misma fila (un círculo):
+ * una cápsula. Sparxie le pone las esquinas casi rectas de sus botones.
+ */
 .drag-handle {
   display: grid;
   width: var(--remove-w);
   padding: 2px 0;
   place-items: center;
   align-self: stretch;
+  border-radius: 999px;
   color: var(--text-muted);
   cursor: grab;
   touch-action: none;
@@ -2557,7 +2819,7 @@ tfoot td {
   width: var(--pull-thumb);
   height: var(--pull-thumb);
   border-radius: 8px;
-  overflow: hidden;
+  overflow: clip;
   background: var(--surface-2);
   color: var(--text-muted);
   font-size: 1rem;
@@ -2615,7 +2877,7 @@ tfoot td {
   z-index: 1;
   top: 50%;
   left: 9px;
-  transform: translateY(-50%);
+  translate: 0 -50%;
   transform-origin: left top;
   font-size: 1rem;
   line-height: 1.2;
@@ -2623,11 +2885,14 @@ tfoot td {
   pointer-events: none;
 }
 .pull-field:is(:focus-within, .has-value) .field-label {
-  transform: translateY(calc(7px - var(--pull-thumb) / 2)) scale(0.6875);
+  translate: 0 calc(7px - var(--pull-thumb) / 2);
+  scale: 0.6875;
 }
 @media (prefers-reduced-motion: no-preference) {
   .pull-field .field-label {
-    transition: transform 150ms ease;
+    transition:
+      translate 150ms ease,
+      scale 150ms ease;
   }
 }
 .pull-row .pull-field input {
@@ -2696,36 +2961,75 @@ tfoot td {
 :where(:root[data-skin='sparxie']) .combo-value {
   font-family: var(--font-type);
 }
-.combo-list {
+/*
+ * Listas desplegables bajo un control: las sugerencias del buscador (NameCombobox) y el menú «Subir / Bajar» del
+ * asa de una fila (SortableRows). Misma caja y mismas opciones; la elegida (o la enfocada), con el acento.
+ */
+:is(.combo-list, .move-menu) {
   position: absolute;
   z-index: var(--z-list);
   top: calc(100% + 4px);
   left: 0;
+  margin: 0;
+  padding: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-pop);
+  /* Crecen desde su control, que queda encima a la izquierda. Al cerrarse se quitan de golpe. */
+  transform-origin: left top;
+}
+@media (prefers-reduced-motion: no-preference) {
+  :is(.combo-list, .move-menu) {
+    animation: pop-in var(--fade-in) ease-out;
+  }
+}
+.combo-list {
   /* Tan ancha como el nombre más largo, para no cortarlo; como mínimo, como el campo. */
   width: max-content;
   min-width: 100%;
   max-width: min(24rem, calc(100vw - 32px));
   max-height: 16rem;
   overflow-y: auto;
-  margin: 0;
-  padding: 4px;
+  /* Al llegar al final de la lista con la rueda, la página no sigue desplazándose. */
+  overscroll-behavior: contain;
   list-style: none;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-pop);
 }
-.combo-option {
+:is(.combo-option, .move-menu [role='menuitem']) {
   padding: 6px 8px;
   border-radius: 6px;
   cursor: pointer;
   white-space: nowrap;
+}
+.combo-option {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.combo-option[aria-selected='true'] {
+:is(.combo-option[aria-selected='true'], .move-menu [role='menuitem']:is(:hover, :focus-visible)) {
   background: var(--surface-2);
   color: var(--accent-text);
+}
+/* El menú de mover: una columna de opciones, del ancho de la más larga. */
+.move-menu {
+  display: grid;
+  min-width: 7rem;
+}
+.move-menu [role='menuitem'] {
+  font: inherit;
+  text-align: left;
+  color: var(--text);
+  background: none;
+  border: 0;
+}
+/* La opción que no se puede usar (subir la primera fila, bajar la última). */
+.move-menu [role='menuitem']:disabled {
+  color: var(--text-muted);
+  cursor: default;
+}
+/* Con el menú abierto, su fila y su tarjeta pasan por encima de las de debajo (como con la lista del buscador). */
+.sortable-row:has(> .move-menu) {
+  position: relative;
+  z-index: 3;
 }
 /* Lo escrito no coincide con ningún nombre: aviso, no se puede elegir. */
 .combo-empty {
@@ -2733,8 +3037,11 @@ tfoot td {
   color: var(--text-muted);
   white-space: nowrap;
 }
-/* Con la lista abierta, la tarjeta pasa por encima de las de debajo (algunas crean su propio apilamiento). */
-.card:has(.combo.is-open) {
+/*
+ * Con la lista abierta, la tarjeta pasa por encima de las de debajo (algunas crean su propio apilamiento). Solo las
+ * de la página: el diálogo de edición, también tarjeta, ya está por encima de todo y no debe dejar de ser fijo.
+ */
+.main .card:has(.combo.is-open, .move-menu) {
   position: relative;
   z-index: var(--z-raised);
 }
@@ -2939,13 +3246,20 @@ tfoot td {
 .content-sync-row .btn {
   white-space: nowrap;
 }
+/*
+ * Junto al botón, en un mismo hueco y uno tras otro (ContentSync): el spinner mientras descarga; al terminar bien,
+ * una ✓ que late una vez; y, cuando se va, la cuenta atrás. Mide lo que la cuenta atrás, que es lo más ancho.
+ */
 .content-sync-wait {
-  display: inline-flex;
+  display: inline-grid;
+  justify-items: start;
   align-items: center;
-  gap: 8px;
   font-size: 0.875rem;
   color: var(--text-secondary);
   font-variant-numeric: var(--num-variant);
+}
+.content-sync-wait > * {
+  grid-area: 1 / 1;
 }
 /* Spinner: aro con un tramo de acento girando; más pequeño que el alto del botón. */
 .spinner {
@@ -2965,6 +3279,44 @@ tfoot td {
 @media (prefers-reduced-motion: reduce) {
   .spinner {
     animation-duration: 2.4s;
+  }
+}
+/*
+ * Cada pieza sale fundiéndose con algo de desenfoque y escala; la que entra lo hace cuando la otra ya se ha ido
+ * (con el retraso de su salida), así nunca se ven dos a la vez. La cuenta atrás, texto, apenas escala.
+ */
+.content-sync-wait > .is-off {
+  opacity: 0;
+  filter: blur(2px);
+  scale: var(--off-scale, 0.6);
+}
+.content-sync-time {
+  --off-scale: 0.9;
+  transform-origin: left center;
+}
+.sync-check {
+  color: var(--text);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .content-sync-wait > * {
+    transition:
+      opacity var(--fade-out) ease-in,
+      filter var(--fade-out) ease-in,
+      scale var(--fade-out) ease-in;
+  }
+  .content-sync-wait > :not(.is-off) {
+    transition-duration: var(--fade-in);
+    transition-timing-function: ease-out;
+    transition-delay: var(--fade-out);
+  }
+  /* Ya dentro, un latido: confirma que ha terminado bien. */
+  .sync-check:not(.is-off) {
+    animation: check-pulse 450ms ease-out calc(var(--fade-out) + var(--fade-in));
+  }
+}
+@keyframes check-pulse {
+  40% {
+    scale: 1.3;
   }
 }
 .content-sync-error {
@@ -3192,7 +3544,7 @@ tfoot td {
   width: var(--account-portrait);
   height: var(--account-portrait);
   border-radius: 50%;
-  overflow: hidden;
+  overflow: clip;
   background: var(--surface-2);
   color: var(--text-muted);
 }
@@ -3343,10 +3695,7 @@ tfoot td {
 .patch-table :is(th, td):not(:first-child) {
   white-space: nowrap;
 }
-/* Evento que no cuenta: se apaga lo que no suma, como en el editor; el porqué va bajo el nombre. */
-.patch-table .is-ignored .patch-reward {
-  opacity: 0.5;
-}
+/* Evento que no cuenta: se apaga lo que no suma, como en el editor (ver «Lo que no cuenta»); el porqué va bajo el nombre. */
 /*
  * En el móvil, en tres columnas el nombre se partía en tres o cuatro líneas: la fecha baja bajo el nombre (como
  * la línea de detalle de las fuentes) y las recompensas quedan a la derecha, a lo alto de los dos.
@@ -3379,11 +3728,23 @@ tfoot td {
     justify-content: flex-end;
   }
 }
-/* Editando: el número y el inicio de la versión. */
+/*
+ * Editando: el número y el inicio de la versión. Tras el canal de las asas, siempre (también sin eventos): así
+ * empiezan en la misma línea que los nombres de los eventos y «+ Evento», y nada salta al añadir el primero. El
+ * título y «Eliminar versión» quedan en el borde, como encabezado y pie.
+ */
 .patch-fields {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+  padding-left: var(--row-gutter);
+}
+/*
+ * Los eventos, bajo los campos de la versión: son otro bloque, no otro grupo de campos, así que 20px
+ * (--space-5) en vez de los 12 de la rejilla del diálogo.
+ */
+.patch-fields + .event-list {
+  margin-top: calc(var(--space-5) - var(--space-3));
 }
 .patch-fields .date-field {
   width: var(--date-field-w);
@@ -3434,12 +3795,9 @@ tfoot td {
   text-align: right;
 }
 /*
- * Evento que no cuenta: se apagan solo las cantidades, que son lo que no suma; el nombre y la fecha (la causa,
- * lo que hay que corregir) quedan a contraste normal.
+ * Evento que no cuenta: se apagan solo las cantidades, que son lo que no suma (ver «Lo que no cuenta»); el nombre
+ * y la fecha (la causa, lo que hay que corregir) quedan a contraste normal.
  */
-.event-row.is-ignored > :is(.event-jades, .event-passes) {
-  opacity: 0.5;
-}
 /* Por qué un evento no cuenta, bajo su nombre: en la tabla y en el editor. */
 .event-status {
   display: block;
@@ -3454,10 +3812,22 @@ tfoot td {
   grid-column: 2 / -1;
   margin: -4px 0 4px;
 }
-/* «+ Evento»: un botón del ancho y el alto de una fila, en el hueco donde aparecerá la nueva. */
+/*
+ * Pie de la lista de eventos (en el diálogo): «+ Evento», un .btn normal, y el total de la versión, a la derecha.
+ */
+.event-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+/* Bajo las filas, 12px (con los 6 de la lista): es otra pieza, no una fila más. */
+.event-rows + .event-foot {
+  margin-top: 6px;
+}
+/* Donde los nombres y los campos de la versión: tras el canal de las asas, haya filas o no. */
 .btn-add-event {
-  justify-self: stretch;
-  min-height: var(--field-compact-h);
+  margin-left: var(--row-gutter);
 }
 /*
  * Fecha de cobro: borde y relleno (9px), icono con su aire (28px) y la fecha más ancha. En Figtree, 92px
@@ -3727,7 +4097,7 @@ tfoot td {
     width: 1px;
     height: 1px;
     overflow: hidden;
-    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
     white-space: nowrap;
   }
   .pack-row > .pack-name {
@@ -3858,14 +4228,15 @@ tfoot td {
   left: 24px;
   bottom: 24px;
   width: max-content;
-  max-width: min(32rem, calc(100vw - 48px));
+  /* 100%: el de la ventana sin la barra de desplazamiento (es fixed); 100vw la incluía. */
+  max-width: min(32rem, calc(100% - 48px));
   pointer-events: none;
 }
 @media (width <= 560px) {
   .toast-region {
     left: 16px;
     bottom: 16px;
-    max-width: min(32rem, calc(100vw - 32px));
+    max-width: min(32rem, calc(100% - 32px));
   }
 }
 .toast {
@@ -3878,7 +4249,10 @@ tfoot td {
   font-size: 0.875rem;
   pointer-events: auto;
 }
-/* Siempre en una línea: si no cabe, se recorta el nombre entre «» (ToastName), nunca lo de alrededor. */
+/*
+ * Siempre en una línea: si no cabe, se recorta con "…" el nombre entre «», nunca lo de alrededor. El recorte es
+ * solo visual (text-overflow): el nombre sigue entero en la página.
+ */
 .toast-text {
   display: flex;
   flex: 1;
@@ -3893,6 +4267,7 @@ tfoot td {
 .toast-name {
   min-width: 0;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 /* "Deshacer": la acción a la que hay que llegar antes de que se vaya, con el color del acento. */
 .toast-action {
@@ -3901,8 +4276,6 @@ tfoot td {
   white-space: nowrap;
 }
 .toast .btn-remove {
-  align-self: center;
-  height: var(--control-h);
   /*
    * Corrección óptica: centrado al píxel, el ✕ parecía alto al lado de un texto casi todo en minúsculas,
    * cuyo centro queda más abajo que el de las mayúsculas. El padding baja el glifo sin mover el botón.
@@ -4039,10 +4412,10 @@ tfoot td {
   border-radius: 2px;
   padding: 4px 10px;
 }
-:where(:root[data-skin='sparxie']) .tab:not([aria-selected='true']):hover {
+:where(:root[data-skin='sparxie']) .tab:not([aria-current='page']):hover {
   background: color-mix(in srgb, var(--chip) 85%, var(--text));
 }
-:where(:root[data-skin='sparxie']) .tab[aria-selected='true'] {
+:where(:root[data-skin='sparxie']) .tab[aria-current='page'] {
   color: var(--surface-2);
   background: var(--text);
 }
@@ -4073,6 +4446,13 @@ tfoot td {
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 9'%3E%3Cpath d='M0 0h1v1h1v1h1v1h1v1h1V3h1V2h1V1h1V0h1v1H8v1H7v1H6v1H5v1h1v1h1v1h1v1h1v1H8V8H7V7H6V6H5V5H4v1H3v1H2v1H1v1H0V8h1V7h1V6h1V5h1V4H3V3H2V2H1V1H0z'/%3E%3C/svg%3E")
     0 0 / 100% 100%;
 }
+/* En el diálogo de edición, la caja de cierre es de verdad: su X (.edit-dialog-close) ocupa el sitio de la de adorno. */
+:where(:root[data-skin='sparxie']) .edit-dialog .card-header::before {
+  content: none;
+}
+:where(:root[data-skin='sparxie']) .edit-dialog-close {
+  order: -1;
+}
 /* Título a la derecha, en la Chicago de los títulos, a 16px (a 22px «Plan de tiradas» llenaba la barra). */
 :where(:root[data-skin='sparxie']) .card-header h2 {
   order: 2;
@@ -4082,7 +4462,7 @@ tfoot td {
   font-weight: 400;
   line-height: 1;
 }
-:where(:root[data-skin='sparxie']) .card-header .btn {
+:where(:root[data-skin='sparxie']) .card-header .btn:not(.btn-remove) {
   padding: 3px 10px 2px;
   font-size: 0.8125rem;
 }
@@ -4093,7 +4473,8 @@ tfoot td {
 }
 :where(:root[data-skin='sparxie']) .hero-value {
   font-family: var(--font-display);
-  font-size: clamp(3.5rem, 9vw, 5rem);
+  /* Con una parte en rem: solo en vw, el zoom del navegador no la agrandaría. */
+  font-size: clamp(3.5rem, 1rem + 6.4vw, 5rem);
   font-weight: 400;
   line-height: 0.9;
   letter-spacing: -0.025em;
@@ -4129,7 +4510,6 @@ tfoot td {
 :where(:root[data-skin='sparxie']) :is(input[type='number'], input[type='text'], input[type='search'], select) {
   font-family: var(--font-type);
   background-color: var(--surface);
-  border-color: var(--border);
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text) 10%, transparent);
 }
 /* Calendario: esquinas casi rectas, como las ventanas, y la misma letra de máquina de escribir. */
@@ -4137,16 +4517,16 @@ tfoot td {
   --adp-border-radius: 3px;
   --adp-cell-border-radius: 2px;
 }
-/* Desplegables, editor de fuentes, fila arrastrada y miniatura de cono: esquinas casi rectas. */
-:where(:root[data-skin='sparxie']) :is(.combo-list, .inline-edit, .pull-portrait-lightCone),
+/* Desplegables (el buscador y el menú de mover), fila arrastrada y miniatura de cono: esquinas casi rectas. */
+:where(:root[data-skin='sparxie']) :is(.combo-list, .move-menu, .pull-portrait-lightCone),
 :where(:root[data-skin='sparxie']) .sortable-row.is-dragging::before {
   border-radius: 3px;
 }
-:where(:root[data-skin='sparxie']) :is(.combo-option, .dupe-badge, .eidolon-badge) {
+:where(:root[data-skin='sparxie']) :is(.combo-option, .move-menu [role='menuitem'], .dupe-badge, .eidolon-badge) {
   border-radius: 2px;
 }
 :where(:root[data-skin='sparxie']) :is(input, select):focus {
-  border-color: var(--border);
+  border-color: var(--field-border);
 }
 
 /* Botones biselados: luz arriba a la izquierda y sombra abajo a la derecha; al pulsar se invierten. */
@@ -4157,7 +4537,7 @@ tfoot td {
   border-radius: 3px;
 }
 :where(:root[data-skin='sparxie']) .btn {
-  --btn-hover-bg: color-mix(in srgb, var(--surface-2) 88%, var(--text));
+  --btn-hover-bg: color-mix(in srgb, var(--btn-bg) 88%, var(--text));
   --btn-hover-border: var(--border);
   box-shadow:
     inset -1px -1px 0 var(--bevel-dark),
@@ -4256,4 +4636,59 @@ tfoot td {
   border: 1px solid var(--border);
   border-radius: 3px;
   box-shadow: var(--shadow-win);
+}
+
+/* == Colores forzados == */
+/*
+ * Contraste alto de Windows (forced-colors): el navegador pone los colores del sistema y quita sombras y
+ * degradados. Aquí solo va lo que se perdería: estados pintados con fondo o sombra, que pasan a un contorno en
+ * el color de selección (Highlight), y lo dibujado con fondo o degradado, en el color del texto del sistema.
+ * Al final del archivo, para ganar a las capas de los temas por orden.
+ */
+@media (forced-colors: active) {
+  /* Lo seleccionado o pulsado: el contorno lo dice (su fondo se pierde). */
+  :is(
+    .segment[aria-pressed='true'],
+    .key-date[aria-pressed='true'],
+    .tab[aria-current='page'],
+    .combo-option[aria-selected='true'],
+    .move-menu [role='menuitem']:is(:hover, :focus-visible),
+    .air-datepicker-cell.-selected-
+  ) {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+  /* La fila arrastrada: su recuadro es fondo y sombra. */
+  .sortable-row.is-dragging::before {
+    outline: 2px solid Highlight;
+  }
+  /* Iconos de máscara (tipo de fila, Vías): pintan su fondo con el color del texto, que aquí ya es el del sistema. */
+  :is(.glyph, .path-icon) {
+    forced-color-adjust: none;
+  }
+  /*
+   * Interruptor: la pista apagada es una sombra y el botón, un degradado, así que desaparecía entero. Con los
+   * colores del sistema puestos a mano: apagado, contorno y botón en el color del texto; encendido, relleno
+   * en el de selección.
+   */
+  .switch span {
+    forced-color-adjust: none;
+    --knob: CanvasText;
+    background-color: Canvas;
+    box-shadow: inset 0 0 0 1.5px CanvasText;
+  }
+  .switch input:checked + span {
+    --knob: HighlightText;
+    background-color: Highlight;
+    box-shadow: none;
+  }
+  /* Cristales de Eidolón marcados: relleno en el color de selección. */
+  .eidolon-shard[aria-pressed='true'] :is(.shard-face, .shard-side) {
+    fill: Highlight;
+    stroke: Highlight;
+  }
+  /* Los desplegables, con la flecha del sistema: la propia es un degradado. */
+  select {
+    appearance: auto;
+  }
 }

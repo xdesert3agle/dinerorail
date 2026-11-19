@@ -12,6 +12,7 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { useLayer } from './layer';
 import { reducedMotion } from './motion';
 
 interface Props {
@@ -54,17 +55,28 @@ const ARROW_INSET = 24;
 const HOVER_DELAY = 400;
 /**
  * Margen al salir del dato con el ratón antes de cerrarla: da tiempo a cruzar el hueco hasta la burbuja, que se
- * puede recorrer (WCAG 1.4.13: quien usa lupa tiene que poder mover el puntero encima para leerla).
+ * puede recorrer (WCAG 1.4.13: quien usa lupa tiene que poder mover el puntero encima para leerla). Se va fundiendo
+ * desde el primer momento, y vuelve si el puntero llega a ella o al dato antes de que acabe.
  */
 const LEAVE_GRACE = 150;
+/**
+ * Encadenado: con una burbuja abierta, o cerrada hace menos de WARM_MS, la siguiente que se pasa con el ratón sale
+ * sin esperar HOVER_DELAY. La espera filtra los pasos casuales del ratón; quien va de un término a otro ya está
+ * leyendo. Lo comparten todas las burbujas de la página.
+ */
+const WARM_MS = 300;
+let openTips = 0;
+let lastTipClosed = Number.NEGATIVE_INFINITY;
+const warm = () => openTips > 0 || performance.now() - lastTipClosed < WARM_MS;
 
 /**
  * Explicación de un dato que se abre en todos los dispositivos (el `title` solo sale con el ratón):
  * - Ratón: al pasar por encima, tras un momento (HOVER_DELAY); sigue abierta con el puntero sobre la burbuja.
- * - Teclado: al enfocar el dato (es enfocable); Esc la cierra.
+ * - Teclado: al enfocar el dato (es enfocable); Esc la cierra, e Intro o espacio la cierran y la abren.
  * - Táctil: al tocar el dato; se cierra al volver a tocarlo o al tocar fuera.
  * Para los lectores de pantalla el texto es la descripción del dato (aria-describedby), siempre presente.
- * La burbuja va en un portal, fija bajo el dato (o encima si no cabe), para que ninguna tarjeta la recorte.
+ * La burbuja va en un portal, fija bajo el dato (o encima si no cabe), para que ninguna tarjeta la recorte; con un
+ * diálogo abierto, dentro de él (layer.ts).
  */
 export function Tip({
   content,
@@ -76,12 +88,15 @@ export function Tip({
   id: givenId,
 }: Props) {
   const ownId = useId();
+  const layer = useLayer();
   const id = givenId ?? ownId;
   const triggerRef = useRef<HTMLElement | null>(null);
   const bubbleRef = useRef<HTMLSpanElement | null>(null);
   const [open, setOpen] = useState(false);
   // Cerrada pero aún fundiéndose (como el popover de la galería): sigue a la vista hasta que acaba la animación.
   const [leaving, setLeaving] = useState(false);
+  // Abierta, pero el ratón ha salido hace menos de LEAVE_GRACE: se va fundiendo y vuelve si regresa.
+  const [closing, setClosing] = useState(false);
   const [pos, setPos] = useState<CSSProperties>({ visibility: 'hidden' });
   // Encima del dato cuando no cabe debajo: la flecha pasa abajo, apuntando hacia él.
   const [above, setAbove] = useState(false);
@@ -123,10 +138,23 @@ export function Tip({
     };
   }, [open, side]);
 
+  // Cuenta para el encadenado (warm): abierta, y al cerrarse, cuándo.
+  useEffect(() => {
+    if (!open) return;
+    openTips++;
+    return () => {
+      openTips--;
+      lastTipClosed = performance.now();
+    };
+  }, [open]);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close();
+      if (e.key !== 'Escape') return;
+      // Esc cierra solo la burbuja: sin preventDefault, cerraría también el diálogo en el que esté.
+      e.preventDefault();
+      close();
     };
     const onDown = (e: PointerEvent) => {
       const target = e.target as Node;
@@ -150,11 +178,16 @@ export function Tip({
     setOpen(true);
     setLeaving(false);
   };
-  // Con movimiento reducido no hay animación de salida (ni su animationend): se oculta al momento.
-  const close = () => {
+  /*
+   * `fade`: con su animación de salida (al irse el foco, Esc, un toque fuera). Tras salir el ratón ya se ha fundido
+   * (closing), así que se quita sin más. Con movimiento reducido no hay animación de salida (ni su animationend):
+   * se oculta al momento.
+   */
+  const close = (fade = true) => {
+    setClosing(false);
     if (!openRef.current) return;
     setOpen(false);
-    if (!reducedMotion()) setLeaving(true);
+    if (fade && !reducedMotion()) setLeaving(true);
   };
   // Con el ratón espera un poco: al cruzar por encima de varios datos no van saltando burbujas.
   const hoverTimer = useRef<number | undefined>(undefined);
@@ -164,7 +197,13 @@ export function Tip({
   const cancelLeave = () => window.clearTimeout(leaveTimer.current);
   const closeSoon = () => {
     cancelLeave();
-    leaveTimer.current = window.setTimeout(close, LEAVE_GRACE);
+    if (openRef.current) setClosing(true);
+    leaveTimer.current = window.setTimeout(() => close(false), LEAVE_GRACE);
+  };
+  /** El puntero vuelve al dato o a la burbuja antes de que se vaya: se queda. */
+  const stay = () => {
+    cancelLeave();
+    setClosing(false);
   };
   useEffect(
     () => () => {
@@ -181,16 +220,34 @@ export function Tip({
           triggerRef.current = el;
         }}
         className={control ? className : className ? `tip-trigger ${className}` : 'tip-trigger'}
+        /*
+         * Sin `control`, el dato es un botón que abre su explicación (un toggletip): enfocable, dice si está abierta
+         * y se abre o cierra con Intro o espacio. La explicación sigue también como descripción: va en un portal,
+         * lejos del dato, y el lector no la encontraría leyendo a continuación.
+         */
         tabIndex={control ? undefined : 0}
+        role={control ? undefined : 'button'}
+        aria-expanded={control ? undefined : open}
         aria-describedby={control ? undefined : id}
+        onKeyDown={
+          control
+            ? undefined
+            : (e) => {
+                if (e.key !== 'Enter' && e.key !== ' ') return;
+                e.preventDefault();
+                if (open) close();
+                else show();
+              }
+        }
         onPointerDown={(e) => {
           if (e.pointerType !== 'mouse') lastTouch.current = Date.now();
         }}
         onPointerEnter={(e) => {
           if (e.pointerType !== 'mouse') return;
           cancelHover();
-          cancelLeave();
-          hoverTimer.current = window.setTimeout(show, HOVER_DELAY);
+          stay();
+          if (warm()) show();
+          else hoverTimer.current = window.setTimeout(show, HOVER_DELAY);
         }}
         onPointerLeave={(e) => {
           if (e.pointerType !== 'mouse') return;
@@ -201,7 +258,7 @@ export function Tip({
           // En un control, el clic del ratón también lo enfoca: solo se abre al llegar con el teclado.
           if (control ? e.target.matches(':focus-visible') : !byTouch()) show();
         }}
-        onBlur={close}
+        onBlur={() => close()}
         onClick={(e) => {
           // Con el ratón no hace nada (abre el hover): dentro de un <label>, el clic sigue enfocando su campo.
           if (!byTouch()) return;
@@ -228,22 +285,22 @@ export function Tip({
           ref={bubbleRef}
           id={id}
           role="tooltip"
-          className={`tip${above ? ' tip-above' : ''}${open ? '' : ' is-leaving'}`}
+          className={`tip${above ? ' tip-above' : ''}${open ? '' : ' is-leaving'}${closing ? ' is-closing' : ''}`}
           hidden={!open && !leaving}
           style={pos}
           onPointerEnter={(e) => {
-            if (e.pointerType === 'mouse') cancelLeave();
+            if (e.pointerType === 'mouse') stay();
           }}
           onPointerLeave={(e) => {
             if (e.pointerType === 'mouse') closeSoon();
           }}
           onAnimationEnd={(e) => {
-            if (e.animationName === 'dupe-pop-out') setLeaving(false);
+            if (e.animationName === 'pop-out') setLeaving(false);
           }}
         >
           {content}
         </span>,
-        document.body,
+        layer,
       )}
     </>
   );

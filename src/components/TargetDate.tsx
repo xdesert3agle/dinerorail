@@ -1,10 +1,11 @@
-import { useId, useState } from 'react';
+import { useId, useLayoutEffect, useRef, useState } from 'react';
 import { addDays, toDayNum, WEEKDAYS, weekdayOf } from '../engine/dates';
 import { byVersion, patchText, phaseText, upcomingKeyDates, type KeyDate } from '../engine/keyDates';
 import type { AppState } from '../engine/types';
 import type { ChangeState } from '../state/store';
 import { DateField } from './DateField';
 import { fmtCountdown, fmtDayMonth, fmtMonth } from './format';
+import { reducedMotion } from './motion';
 
 interface Props {
   state: AppState;
@@ -20,6 +21,24 @@ const QUICK_TARGETS = [
 /** Versiones a la vista antes de «Ver más»: solo la próxima; las demás, al desplegar. */
 const SHOWN_VERSIONS = 1;
 
+/**
+ * Lo que tarda la lista en crecer al desplegar y en encogerse al plegar (un 20 % menos: lo que se deja ya no
+ * interesa), y su curva: de entrada y salida, porque es un movimiento (lo de debajo se desplaza). La quíntica:
+ * arranca y frena muy suave y el tramo central va rápido (se probaron ease-in-out y la cúbica, más blandas).
+ */
+const REVEAL_MS = 240;
+const HIDE_MS = 190;
+const MOVE_EASING = 'cubic-bezier(0.83, 0, 0.17, 1)';
+
+/**
+ * Hasta dónde llega, desde arriba de la tabla, la fila `count` de versiones (la última que queda a la vista): el
+ * alto de la tabla con solo esas filas.
+ */
+const rowsEnd = (table: HTMLElement, count: number) => {
+  const rows = table.querySelectorAll('.key-date-row:not(.key-date-head)');
+  return (rows[count - 1]?.getBoundingClientRect().bottom ?? 0) - table.getBoundingClientRect().top;
+};
+
 /** "1 versión más" o "7 versiones más". */
 const moreText = (n: number) => `${n} ${n === 1 ? 'versión' : 'versiones'} más`;
 
@@ -33,11 +52,64 @@ export function TargetDate({ state, today, onChange }: Props) {
   const keyDates = upcomingKeyDates(today);
   const versions = byVersion(keyDates);
   const [expanded, setExpanded] = useState(false);
-  // Si la fecha objetivo es de una versión oculta, se ven todas: la marcada no puede quedar escondida.
-  const targetHidden =
-    versions.findIndex((v) => v.first?.date === state.targetDate || v.second?.date === state.targetDate) >=
-    SHOWN_VERSIONS;
-  const visibleVersions = expanded || targetHidden ? versions : versions.slice(0, SHOWN_VERSIONS);
+  /*
+   * Plegada, hasta la próxima versión o, si la fecha objetivo es de una posterior, hasta esa: la marcada no queda
+   * escondida, y las de después siguen plegadas. Crece sola, pero no encoge sola: elegir después una fecha de más
+   * arriba no quita las filas de debajo (lo de debajo se movería justo tras el clic). Encoge con «Ver menos», hasta
+   * la versión de la fecha objetivo.
+   */
+  const targetIndex = versions.findIndex(
+    (v) => v.first?.date === state.targetDate || v.second?.date === state.targetDate,
+  );
+  const [reached, setReached] = useState(targetIndex + 1);
+  if (targetIndex + 1 > reached) setReached(targetIndex + 1);
+  const foldedCount = Math.max(SHOWN_VERSIONS, reached);
+  const hiddenCount = versions.length - foldedCount;
+  // Las que tocan a la vista y las que se ven: al plegar, las que sobran siguen un momento, mientras se tapan.
+  const wanted = expanded ? versions.length : foldedCount;
+  const [shown, setShown] = useState(wanted);
+  const visibleVersions = versions.slice(0, Math.max(shown, wanted));
+
+  /*
+   * La lista crece al desplegar (o al poner una fecha objetivo de una versión plegada) y se encoge al plegar, con lo
+   * que sobra recortado: las filas se descubren o se tapan a la vez que la tarjeta cambia de alto, y lo de debajo
+   * la acompaña. Al plegar, las que se van siguen hasta que acaba, y después se quitan.
+   */
+  const tableRef = useRef<HTMLDivElement>(null);
+  const shownBefore = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    const before = shownBefore.current;
+    const count = visibleVersions.length;
+    shownBefore.current = count;
+    const table = tableRef.current;
+    if (!table || before === null || count <= before || reducedMotion()) return;
+    const from = rowsEnd(table, before);
+    table.animate([{ height: `${from}px`, overflow: 'clip' }, { height: `${table.offsetHeight}px`, overflow: 'clip' }], {
+      duration: REVEAL_MS,
+      easing: MOVE_EASING,
+    });
+  }, [visibleVersions.length]);
+  useLayoutEffect(() => {
+    if (wanted >= shown) {
+      if (wanted > shown) setShown(wanted);
+      return;
+    }
+    const table = tableRef.current;
+    if (!table || reducedMotion()) {
+      setShown(wanted);
+      return;
+    }
+    const hide = table.animate(
+      [
+        { height: `${table.offsetHeight}px`, overflow: 'clip' },
+        { height: `${rowsEnd(table, wanted)}px`, overflow: 'clip' },
+      ],
+      { duration: HIDE_MS, easing: MOVE_EASING, fill: 'forwards' },
+    );
+    hide.onfinish = () => setShown(wanted);
+    // Al quitarse las filas (o si se vuelve a desplegar antes), el alto fijo y el recorte se van con ellas.
+    return () => hide.cancel();
+  }, [wanted, shown]);
 
   // Una hoja de calendario: pulsarla pone esa fecha objetivo; la de la fecha puesta queda marcada.
   const leaf = (d: KeyDate) => {
@@ -125,7 +197,7 @@ export function TargetDate({ state, today, onChange }: Props) {
           <span className="field-label key-dates-title" id={keyDatesId}>
             Fechas destacadas
           </span>
-          <div className="key-date-table" id={keyDateListId} role="table" aria-labelledby={keyDatesId}>
+          <div ref={tableRef} className="key-date-table" id={keyDateListId} role="table" aria-labelledby={keyDatesId}>
             <div className="key-date-row key-date-head" role="row">
               <span role="columnheader">Versión</span>
               <span role="columnheader">1.ª parte</span>
@@ -154,15 +226,18 @@ export function TargetDate({ state, today, onChange }: Props) {
             ))}
           </div>
           {/* Solo las próximas a la vista: con todas, la tarjeta empujaba varias filas abajo a las que van debajo. */}
-          {versions.length > SHOWN_VERSIONS && !targetHidden && (
+          {hiddenCount > 0 && (
             <button
               type="button"
               className="btn btn-ghost key-dates-more"
               aria-expanded={expanded}
               aria-controls={keyDateListId}
-              onClick={() => setExpanded((e) => !e)}
+              onClick={() => {
+                if (expanded) setReached(targetIndex + 1);
+                setExpanded(!expanded);
+              }}
             >
-              {expanded ? 'Ver menos' : `Ver ${moreText(versions.length - SHOWN_VERSIONS)}`}
+              {expanded ? 'Ver menos' : `Ver ${moreText(hiddenCount)}`}
             </button>
           )}
         </div>

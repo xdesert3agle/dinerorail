@@ -47,5 +47,5 @@ export const WEEKDAYS = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', '
 const DATE_FORMAT = new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
 
 export function formatDate(iso: ISODate): string {
-  return DATE_FORMAT.format(new Date(`${iso}T00:00:00Z`));
+  return DATE_FORMAT.format(toDayNum(iso) * MS_PER_DAY);
 }

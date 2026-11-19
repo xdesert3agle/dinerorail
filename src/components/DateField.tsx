@@ -2,6 +2,7 @@ import AirDatepicker, { type AirDatepickerLocale } from 'air-datepicker';
 import { useEffect, useId, useRef, useState } from 'react';
 import { formatDate, localISO } from '../engine/dates';
 import type { ISODate } from '../engine/types';
+import { fmtFullDate } from './format';
 
 // Locale propio en vez del de la librería (que viene en CommonJS y sin tildes): semana de lunes a domingo.
 const LOCALE_ES: AirDatepickerLocale = {
@@ -58,13 +59,22 @@ export function DateField({
   valueRef.current = value;
   onChangeRef.current = onChange;
   marksRef.current = marks;
-  // Para los lectores de pantalla: el campo abre un calendario y se dice si está abierto.
+  // Para los lectores de pantalla: si el calendario está abierto y qué día marcan las flechas. air-datepicker no
+  // da semántica a su calendario (ni roles ni aria), así que el día marcado se anuncia aparte.
   const [open, setOpen] = useState(false);
+  const [focusedDay, setFocusedDay] = useState('');
   const hintId = useId();
 
   useEffect(() => {
-    const picker = new AirDatepicker(inputRef.current!, {
+    const input = inputRef.current!;
+    const picker = new AirDatepicker(input, {
       locale: LOCALE_ES,
+      /*
+       * En un diálogo (EditDialog), junto a su campo: fuera de él quedaría debajo del modal. Y no en el propio
+       * diálogo, que se desplaza: air-datepicker no cuenta el desplazamiento al colocarlo, salvo si comparte con el
+       * campo el elemento de referencia (su envoltorio). Fuera de un diálogo, en su contenedor de siempre.
+       */
+      container: input.closest('dialog') ? input.parentElement! : undefined,
       selectedDates: [toLocalDate(valueRef.current)],
       minDate: min ? toLocalDate(min) : false,
       autoClose: true,
@@ -74,7 +84,13 @@ export function DateField({
       // En pantallas táctiles, ventana centrada en vez de desplegable.
       isMobile: window.matchMedia('(pointer: coarse)').matches,
       onShow: (done) => !done && setOpen(true),
-      onHide: (done) => !done && setOpen(false),
+      onHide: (done) => {
+        if (done) return;
+        setOpen(false);
+        setFocusedDay('');
+      },
+      // El día que marcan las flechas (o el ratón): sin fecha, al salir del calendario.
+      onFocus: ({ date }) => setFocusedDay(date ? fmtFullDate(localISO(date)) : ''),
       // Días señalados: clase para el punto (CSS) y su nombre como título de la celda.
       onRenderCell: ({ date, cellType }) => {
         if (cellType !== 'day') return;
@@ -120,13 +136,20 @@ export function DateField({
         readOnly
         value={formatDate(value)}
         aria-label={ariaLabel}
-        aria-haspopup="dialog"
         aria-expanded={open}
         aria-describedby={describedBy ? `${describedBy} ${hintId}` : hintId}
+        onKeyDownCapture={(e) => {
+          // Esc cierra solo el calendario (lo hace air-datepicker): sin esto, cerraría también el diálogo. En la
+          // captura, antes que air-datepicker: tras él, `open` ya sería false.
+          if (e.key === 'Escape' && open) e.preventDefault();
+        }}
       />
       {/* Instrucción de teclado solo para lectores: en imperativo, como las pistas del propio lector (norma de voz). */}
       <span id={hintId} className="sr-only">
         Se abre un calendario: elige el día con las flechas y pulsa intro.
+      </span>
+      <span className="sr-only" role="status">
+        {open ? focusedDay : ''}
       </span>
       <svg
         className="date-field-icon"

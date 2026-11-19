@@ -6,6 +6,7 @@ import {
   fmtCountdown,
   fmtDayMonthLong,
   fmtEuros,
+  fmtFullDate,
   fmtSingles,
   pendingLabel,
 } from './format';
@@ -29,6 +30,10 @@ describe('formatos', () => {
 
   it('día y mes entero, sin cero delante', () => {
     expect([fmtDayMonthLong('2026-11-11'), fmtDayMonthLong('2027-01-05')]).toEqual(['11 de noviembre', '5 de enero']);
+    expect([fmtFullDate('2026-11-18'), fmtFullDate('2027-01-03')]).toEqual([
+      'miércoles, 18 de noviembre de 2026',
+      'domingo, 3 de enero de 2027',
+    ]);
   });
 
   it('el % de cada objetivo: 100 y 0 solo si son seguros; si no, >99 y <1', () => {

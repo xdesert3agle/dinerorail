@@ -71,16 +71,21 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
   const updatePull = (id: string, patch: Partial<PlannedPull>) =>
     setPlan((p) => p.map((x) => (x.id === id ? { ...x, ...patch } : x)));
   // Al quitar una fila, se deshace en polvo y luego sale del plan (useDustRemoval). El aviso pone el dupe tras
-  // el nombre («Kafka E2»), fuera de lo que se recorta si el nombre es largo.
+  // el nombre («Kafka E2»), fuera de lo que se recorta si el nombre es largo. Si era la última fila y tenía el
+  // foco, este pasa al primer botón de añadir.
   const { leaving, removeLater } = useDustRemoval();
+  const firstAdd = useRef<HTMLButtonElement>(null);
   const remove = (pull: PlannedPull, dupe: number | null) =>
-    removeLater(pull.id, () =>
-      setPlan(
-        (p) => p.filter((x) => x.id !== pull.id),
-        pull.name
-          ? { before: '«', name: pull.name, after: `${dupe === null ? '' : ` E${dupe}`}» eliminado del plan.` }
-          : 'Fila eliminada del plan.',
-      ),
+    removeLater(
+      pull.id,
+      () =>
+        setPlan(
+          (p) => p.filter((x) => x.id !== pull.id),
+          pull.name
+            ? { before: '«', name: pull.name, after: `${dupe === null ? '' : ` E${dupe}`}» eliminado del plan.` }
+            : 'Fila eliminada del plan.',
+        ),
+      () => firstAdd.current,
     );
   // Miniatura de cada fila: el retrato del personaje o el icono del cono (null si no está en el catálogo).
   // Del cono, primero el de StarRailRes y, si no lo tiene, el de nanoka.
@@ -115,6 +120,7 @@ export function FuturePulls({ state, result, catalog, copies, chances, onChange 
           {ADD_KINDS.map((kind) => (
             <button
               key={kind}
+              ref={kind === ADD_KINDS[0] ? firstAdd : undefined}
               type="button"
               className="btn btn-add-pull"
               aria-label={`Añadir ${KIND_LABEL[kind].toLowerCase()}`}

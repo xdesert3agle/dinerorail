@@ -1,6 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { SYNC_COOLDOWN_MS, type CatalogSync } from '../state/catalog';
 import { fmtMoment } from './format';
+
+/** Lo que se queda a la vista la ✓ de «sincronizado» antes de fundirse. */
+const CONFIRM_MS = 1500;
 
 /** Segundos que quedan, como "0:42". */
 const fmtWait = (ms: number) => {
@@ -28,6 +31,20 @@ export function ContentSync({ catalog, syncing, error, lastAttempt, sync }: Cata
   const cooling = remaining > 0;
   const disabled = syncing || cooling;
 
+  /*
+   * La ✓ de «hecho»: sustituye al spinner cuando una sincronización termina bien (cambia la fecha del catálogo) y
+   * se va tras CONFIRM_MS. No al cargar: solo si la fecha cambia con la tarjeta a la vista.
+   */
+  const syncedAt = catalog?.syncedAt;
+  const firstSyncedAt = useRef(syncedAt);
+  const [confirmed, setConfirmed] = useState(false);
+  useEffect(() => {
+    if (syncedAt === undefined || syncedAt === firstSyncedAt.current) return;
+    setConfirmed(true);
+    const timer = window.setTimeout(() => setConfirmed(false), CONFIRM_MS);
+    return () => window.clearTimeout(timer);
+  }, [syncedAt]);
+
   return (
     <section className="card content-sync">
       <header className="card-header">
@@ -45,13 +62,28 @@ export function ContentSync({ catalog, syncing, error, lastAttempt, sync }: Cata
           Sincronizar contenido
         </button>
         {/*
-          Mientras el botón está desactivado: el spinner solo mientras descarga, y la cuenta atrás durante toda
-          la espera. El hueco se reserva siempre, para que nada se mueva.
+          Mientras el botón está desactivado, una cosa tras otra en el mismo hueco junto a él: el spinner mientras
+          descarga; al terminar bien, una ✓ (la fecha nueva la anuncia la línea de arriba); y, cuando se va, la
+          cuenta atrás hasta poder sincronizar otra vez. El hueco se reserva siempre, para que nada se mueva.
         */}
         <span className={`content-sync-wait${disabled ? '' : ' invisible'}`}>
-          <span className={`spinner${syncing ? '' : ' invisible'}`} aria-hidden="true" />
+          <span className={`spinner${syncing ? '' : ' is-off'}`} aria-hidden="true" />
+          <svg
+            className={`sync-check${confirmed && !syncing ? '' : ' is-off'}`}
+            width="18"
+            height="18"
+            viewBox="0 0 18 18"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M4 9.5l3.2 3.2L14 5.8" />
+          </svg>
           {syncing && <span className="sr-only">Sincronizando…</span>}
-          <span>
+          <span className={`content-sync-time${cooling && !syncing && !confirmed ? '' : ' is-off'}`}>
             <span className="sr-only">Tiempo hasta poder sincronizar de nuevo: </span>
             {fmtWait(cooling ? remaining : SYNC_COOLDOWN_MS)}
           </span>

@@ -38,12 +38,12 @@ const untilt = (e: PointerEvent<HTMLDivElement>) => {
 };
 
 /*
- * Flotar (dupe-float en styles.css): la altura del hueco (--lift, de 0 a 1) sube 3 s y baja 3 s, en bucle;
+ * Flotar (dupe-float en styles.css): la altura del hueco (--lift, de 0 a 1) sube 2,4 s y baja 2,4 s, una vez;
  * de ella salen la escala de la imagen y sus sombras. Al pasar el ratón, sube desde donde esté hasta arriba
- * del todo y se queda quieta; al salir, el bucle sigue desde arriba, así que baja sola con su propio ritmo y
- * vuelve a flotar. Sin animaciones (reduced motion) no hay bucle y no se hace nada.
+ * del todo y se queda quieta; al salir, el vuelo sigue desde arriba, así que baja sola con su propio ritmo (si
+ * ya había acabado, baja igual y se queda abajo). Sin animaciones (reduced motion) no se hace nada.
  */
-const FLOAT_HALF_MS = 3000;
+const FLOAT_HALF_MS = 2400;
 /** Lo que tarda en subir desde abajo del todo (desde más arriba, la parte que le queda). */
 const LIFT_MS = 500;
 
@@ -54,9 +54,9 @@ const floatAnimation = (slot: HTMLElement) =>
   slot.getAnimations().find((a): a is CSSAnimation => a instanceof CSSAnimation && a.animationName === 'dupe-float');
 
 function liftUp(slot: HTMLElement) {
-  const float = floatAnimation(slot);
-  if (!float) return;
-  float.pause();
+  if (reducedMotion()) return;
+  // Sin vuelo si ya ha acabado: la subida va igual, desde abajo.
+  floatAnimation(slot)?.pause();
   const lift = Number(getComputedStyle(slot).getPropertyValue('--lift')) || 0;
   lifts.get(slot)?.cancel();
   lifts.set(
@@ -83,6 +83,9 @@ function settleDown(slot: HTMLElement) {
       const toTop = (((FLOAT_HALF_MS - (active % cycle)) % cycle) + cycle) % cycle;
       float.currentTime = Number(float.currentTime ?? 0) + toTop;
       float.play();
+    } else {
+      // El vuelo ya había acabado: baja sola, a su ritmo, y se queda abajo (va encima de la subida, que se quita).
+      slot.animate([{ '--lift': 1 }, { '--lift': 0 }], { duration: FLOAT_HALF_MS, easing: 'ease-in-out' });
     }
     lift.cancel();
     lifts.delete(slot);
@@ -101,6 +104,11 @@ interface Item {
 /** Separación entre el popover y la imagen (la flecha ocupa unos 12) y margen mínimo con el borde de la ventana (px). */
 const POP_GAP = 18;
 const POP_EDGE = 8;
+/**
+ * Lo que tarda el popover en irse al salir de la imagen (ms, como LEAVE_GRACE de Tip): se va fundiendo desde el
+ * primer momento, y si el puntero llega a él antes de que acabe, vuelve.
+ */
+const POP_GRACE = 150;
 /** Lo más cerca que puede ir la flecha de arriba o de abajo del popover, para no caer en las esquinas redondeadas (px). */
 const ARROW_INSET = 26;
 
@@ -110,11 +118,16 @@ interface PopoverProps {
   anchor: HTMLElement;
   /** Ya se ha salido de la imagen: se funde y avisa con onLeft al terminar. */
   leaving?: boolean;
+  /** Se ha salido de la imagen hace menos de POP_GRACE: se va fundiendo, pero vuelve si el puntero llega a él. */
+  closing?: boolean;
   onLeft?: () => void;
+  /** El puntero entra en el popover o sale de él (se puede recorrer: ver Side). */
+  onPointerEnter?: () => void;
+  onPointerLeave?: () => void;
 }
 
 /** El popover de una imagen: qué hace ese Eidolón o el efecto del cono en esa superposición. */
-function Popover({ side, item, anchor, leaving, onLeft }: PopoverProps) {
+function Popover({ side, item, anchor, leaving, closing, onLeft, onPointerEnter, onPointerLeave }: PopoverProps) {
   const { details, failed } = useDetails(item.ref);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -152,10 +165,12 @@ function Popover({ side, item, anchor, leaving, onLeft }: PopoverProps) {
   return (
     <div
       ref={ref}
-      className={`dupe-pop dupe-pop-${side}${leaving ? ' is-leaving' : ''}`}
+      className={`dupe-pop dupe-pop-${side}${leaving ? ' is-leaving' : ''}${closing ? ' is-closing' : ''}`}
       aria-hidden="true"
+      onPointerEnter={onPointerEnter}
+      onPointerLeave={onPointerLeave}
       onAnimationEnd={(e) => {
-        if (e.animationName === 'dupe-pop-out') onLeft?.();
+        if (e.animationName === 'pop-out') onLeft?.();
       }}
     >
       <div className="dupe-pop-head">
@@ -202,6 +217,44 @@ function Side({ side, items }: { side: 'left' | 'right'; items: Item[] }) {
   const [hover, setHover] = useState<{ index: number; anchor: HTMLElement } | null>(null);
   // El último popover del que se ha salido, mientras se funde.
   const [leaving, setLeaving] = useState<{ index: number; anchor: HTMLElement } | null>(null);
+  /*
+   * Al salir de la imagen, el popover empieza a fundirse enseguida (closing) y se quita a los POP_GRACE; si el
+   * puntero llega a él antes, vuelve: da tiempo a cruzar hasta él y leerlo con el puntero encima (WCAG 1.4.13, como
+   * las burbujas de Tip) sin quedarse quieto antes de irse. Esc lo quita sin mover el ratón.
+   */
+  const [closing, setClosing] = useState(false);
+  const leaveTimer = useRef<number | undefined>(undefined);
+  const cancelLeave = () => window.clearTimeout(leaveTimer.current);
+  // El abierto ahora, también para el temporizador (que se creó en un render anterior).
+  const hoverRef = useRef(hover);
+  hoverRef.current = hover;
+  /** Lo quita; `fade`: con su fundido (Esc). Al acabar el de closing ya está fundido. */
+  const hide = (fade: boolean) => {
+    cancelLeave();
+    setClosing(false);
+    // Sin animaciones no llega el final del fundido: se quita directamente.
+    if (fade && hoverRef.current && !reducedMotion()) setLeaving(hoverRef.current);
+    setHover(null);
+  };
+  const hideSoon = () => {
+    cancelLeave();
+    setClosing(true);
+    leaveTimer.current = window.setTimeout(() => hide(false), POP_GRACE);
+  };
+  /** El puntero vuelve a él (o a su imagen) antes de que se vaya: se queda. */
+  const stay = () => {
+    cancelLeave();
+    setClosing(false);
+  };
+  useEffect(() => {
+    if (!hover) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') hide(true);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [hover]);
+  useEffect(() => cancelLeave, []);
   if (items.length === 0) return null;
   const hovered = hover && items[hover.index];
   const fading = leaving && items[leaving.index];
@@ -226,23 +279,35 @@ function Side({ side, items }: { side: 'left' | 'right'; items: Item[] }) {
                 onPointerEnter={(e) => {
                   const slot = e.currentTarget.closest<HTMLElement>('.dupe-slot')!;
                   liftUp(slot);
+                  stay();
+                  // Si quedaba el de otra imagen, se va ya, con su fundido; si ya se estaba fundiendo, sin volver
+                  // a aparecer para fundirse otra vez.
+                  if (hover && hover.index !== i && !closing && !reducedMotion()) setLeaving(hover);
                   setHover({ index: i, anchor: slot });
                 }}
                 onPointerMove={tilt}
                 onPointerLeave={(e) => {
                   untilt(e);
-                  const slot = e.currentTarget.closest<HTMLElement>('.dupe-slot')!;
-                  settleDown(slot);
-                  // Sin animaciones no llega el final del fundido: se quita directamente.
-                  if (!reducedMotion()) setLeaving({ index: i, anchor: slot });
-                  setHover(null);
+                  settleDown(e.currentTarget.closest<HTMLElement>('.dupe-slot')!);
+                  hideSoon();
                 }}
               >
                 {/*
                   En modo CORS, como la máscara de su sombra (--dupe-src), que el navegador siempre pide así:
                   con el mismo modo, la imagen se descarga una vez y no dos.
                 */}
-                <img className="dupe-img" src={item.src} alt="" crossOrigin="anonymous" decoding="async" draggable={false} />
+                {/*
+                  lazy: por debajo de 1480px la galería no se ve (display: none) y así no se descarga.
+                */}
+                <img
+                  className="dupe-img"
+                  src={item.src}
+                  alt=""
+                  crossOrigin="anonymous"
+                  loading="lazy"
+                  decoding="async"
+                  draggable={false}
+                />
                 <span className="dupe-glare" />
               </div>
             </div>
@@ -264,7 +329,17 @@ function Side({ side, items }: { side: 'left' | 'right'; items: Item[] }) {
           onLeft={() => setLeaving((l) => (l === leaving ? null : l))}
         />
       )}
-      {hovered && <Popover key={hover.index} side={side} item={hovered} anchor={hover.anchor} />}
+      {hovered && (
+        <Popover
+          key={hover.index}
+          side={side}
+          item={hovered}
+          anchor={hover.anchor}
+          closing={closing}
+          onPointerEnter={stay}
+          onPointerLeave={hideSoon}
+        />
+      )}
     </>
   );
 }

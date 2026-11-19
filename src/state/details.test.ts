@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { loadDetails } from './details';
+import { loadDetails, prefetchDetails } from './details';
 
 // Respuestas mínimas que el motor sabe leer (ver engine/details.test.ts).
 const yattaCharacter = {
@@ -16,7 +16,7 @@ const json = (body: unknown, ok = true) => Promise.resolve({ ok, status: ok ? 20
 
 /** fetch falso: responde según la fuente de la URL; cuenta las llamadas. */
 const stubFetch = (yatta: unknown | null, nanoka: unknown | null) => {
-  const fetch = vi.fn((url: string) => {
+  const fetch = vi.fn((url: string, _init?: RequestInit) => {
     const body = url.includes('yatta') ? yatta : nanoka;
     return body === null ? json(null, false) : json(body);
   });
@@ -56,5 +56,15 @@ describe('descarga de detalles', () => {
     await expect(loadDetails(ref('9004'))).rejects.toThrow();
     stubFetch(yattaCharacter, null);
     expect((await loadDetails(ref('9004'))).lang).toBe('es');
+  });
+
+  it('la descarga de fondo va con prioridad baja, y todas con tiempo límite', async () => {
+    const fetch = stubFetch(yattaCharacter, nanokaCharacter);
+    prefetchDetails([ref('9005')]);
+    await loadDetails(ref('9006'));
+    const [background, hover] = fetch.mock.calls.map(([, init]) => init);
+    expect(background?.priority).toBe('low');
+    expect(hover?.priority).toBe('auto');
+    expect(background?.signal).toBeInstanceOf(AbortSignal);
   });
 });

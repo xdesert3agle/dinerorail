@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import { AccountPanel } from './components/AccountPanel';
 import { ContentSync } from './components/ContentSync';
 import { CurrentInventory } from './components/CurrentInventory';
@@ -28,7 +28,10 @@ const SKIN_OPTIONS: Record<Skin, { label: string; title: string }> = {
   sparxie: { label: 'Sparxie', title: 'Tema Sparxie: escritorio de 1987, ventanas crema sobre rosa' },
 };
 
-/** Modos que se eligen a mano; "system" no tiene botón: es el punto de partida hasta que se pulsa uno. */
+/**
+ * Los dos botones del modo. "system" no tiene botón propio: es el punto de partida, y se vuelve a él pulsando el
+ * modo que tiene el sistema (se guarda "system", no ese modo, que fijaría el tema aunque el sistema cambie).
+ */
 type ManualTheme = Exclude<ThemeMode, 'system'>;
 
 // Iconos de 14px con el color del texto: sol (claro) y luna (oscuro).
@@ -104,7 +107,6 @@ export default function App() {
   const notify = (message: Omit<ToastMessage, 'id'>) => setToast({ ...message, id: ++toastId.current });
   const [tab, setTab] = useState<Tab>(tabFromHash);
   const mainRef = useRef<HTMLElement>(null);
-  const tabRefs = useRef<Partial<Record<Tab, HTMLButtonElement | null>>>({});
 
   // Los borrados guardan el estado de antes para poder deshacerlos desde el aviso. El de ahora, no el del render
   // en que se creó `change`: la fila que se deshace en polvo lo llama 600 ms después, y con el de entonces
@@ -145,22 +147,20 @@ export default function App() {
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
-  const selectTab = (id: Tab) => {
+  /*
+   * Las pestañas son enlaces: cambian la URL y el historial, así que son navegación, no un tablist. Un clic
+   * normal cambia de sección sin recargar (la Calculadora no lleva hash, y su enlace recargaría la página); con
+   * Ctrl o la rueda, el enlace se abre en otra pestaña del navegador, como cualquiera.
+   */
+  const homeHref = window.location.pathname + window.location.search;
+  const selectTab = (e: MouseEvent, id: Tab) => {
+    if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
+    if (id === tab) return;
     const hash = TABS[id].hash;
     if (hash) window.location.hash = hash;
-    else history.pushState(null, '', window.location.pathname + window.location.search);
+    else history.pushState(null, '', homeHref);
     setTab(id);
-  };
-
-  // Flechas izquierda/derecha para moverse entre pestañas (patrón de tablist accesible).
-  const onTabKey = (e: KeyboardEvent) => {
-    const i = TAB_ORDER.indexOf(tab);
-    const next = e.key === 'ArrowRight' ? i + 1 : e.key === 'ArrowLeft' ? i - 1 : e.key === 'Home' ? 0 : e.key === 'End' ? TAB_ORDER.length - 1 : null;
-    if (next === null) return;
-    e.preventDefault();
-    const id = TAB_ORDER[(next + TAB_ORDER.length) % TAB_ORDER.length];
-    selectTab(id);
-    tabRefs.current[id]?.focus();
   };
 
   const result = useMemo(() => calculate(state, today), [state, today]);
@@ -187,7 +187,8 @@ export default function App() {
     query.addEventListener('change', onChange);
     return () => query.removeEventListener('change', onChange);
   }, []);
-  const activeTheme: ManualTheme = theme === 'system' ? (systemDark ? 'dark' : 'light') : theme;
+  const systemTheme: ManualTheme = systemDark ? 'dark' : 'light';
+  const activeTheme: ManualTheme = theme === 'system' ? systemTheme : theme;
 
   // El tema se aplica en <html> para que las variables de color lleguen a toda la página.
   useLayoutEffect(() => {
@@ -244,7 +245,7 @@ export default function App() {
                 aria-pressed={activeTheme === t.id}
                 aria-label={t.title}
                 title={t.title}
-                onClick={() => change(withSettings({ theme: t.id }))}
+                onClick={() => change(withSettings({ theme: t.id === systemTheme ? 'system' : t.id }))}
               >
                 {THEME_ICONS[t.id]}
               </button>
@@ -252,25 +253,18 @@ export default function App() {
           </div>
         </div>
       </header>
-      <nav className="tabs" role="tablist" aria-label="Secciones" onKeyDown={onTabKey}>
+      <nav className="tabs" aria-label="Secciones">
         {TAB_ORDER.map((id) => ({ id, ...TABS[id] })).map((t) => (
-          <button
+          <a
             key={t.id}
-            ref={(el) => {
-              tabRefs.current[t.id] = el;
-            }}
-            type="button"
-            role="tab"
-            id={`tab-${t.id}`}
+            href={t.hash || homeHref}
             className="tab"
-            aria-selected={tab === t.id}
-            aria-controls={tab === t.id ? `panel-${t.id}` : undefined}
-            tabIndex={tab === t.id ? 0 : -1}
-            onClick={() => selectTab(t.id)}
+            aria-current={tab === t.id ? 'page' : undefined}
+            onClick={(e) => selectTab(e, t.id)}
           >
             {TAB_ICONS[t.id]}
             {t.label}
-          </button>
+          </a>
         ))}
       </nav>
       <Toast message={toast} onUndo={undoLast} onClose={() => setToast(null)} />
@@ -279,7 +273,7 @@ export default function App() {
       {/* Un solo <main> (destino del salto de teclado); dentro, el panel de la pestaña activa. */}
       <main ref={mainRef} tabIndex={-1} className="main">
         {tab === 'main' ? (
-          <div className="layout" role="tabpanel" id="panel-main" aria-labelledby="tab-main">
+          <div className="layout">
             <div className="col-inputs">
               {/* Primero lo que se actualiza en cada visita (los recursos); la fecha se cambia pocas veces. */}
               <CurrentInventory state={state} result={result} onChange={change} />
@@ -302,11 +296,11 @@ export default function App() {
             </aside>
           </div>
         ) : tab === 'account' ? (
-          <div className="layout-settings" role="tabpanel" id="panel-account" aria-labelledby="tab-account">
+          <div className="layout-settings">
             <AccountPanel state={state} catalog={catalogSync.catalog} onChange={change} />
           </div>
         ) : (
-          <div className="layout-settings" role="tabpanel" id="panel-settings" aria-labelledby="tab-settings">
+          <div className="layout-settings">
             {/* Columna estrecha a la derecha en escritorio; en móvil va arriba del todo. */}
             <aside className="col-aside">
               <ContentSync {...catalogSync} />

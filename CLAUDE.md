@@ -28,6 +28,9 @@ npx vitest run -t "nombre del test"          # one test by name
 - **Deploy:** every push to `main` runs the tests and the build, on the Node version in `.nvmrc`, and publishes to GitHub Pages (`.github/workflows/deploy.yml`). That is the link the user's friends use.
   - Never commit or push unless asked.
   - `vite.config.ts` sets `base: './'`, so the build works from any subfolder.
+  - The build adds a Content Security Policy as a `<meta>` (GitHub Pages allows no headers): scripts only from the app plus the inline ones in `index.html` by hash, requests and images only to `EXTERNAL_ORIGINS` (`urls.ts`). It is build-only, because Vite's dev server injects inline scripts. A new external host goes into `EXTERNAL_ORIGINS`, or the build blocks it.
+  - `vite.config.ts` imports `urls.ts`, so that chain (`urls.ts` → `types.ts`) uses `.ts` extensions, which Vite's config loader needs (`allowImportingTsExtensions`).
+- **`index.html`** has one inline script, before the first paint: it applies the saved skin and mode (from `hsr-jades:v1`), so the page does not flash Aha and the system mode first.
 - **No `sed -i` on `src/` while the dev server runs:** on Windows it breaks Vite's watcher. Edit files in place.
 
 ## How to handle requests
@@ -69,7 +72,7 @@ Pure, framework-free logic. Business logic belongs here, not in components. Test
 - **`pulls.ts`:** `planPulls` (cost per row), `planBalance` and `effectivePity` (the only place that limits the pity).
 - **`odds.ts`:** `simulatePlan`/`planOdds` (Monte Carlo), `guaranteedNeeded` (the worst possible luck, which only gates 100 %) and `shownChances`.
 - **`dupes.ts`:** `planCopies`/`planDupes` and `superimpositions`.
-- **`urls.ts`:** every external address (nanoka.cc, yatta.moe, StarRailRes), including the image URLs. Every yatta request goes through `yattaUrl`, which adds `?vh=` with the current minute: without it, Cloudflare serves copies (and 404s) up to 16 days old.
+- **`urls.ts`:** every external address (nanoka.cc, yatta.moe, StarRailRes), including the image URLs, and `EXTERNAL_ORIGINS` for the build's CSP. Every yatta request goes through `yattaUrl`, which adds `?vh=` with the current minute: without it, Cloudflare serves copies (and 404s) up to 16 days old. Every fetch passes `AbortSignal.timeout(FETCH_TIMEOUT_MS)`; background downloads (`prefetchDetails`) go with `priority: 'low'`.
 - **`account.ts`:** `parseProfile`, the roster and its Path groups.
 - **`catalog.ts`:**
   - parsing and weekly-sync rules (`WEEKLY_SYNC`, `syncDue`);
@@ -97,11 +100,15 @@ React hooks and browser storage.
   - `NumberField`, `DateField` (air-datepicker) and `NameCombobox`;
   - `Toggle` and `SwitchInput` (the bare switch), `Tip`/`TipTitle`, `Term`/`TermProvider`, `TipSumRow` and `TipEquation` (every «=» with icons in a bubble);
   - `RemoveGlyph`, `Icon`, `Rarity`, `Toast` and `RewardInline` (a reward with its icons, in sources and events);
+  - `EditDialog` and `useEditDialog`: the modal edit dialog (native `<dialog>` with `showModal()`, portaled to `<body>`) with its action foot, shared by the sources and the versions. Its `addButton` ref goes on the card's add button, and `removed(commit)` closes the dialog first, then deletes (so the undo toast lands outside it) and moves the focus there;
   - `SortableRows`: rows reordered by a handle and turned to dust on removal (`SortableList`, `useSortableRow`, `DragHandle`, `DustFilter`, `useDustRemoval`), shared by the plan and the events.
+    - A tap on the handle that does not move it opens its «Subir / Bajar» menu (`MoveMenu`, WCAG 2.5.7: reordering without dragging); the keyboard picks the row up with space or enter instead.
+    - Removing a row that has the focus moves it to the ✕ of the next row (or the previous one), and with no rows left to the `fallback` the list passes (its add button).
 - **Helpers:**
   - `glossary.tsx`: shared definitions;
   - `format.ts`: every es-ES formatter, such as `fmtSingles`, `fmtChance` and `fmtEuros`;
-  - `kinds.ts`, `motion.ts`, `inputs.ts`, `usePlanOdds.ts` and `useFocusNew.ts` (a newly added row focuses its name once).
+  - `kinds.ts`, `motion.ts`, `inputs.ts`, `usePlanOdds.ts` and `useFocusNew.ts` (a newly added row focuses its name once);
+  - `layer.ts` (`useLayer`): where floating pieces portal to, `<body>` or the open modal dialog. A modal makes everything outside it inert and puts it underneath, so `Tip`, the `Toast` and the screen-reader announcements of `SortableRows` (and dnd-kit's) go into the dialog while one is open. Inside a dialog, `DateField`'s calendar goes next to its field instead (air-datepicker misplaces it in a scrolled container). Whatever closes on Esc inside a dialog (a bubble, the calendar, the move menu) calls `preventDefault`, or Esc closes the dialog too.
 
 `App.tsx` owns the state. It runs `calculate`, `usePlanOdds` and `planCopies` once each, passes the results down, and keeps the undo toast. Planner and event rows are reordered with `@dnd-kit`, through `SortableRows`.
 
@@ -148,7 +155,7 @@ React hooks and browser storage.
 - **Key dates:** `KEY_DATES` is hand-maintained.
   - Unpublished dates are estimated at `PATCH_LENGTH_DAYS` per version.
   - Clicking a leaf sets the target date.
-  - Only the next version shows; «Ver N versiones más» opens the rest (all of them when the target date falls in a hidden one).
+  - Only the next version shows (or up to the one with the target date, when it is a later one); «Ver N versiones más» opens the rest. The folded list grows on its own to show the target date but never shrinks on its own (picking a date higher up leaves the rows below); «Ver menos» folds it back to the target's version. The list grows and shrinks to its new height with the rest clipped (Web Animations, in `TargetDate`), so rows are revealed or covered while what is below follows; those that go stay until it ends.
 
 ## State and external data
 
@@ -179,23 +186,26 @@ React hooks and browser storage.
   - Actions use the infinitive, states use nominal phrases, and explanations and instructions are impersonal.
   - **Exception:** keyboard instructions that only screen readers hear are imperative, with keys in lowercase («elige el día con las flechas y pulsa intro»), like the reader's own hints.
   - **Register:** explanations and definitions are formal, not the players' colloquial speech: «la siguiente tirada garantiza un 5★», not «la tirada da el 5★ seguro»; «será el destacado con total seguridad», not «será el destacado seguro». Cause and consequence go in separate sentences, not joined by a colon.
-- **Tabs:** chosen by URL hash: none is Calculadora, `#cuenta` and `#configuracion` the others.
+- **Tabs:** chosen by URL hash: none is Calculadora, `#cuenta` and `#configuracion` the others. They change the URL and the history, so they are navigation: links in a `<nav>` with `aria-current="page"`, not an ARIA tablist.
 - **Skins:** `aha` (the default and the CSS base) and `sparxie`, set as `data-skin` on `<html>`.
-  - Light/dark is separate: `settings.theme` becomes `data-theme`, with no attribute for `system`.
+  - Light/dark is separate: `settings.theme` becomes `data-theme`, with no attribute for `system`. The two mode buttons store the opposite of the system as `light`/`dark`; pressing the one that matches the system stores `system` again (never that mode, which would pin it).
   - Use tokens and never hard-code colors.
   - Sparxie comes from `designs/droolsuite.DESIGN.md`.
   - Aha uses Figtree, plus Card Characters (`--font-card`, a single weight of 400) for card titles and result figures.
+  - Every font is self-hosted as woff2 in `src/assets/fonts/`: the Google ones (Figtree, Pixelify Sans, VT323, Courier Prime) are declared in `src/fonts.css`, with their OFL license; Card Characters and ChicagoFLF in `styles.css`.
   - In Sparxie, Pixelify Sans is only for labels without digits; numbers use Courier Prime. Window titles, bubble headings and the big figures use ChicagoFLF (`--font-display`), a public-domain copy of the classic Mac's Chicago, self-hosted in `src/assets/fonts/` with its license.
 - **CSS organization (`styles.css`):**
   - The header has an index; sections are marked `/* == Name == */`.
   - Color tokens are `light-dark(light, dark)`. The dark blocks hold only `color-scheme` and non-color tokens, written twice: once in the media query and once under `[data-theme='dark']`.
   - The base is Aha. Sparxie overrides it, and `:where(:root[data-skin='aha'])` is kept only for Aha extras that Sparxie must not inherit (the card font on figures, uppercase card and bubble titles, the page decoration). Skin rules sit next to their component under `:where()`, so they keep base specificity.
   - The field base rule is under `:where()`, so components need no `[type]`.
-  - Variants set variables instead of undoing rules: buttons set `--btn-hover-bg`/`--btn-hover-border` (one `.btn:hover` rule), switches use `--switch-on`/`--switch-knob-on`/`--switch-knob-off`, focus uses `--focus-ring`. Floating surfaces (`.dupe-pop`, `.tip`, `.toast`) share one rule.
+  - Variants set variables instead of undoing rules: buttons set `--btn-hover-bg`/`--btn-hover-border` (one `.btn:hover` rule) and ghost ones `--btn-ghost-hover-text`; a button's fill is `--btn-bg`, one layer above its backdrop (the card); switches use `--switch-on`/`--switch-knob-on`/`--switch-knob-off`, focus uses `--focus-ring`. Floating surfaces (`.dupe-pop`, `.tip`, `.toast`) share one rule.
   - Width queries use range syntax (`width <= 720px`, `width > 720px`): with display scaling the width can be fractional, and a 1179/1180 pair left a gap.
   - air-datepicker's CSS is imported in `main.tsx` before `styles.css`, which overrides it by source order.
   - No `!important`.
-- **Accent color:** problems («Faltan», a row that does not fit), selection (tab, key date, calendar day, combobox option, dragged row) and focus. Never neutral data or controls at rest.
+  - The last section, «Colores forzados», covers Windows high contrast: a state drawn with a background or a shadow (selection, the switch, the dragged row) needs an outline or border in a system color there, because forced colors remove both.
+  - Something that does not count (a source turned off, an event that misses the target date) is dimmed by redefining the text tokens to `--text-muted` inside it, with only its icons at half opacity. Never `opacity` on text: it drops below 4.5:1.
+- **Accent color:** problems («Faltan», a row that does not fit), selection (tab, key date, calendar day, combobox or menu option, dragged row) and focus. Never neutral data or controls at rest.
   - Deliberate extras: the bubbles' and toast's `--border-pop`, «Deshacer», and the 28 % `--accent-frame` of the Resumen card and its stat boxes.
   - Sparxie's turquoise is not an alarm color.
   - Rarity colors (`Rarity.tsx`) are the game's own.
@@ -208,11 +218,13 @@ React hooks and browser storage.
 - **Tokens:**
   - spacing `--space-1…5` (4/8/12/16/20; 6px for repeating row pitch), and `--card-gap` between a card's header and its blocks (12; 4 in the Resumen). The plan's first row sits at 16 instead, an approved exception (`docs/decisiones.md`);
   - type scale 12/13/14/16/18/20/24/56px;
-  - controls: `--control-h`, `--field-compact-h`, `--field-compact-pad`, `--field-radius`, `--stepper-w`, `--btn-pad-x`, `--remove-w`, `--date-field-w`, `--badge-out`, `--focus-ring`;
+  - controls: `--control-h`, `--field-compact-h`, `--field-compact-pad`, `--field-radius`, `--field-border` (3.3:1 with the card and the field's own fill: WCAG's 3:1 plus a margin, because a 1px line looks weaker than its color, more so with display scaling; in Aha light and dark and in Sparxie dark, while Sparxie light keeps its ink frames; edit dialogs are cards too, so no field sits on `--surface-2` except in the row being dragged; `--border` separates cards, not controls), `--stepper-w`, `--btn-pad-x`, `--remove-w`, `--date-field-w`, `--badge-out`, `--focus-ring`;
+  - layers, about 1.19:1 apart in Aha: `--surface` (card, also the edit dialog), `--surface-2` (buttons, stat boxes, the dragged row);
+  - `--backdrop`, the veil behind a modal dialog;
   - floating surfaces: `--shadow-pop`, `--border-pop`;
   - accent mixes: `--accent-frame`, `--accent-hover`;
-  - layers, bottom to top: `--z-raised`, `--z-list`, `--z-popover`, `--z-tip`, `--z-toast` (the loose −1/1/2 only order pieces inside a component);
-  - motion: `--fade-in`/`--fade-out`.
+  - layers, bottom to top: `--z-raised`, `--z-list`, `--z-popover`, `--z-tip`, `--z-toast` (the loose −1/1/2 only order pieces inside a component). The edit dialog sits above all of them in the browser's top layer, and whatever floats over it goes inside it (`layer.ts`);
+  - motion: `--fade-in`/`--fade-out`, `--press-scale`/`--press-ms`, `--pop-scale`. What floats over a control (`.tip`, `.dupe-pop`, the dropdowns, the calendar) is born at `--pop-scale` (0.95) and grows from its control (`transform-origin` on the side of its arrow or its control; `pop-in`/`pop-out`), never with `transform`, which would re-anchor fixed pieces inside it. The edit dialog only fades, for the same reason (the toast can be inside it). A switch's knob stretches 12% while pressed (`--knob-w`; not in Sparxie).
   - Field padding follows `--input-nudge`: 0 in Aha, and −1px in Sparxie, whose Courier sits high, so it gets 1px more on top.
 - **Breakpoints:**
   - 2000 and 1480 (dupe gallery), 1180 (two columns), 1040 (Configuración aside);
@@ -220,20 +232,27 @@ React hooks and browser storage.
   - container queries: `plan` 29rem (the add buttons lose their text and each row's Starlight drops under the cost), key dates 36rem, account 30 and 44rem.
 - **Calculadora order:** below 1180px the cards order by class: Resumen, Recursos actuales, Plan, Previsión, Fecha objetivo, Versiones y eventos, Paquetes, Desglose.
 - **Explanations:**
-  - **`Tip`** explains a value on hover, focus or tap, linked with `aria-describedby`. `control` wraps a button.
+  - **`Tip`** explains a value on hover, focus or tap, linked with `aria-describedby`. `control` wraps a button. Without it, the value is a `role="button"` toggletip with `aria-expanded` (Enter or space open and close it). With the mouse it opens after 400 ms (`HOVER_DELAY`), but right away while another bubble is open or closed less than 300 ms ago (`WARM_MS`: going from one term to the next). On leaving, it fades from the first moment and comes back if the pointer reaches it or its term within `LEAVE_GRACE` (as the gallery popover does).
   - **No `title`** for explanations; it is allowed only on controls with an accessible name.
   - **Glossary:** a dotted-underlined term opens its definition, headed by the term itself (`TipTitle`). A bubble under a card title is headed by what it explains, never by that title («Simulación» under «Previsión de suerte»). Explanations of a setting or a value («Precios de los paquetes», a cost) have no heading. A `Toggle`'s `tip` or a `NumberField`'s `info` is opened by the `Term` in its label, which marks only the defined word («Pity» in «Pity de personaje»), or the whole label when it is the term. Mark a term once per card, where something is decided. A term has one definition, shared through `glossary.tsx`.
 - **Controls:**
   - **`NumberField`** delivers clamped integers, so parents do not clamp again. Emptied, it delivers 0. While focused, the typed text is left alone; the clamped value shows on blur.
     - It draws its own ±1 arrows inside the field (`.stepper`; the native ones are hidden everywhere), only under `pointer: fine`. Amounts in the thousands, typed rather than counted (Jades, Esquirlas), pass `noStepper`; the rest keep them (packs, Pases, Cosmiluz, pity, days).
   - **The segmented control** (`.segmented` with `.segment` buttons) serves the theme and mode selectors, the store and the Path filter.
-  - **`Toggle`** is for on/off settings. Per-row choices stay checkboxes (the 50/50, the ×2). The sources' bare `role="switch"` has no visible label, so it is not a `Toggle`.
-  - **Add buttons** go in the container they add to. What is added to the card goes in its header (`.btn`: «+ Versión», «+ Personaje», «+ Fuente personalizada»). What is added to a sub-list repeated inside the card goes at the end of that sub-list, as a `.btn` the width and height of a row, in the slot where the new row appears (`.btn-add-event`, «+ Evento»).
-  - **Remove buttons** are `btn btn-ghost btn-remove` with `<RemoveGlyph />`, never ✕.
-  - **Read first, edit in place:** Fuentes de ingresos and Versiones y eventos show read-only rows, and a ghost «Editar»/«Cerrar» (`aria-expanded`) opens one editor at a time in place: the `.inline-edit` box, with «Eliminar …» (`btn btn-danger`) at its foot (`.inline-edit-footer`).
-  - **Every `.btn` and `.chip` fades its hover** with `--fade-in`/`--fade-out`.
+  - **`Toggle`** is for on/off settings. Per-row choices stay checkboxes (the 50/50, the ×2). The sources' bare `role="switch"` is named by the source's visible name (`aria-labelledby`) and has no label of its own, so it is not a `Toggle`.
+  - **Add buttons** go in the container they add to. What is added to the card goes in its header (`.btn`: «+ Versión», «+ Personaje», «+ Fuente personalizada»). What is added to a list inside an edit dialog goes at the end of that list, as a plain `.btn` that starts where the rows' first field does, sharing the line with the list's total, like a table foot (`.event-foot`: «+ Evento» and the version's total).
+  - **Remove buttons** are `btn btn-ghost btn-remove` with `<RemoveGlyph />`, never ✕: a circle as wide as `--remove-w`, centered in its row, so its hover and focus ring are round. The drag handle beside it is as tall as its row (the grip) with the same round ends, a capsule: icon buttons in a row share fully rounded ends (Sparxie keeps its near-square corners on both). The toast and the edit dialog close with the same button.
+  - **Read in the card, edit in a dialog:** Fuentes de ingresos and Versiones y eventos show read-only rows, and a ghost «Editar» (`aria-haspopup="dialog"`) opens that one in a modal dialog (`useEditDialog`, `EditDialog`): a `.card` with the edited thing as its header title and a close X (`btn-remove`, like the toast's; in Sparxie it is the window's close box, on the left, instead of the decorative one), its fields, and the version's total for a version. Two widths: a few fields (a source) by default, `wide` for the event rows. In a version, every field (number, start, event names, «+ Evento») starts after the handles' gutter (`--row-gutter`), even with no events, while the title and the foot stay on the edge.
+    - The foot (`.edit-dialog-footer`) holds only the actions, as in a form: «Eliminar …» on the left (`btn btn-ghost btn-danger`) and «Terminar edición» on the right (a plain `.btn`). Settings of the edited thing go with the fields, never in the foot.
+    - Changes are saved as they are typed, so closing never loses anything: «Terminar edición», the X, Esc and a click on the backdrop (one that also started there) all just close, and return the focus to «Editar». «Terminar edición» repeats the X on purpose: it says what was typed stays, where an X alone could read as «cancel».
+    - The focus starts on the dialog itself, so a phone does not open its keyboard; on something just added, on its first field (the name, the version number).
+    - The content mounts once the dialog is open: closed, it has no box, and what measures itself on mount (`NumberField`'s thousands mask) would come out at zero.
+  - **Every `.btn` and `.chip` fades its hover** with `--fade-in`/`--fade-out`, and shrinks to `--press-scale` (0.97, in `--press-ms`) while pressed. Not the drag handle, which picks the row up on press, and not in Sparxie (`--press-scale: 1`), whose press is the inverted bevel.
+  - **Ghost text buttons align by their box when they are actions** («Editar», «Deshacer», «Eliminar …»): the box sits on the content edge, so the hover tint lines up with the fields and stays inside the padding, and the text is inset like any button's. Only one that reads as a link under a column of text («Ver N versiones más») aligns its text instead, with a smaller padding pulled out by a negative margin.
 - **Undo instead of confirmations:** deleting or replacing data passes a `Notice` to `onChange`, and the toast offers «Deshacer».
   - Any other change closes that toast, also one arriving from another tab, because its snapshot predates the change.
+  - It leaves on its own after 10 s (`TOAST_MS`), paused while the pointer or the focus is on it. A hidden `role="status"` announces only its text, plus «Acciones disponibles» with «Deshacer»; the visible toast sits in the «Avisos» region. Closing it from inside returns the focus to where it was.
+  - What deletes something hands the focus on (the next row, the add button): the focus never falls to `<body>`.
   - Planner and event rows turn to dust before leaving, except with reduced motion.
 - **Touch:** under `pointer: coarse`, small controls get a 44px hit area (36px tall on `.check`). Glossary terms sit above it.
 - **Pull totals** show the pass ticket and the figure (`.card-total`), never a sentence: whole pulls in a card header (Recursos actuales, Paquetes, Versiones y eventos), and with decimals at the foot of each version (`.patch-total` sets `--total-size`/`--total-icon`).

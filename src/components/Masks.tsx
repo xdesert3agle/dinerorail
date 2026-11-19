@@ -4,9 +4,17 @@
  *
  * Lienzo de 720×300, anclado arriba a la derecha.
  */
+import nihilux640 from '../assets/aha/nihilux-640.webp';
 import nihilux from '../assets/aha/nihilux.webp';
 
 const CENTER = { x: 590, y: 115 };
+
+/*
+ * Ancho al que se pinta la ilustración (medido; lo decide el alto de la tarjeta, en styles.css): unos 285px, y
+ * unos 410px en móvil (≤560px), donde las cifras van en filas y la tarjeta crece. Así el escritorio se queda con
+ * la de 640px y los móviles, de 2× o 3×, con la grande.
+ */
+const ART_SIZES = '(width <= 560px) 410px, 290px';
 
 export function Masks() {
   return (
@@ -22,7 +30,17 @@ export function Masks() {
       </svg>
       {/* Ilustración con el fondo blanco quitado (transparente); decorativa. */}
       {/* width/height: proporción de la imagen (el CSS fija el alto), para que no salte al cargar. */}
-      <img className="hero-art" src={nihilux} alt="" aria-hidden="true" draggable={false} width={1024} height={958} />
+      <img
+        className="hero-art"
+        src={nihilux}
+        srcSet={`${nihilux640} 640w, ${nihilux} 1024w`}
+        sizes={ART_SIZES}
+        alt=""
+        aria-hidden="true"
+        draggable={false}
+        width={1024}
+        height={958}
+      />
     </>
   );
 }

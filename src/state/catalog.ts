@@ -10,7 +10,7 @@ import {
   type Catalog,
 } from '../engine/catalog';
 import type { PullKind } from '../engine/types';
-import { catalogUrl, MANIFEST_URL, yattaNamesUrl } from '../engine/urls';
+import { catalogUrl, FETCH_TIMEOUT_MS, MANIFEST_URL, yattaNamesUrl } from '../engine/urls';
 
 // Va aparte del estado de la app: es una caché de datos del juego.
 const CATALOG_KEY = 'hsr-jades:catalog:v1';
@@ -37,7 +37,7 @@ const write = (key: string, value: unknown) => {
 };
 
 async function fetchJson(url: string): Promise<unknown> {
-  const res = await fetch(url, { cache: 'no-store' });
+  const res = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }

@@ -4,18 +4,25 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light dark" />
+    <!--
+      Tema y modo guardados, antes de la primera pintura: App.tsx los pone al arrancar, y hasta entonces se veía un
+      momento Aha con el modo del sistema. Lee la clave del estado de store.ts (STORAGE_KEY). Sin datos o con datos
+      que no se leen, se queda en Aha y sigue al sistema. En línea y sin type="module": un módulo esperaría.
+    -->
+    <script>
+      try {
+        const settings = JSON.parse(localStorage.getItem('hsr-jades:v1') ?? 'null')?.settings;
+        document.documentElement.dataset.skin = settings?.skin === 'sparxie' ? 'sparxie' : 'aha';
+        if (settings?.theme === 'light' || settings?.theme === 'dark') document.documentElement.dataset.theme = settings.theme;
+      } catch {
+        document.documentElement.dataset.skin = 'aha';
+      }
+    </script>
     <!-- Color de la barra del navegador en móvil: App.tsx lo cambia al fondo del tema activo. -->
     <meta name="theme-color" content="#0f0708" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <!-- Fuente de los títulos del tema Aha (el de partida): precargada para que no salten al cargar. -->
-    <link rel="preload" href="/src/assets/fonts/card-characters.ttf" as="font" type="font/ttf" crossorigin />
-    <!-- Fuentes de los temas (Aha: Figtree; Sparxie: las otras cuatro): el navegador solo descarga las que usa el tema activo. -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Pixelify+Sans:wght@400;600&family=VT323&family=Courier+Prime:wght@400;700&display=swap"
-    />
+    <link rel="preload" href="/src/assets/fonts/card-characters.woff2" as="font" type="font/woff2" crossorigin />
     <title>Dinero Rail</title>
   </head>
   <body>

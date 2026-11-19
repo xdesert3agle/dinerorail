@@ -1,5 +1,5 @@
 import { restrictToParentElement, restrictToVerticalAxis } from '@dnd-kit/modifiers';
-import { useId, useState } from 'react';
+import { useId } from 'react';
 import { countedEventSingles, eventsSingles, eventTiming, type EventTiming } from '../engine/calculate';
 import { addDays, formatDate } from '../engine/dates';
 import { defaultEventDate } from '../engine/defaults';
@@ -9,6 +9,7 @@ import type { AppState, Patch, PatchEvent } from '../engine/types';
 import { newId } from '../engine/util';
 import { namedNotice, type ChangeState } from '../state/store';
 import { DateField } from './DateField';
+import { EditDialog, useEditDialog } from './EditDialog';
 import { floorSingles, fmtInt, fmtSingles } from './format';
 import { Icon } from './Icon';
 import { PLAIN_TEXT_INPUT } from './inputs';
@@ -40,12 +41,12 @@ const eventName = (ev: PatchEvent) => ev.name || 'evento sin nombre';
 
 /**
  * Versiones y eventos, como las fuentes de ingresos: cada versión se lee como una tabla (evento, cobro y
- * recompensas) y «Editar» abre en el sitio sus campos y las filas editables de sus eventos.
+ * recompensas) y «Editar» abre en un diálogo sus campos y las filas editables de sus eventos (EditDialog).
  */
 export function PatchTable({ state, today, onChange }: Props) {
-  const patches = [...state.patches].sort((a, b) => a.start.localeCompare(b.start));
-  // La versión con el editor abierto (una a la vez, como las fuentes).
-  const [openId, setOpenId] = useState<string | null>(null);
+  const patches = state.patches.toSorted((a, b) => a.start.localeCompare(b.start));
+  // La versión que se edita (una a la vez, como las fuentes).
+  const edit = useEditDialog();
 
   const updatePatch = (id: string, update: (p: Patch) => Patch) =>
     onChange((s) => ({ ...s, patches: s.patches.map((p) => (p.id === id ? update(p) : p)) }));
@@ -64,30 +65,34 @@ export function PatchTable({ state, today, onChange }: Props) {
     }));
   };
 
-  // Al quitar un evento, se deshace en polvo y luego sale de su versión, como las filas del plan.
+  // Al quitar un evento, se deshace en polvo y luego sale de su versión, como las filas del plan. Si era el
+  // último y tenía el foco, este pasa al «+ Evento» de su versión.
   const { leaving, removeLater } = useDustRemoval();
   const removeEvent = (patchId: string, ev: PatchEvent) =>
-    removeLater(ev.id, () =>
-      onChange(
-        (s) => ({
-          ...s,
-          patches: s.patches.map((x) =>
-            x.id === patchId ? { ...x, events: x.events.filter((e) => e.id !== ev.id) } : x,
-          ),
-        }),
-        ev.name ? namedNotice('Evento ', ev.name, ' eliminado.') : 'Evento eliminado.',
-      ),
+    removeLater(
+      ev.id,
+      () =>
+        onChange(
+          (s) => ({
+            ...s,
+            patches: s.patches.map((x) =>
+              x.id === patchId ? { ...x, events: x.events.filter((e) => e.id !== ev.id) } : x,
+            ),
+          }),
+          ev.name ? namedNotice('Evento ', ev.name, ' eliminado.') : 'Evento eliminado.',
+        ),
+      (row) => row.closest('.event-list')?.querySelector<HTMLElement>('.btn-add-event') ?? null,
     );
 
-  // La versión recién añadida enfoca su número, que es lo primero que hay que corregir (sale «?» o la siguiente).
-  const [focusPatchId, setFocusPatchId] = useFocusNew(state.patches.map((p) => p.id));
+  // La versión recién añadida empieza por su número, que es lo primero que hay que corregir (sale «?» o la siguiente).
+  const [newPatchId, setNewPatchId] = useFocusNew(state.patches.map((p) => p.id));
   const addPatch = () => {
     const last = patches.at(-1);
     const start = last ? addDays(last.start, PATCH_LENGTH_DAYS) : today;
     const version = last ? nextVersion(last.version) : '?';
     const id = newId('patch');
-    setFocusPatchId(id);
-    setOpenId(id);
+    setNewPatchId(id);
+    edit.open(id);
     onChange((s) => ({ ...s, patches: [...s.patches, { id, version, start, events: [] }] }));
   };
 
@@ -105,89 +110,99 @@ export function PatchTable({ state, today, onChange }: Props) {
             <span className="sr-only">Tiradas de los eventos: </span>
             {fmtInt(floorSingles(totalSingles))}
           </span>
-          <button type="button" className="btn" onClick={addPatch}>
+          <button ref={edit.addButton} type="button" className="btn" onClick={addPatch}>
             + Versión
           </button>
         </div>
       </header>
 
-      {patches.map((p) => {
-        const open = openId === p.id;
-        return (
-          <div key={p.id} className="patch-block">
-            {/* Título de grupo, como los de las fuentes («Diarias»), con el inicio al lado y su «Editar». */}
-            <div className="patch-head">
-              <h3>
-                Versión {p.version} · {formatDate(p.start)}
-              </h3>
-              <button
-                type="button"
-                className="btn btn-ghost"
-                aria-expanded={open}
-                aria-label={`${open ? 'Cerrar' : 'Editar'} la versión ${p.version}`}
-                onClick={() => setOpenId(open ? null : p.id)}
-              >
-                {open ? 'Cerrar' : 'Editar'}
-              </button>
-            </div>
+      {patches.map((p) => (
+        <div key={p.id} className="patch-block">
+          {/* Título de grupo, como los de las fuentes («Diarias»), con el inicio al lado y su «Editar». */}
+          <div className="patch-head">
+            <h3>
+              Versión {p.version} · {formatDate(p.start)}
+            </h3>
+            <button {...edit.editButton(p.id, `Editar la versión ${p.version}`)}>Editar</button>
+          </div>
+          <PatchSummary events={p.events} today={today} targetDate={state.targetDate} />
+          <PatchTotal patch={p} />
 
-            {open ? (
-              <div className="inline-edit">
-                <div className="patch-fields">
-                  <label className="field field-compact">
-                    <span className="field-label">Versión</span>
-                    <input
-                      type="text"
-                      {...PLAIN_TEXT_INPUT}
-                      className="input-version"
-                      value={p.version}
-                      autoFocus={p.id === focusPatchId}
-                      onChange={(e) => updatePatch(p.id, (x) => ({ ...x, version: e.target.value }))}
-                    />
-                  </label>
-                  <label className="field field-compact">
-                    <span className="field-label">Inicio</span>
-                    <DateField value={p.start} onChange={(v) => updatePatch(p.id, (x) => ({ ...x, start: v }))} />
-                  </label>
-                </div>
+          {edit.openId === p.id && (
+            <EditDialog
+              title={`Versión ${p.version}`}
+              focusFirstField={p.id === newPatchId}
+              wide
+              remove={{
+                label: 'Eliminar versión',
+                onClick: () =>
+                  edit.removed(() =>
+                    onChange(
+                      (s) => ({ ...s, patches: s.patches.filter((x) => x.id !== p.id) }),
+                      `Versión ${p.version} eliminada.`,
+                    ),
+                  ),
+              }}
+              onDone={edit.done}
+            >
+              <div className="patch-fields">
+                <label className="field field-compact">
+                  <span className="field-label">Versión</span>
+                  <input
+                    type="text"
+                    {...PLAIN_TEXT_INPUT}
+                    className="input-version"
+                    value={p.version}
+                    onChange={(e) => updatePatch(p.id, (x) => ({ ...x, version: e.target.value }))}
+                  />
+                </label>
+                <label className="field field-compact">
+                  <span className="field-label">Inicio</span>
+                  <DateField value={p.start} onChange={(v) => updatePatch(p.id, (x) => ({ ...x, start: v }))} />
+                </label>
+              </div>
 
-                <div className="event-list">
-                  {p.events.length > 0 && (
-                    <>
-                      <div className="event-row event-header" aria-hidden="true">
-                        <span />
-                        <span>Evento</span>
-                        <span>Fecha de cobro</span>
-                        <span>Jades</span>
-                        <span>Pases</span>
-                        <span />
+              <div className="event-list">
+                {p.events.length > 0 && (
+                  <>
+                    <div className="event-row event-header" aria-hidden="true">
+                      <span />
+                      <span>Evento</span>
+                      <span>Fecha de cobro</span>
+                      <span>Jades</span>
+                      <span>Pases</span>
+                      <span />
+                    </div>
+                    {/* Las filas en su propia caja: es el límite del arrastre (restrictToParentElement). */}
+                    <SortableList
+                      items={p.events.map((ev) => ({ id: ev.id, name: eventName(ev) }))}
+                      modifiers={EVENT_MODIFIERS}
+                      onMove={(activeId, overId) =>
+                        updatePatch(p.id, (x) => ({ ...x, events: moveById(x.events, activeId, overId) }))
+                      }
+                    >
+                      <div className="event-rows">
+                        {p.events.map((ev) => (
+                          <EventRow
+                            key={ev.id}
+                            event={ev}
+                            version={p.version}
+                            status={EVENT_STATUS[eventTiming(ev.date, today, state.targetDate)]}
+                            autoFocus={ev.id === focusId}
+                            leaving={leaving.includes(ev.id)}
+                            onUpdate={(patch) => updateEvent(p.id, ev.id, patch)}
+                            onRemove={() => removeEvent(p.id, ev)}
+                          />
+                        ))}
                       </div>
-                      {/* Las filas en su propia caja: es el límite del arrastre (restrictToParentElement). */}
-                      <SortableList
-                        items={p.events.map((ev) => ({ id: ev.id, name: eventName(ev) }))}
-                        modifiers={EVENT_MODIFIERS}
-                        onMove={(activeId, overId) =>
-                          updatePatch(p.id, (x) => ({ ...x, events: moveById(x.events, activeId, overId) }))
-                        }
-                      >
-                        <div className="event-rows">
-                          {p.events.map((ev) => (
-                            <EventRow
-                              key={ev.id}
-                              event={ev}
-                              version={p.version}
-                              status={EVENT_STATUS[eventTiming(ev.date, today, state.targetDate)]}
-                              autoFocus={ev.id === focusId}
-                              leaving={leaving.includes(ev.id)}
-                              onUpdate={(patch) => updateEvent(p.id, ev.id, patch)}
-                              onRemove={() => removeEvent(p.id, ev)}
-                            />
-                          ))}
-                        </div>
-                      </SortableList>
-                    </>
-                  )}
-                  {/* Del ancho de una fila, donde aparecerá la nueva: dice qué hace antes de pulsarlo. */}
+                    </SortableList>
+                  </>
+                )}
+                {/*
+                  Pie de la lista, como el de una tabla: añadir a la izquierda, bajo los nombres (donde aparecerá
+                  la nueva), y el total de la versión a la derecha, que cambia al escribir.
+                */}
+                <div className="event-foot">
                   <button
                     type="button"
                     className="btn btn-add-event"
@@ -196,50 +211,35 @@ export function PatchTable({ state, today, onChange }: Props) {
                   >
                     + Evento
                   </button>
-                </div>
-
-                {/* Al pie del editor, como «Eliminar fuente». */}
-                <div className="inline-edit-footer">
-                  <span />
-                  <button
-                    type="button"
-                    className="btn btn-danger"
-                    onClick={() =>
-                      onChange(
-                        (s) => ({ ...s, patches: s.patches.filter((x) => x.id !== p.id) }),
-                        `Versión ${p.version} eliminada.`,
-                      )
-                    }
-                  >
-                    Eliminar versión
-                  </button>
+                  <PatchTotal patch={p} />
                 </div>
               </div>
-            ) : (
-              <PatchSummary events={p.events} today={today} targetDate={state.targetDate} />
-            )}
-
-            {/*
-              Lo que da la versión: las tiradas de todos sus eventos, también los que aún no llegan a la fecha
-              objetivo o ya pasaron (cada uno lo avisa en su fila). Lo que cuenta para el cálculo es el total de la
-              cabecera. Al pie y bajo las recompensas, con su ticket; con decimales, para que se vea lo que aporta
-              cada evento. También con el editor abierto: cambia al escribir.
-            */}
-            <div className="patch-foot">
-              <span className="card-total patch-total">
-                <Icon kind="pass" size={25} decorative />
-                <span className="sr-only">Tiradas de los eventos de la versión {p.version}: </span>
-                {fmtSingles(eventsSingles(p.events))}
-              </span>
-            </div>
-          </div>
-        );
-      })}
+            </EditDialog>
+          )}
+        </div>
+      ))}
 
       {patches.length === 0 && (
         <p className="warning">Sin versiones no se cuentan ni los eventos ni las fuentes «por versión».</p>
       )}
     </section>
+  );
+}
+
+/**
+ * Lo que da la versión: las tiradas de todos sus eventos, también los que aún no llegan a la fecha objetivo o ya
+ * pasaron (cada uno lo avisa en su fila). Lo que cuenta para el cálculo es el total de la cabecera. Al pie y bajo
+ * las recompensas, con su ticket; con decimales, para que se vea lo que aporta cada evento.
+ */
+function PatchTotal({ patch }: { patch: Patch }) {
+  return (
+    <div className="patch-foot">
+      <span className="card-total patch-total">
+        <Icon kind="pass" size={25} decorative />
+        <span className="sr-only">Tiradas de los eventos de la versión {patch.version}: </span>
+        {fmtSingles(eventsSingles(patch.events))}
+      </span>
+    </div>
   );
 }
 
